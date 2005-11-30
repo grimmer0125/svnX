@@ -10,6 +10,6 @@ mkdir "$TARGET"/sources
 rsync -avz --exclude .svn --exclude *~.nib --exclude build . "$TARGET"/sources
 hdiutil detach "$TARGET"
 hdiutil convert -format UDZO /tmp/svnX-sources.dmg -shadow -o ~/Desktop/svnX-sources.dmg
-gzip ~/Desktop/svnX-sources.dmg  
-rm /tmp/svnX-sources.dmg
+#gzip ~/Desktop/svnX-sources.dmg  
+#rm /tmp/svnX-sources.dmg
 rm /tmp/svnX-sources.dmg.shadow

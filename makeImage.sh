@@ -12,6 +12,6 @@ cp History.rtf "$TARGET"/
 #rsync -avz --exclude .svn --exclude *~.nib --exclude build . "$TARGET"/sources
 hdiutil detach "$TARGET"
 hdiutil convert -format UDZO /tmp/svnX.dmg -shadow -o ~/Desktop/svnX.dmg
-gzip ~/Desktop/svnX.dmg  
-rm /tmp/svnX.dmg
+#gzip ~/Desktop/svnX.dmg  
+#rm /tmp/svnX.dmg
 rm /tmp/svnX.dmg.shadow

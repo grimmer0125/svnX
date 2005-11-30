@@ -1,0 +1,22 @@
+{
+    IBClasses = (
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {CLASS = MyDragSupportBrowser; LANGUAGE = ObjC; SUPERCLASS = NSBrowser; }, 
+        {CLASS = MyDragSupportMatrix; LANGUAGE = ObjC; SUPERCLASS = NSMatrix; }, 
+        {
+            CLASS = MySvnRepositoryBrowserView; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {browser = id; revisionTextField = id; }; 
+            SUPERCLASS = MySvnView; 
+        }, 
+        {
+            ACTIONS = {refetch = id; }; 
+            CLASS = MySvnView; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {"_view" = id; progress = id; refetch = id; }; 
+            SUPERCLASS = NSView; 
+        }, 
+        {ACTIONS = {refetch = id; }; CLASS = NSObject; LANGUAGE = ObjC; }
+    ); 
+    IBVersion = 1; 
+}

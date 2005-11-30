@@ -1,0 +1,1063 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8D15AC290486D014006FF6A4 /* svnX_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 32DBCF750370BD2300C91783 /* svnX_Prefix.pch */; };
+		8D15AC2C0486D014006FF6A4 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 2A37F4B9FDCFA73011CA2CEA /* Credits.rtf */; };
+		8D15AC2F0486D014006FF6A4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165FFE840EACC02AAC07 /* InfoPlist.strings */; };
+		8D15AC320486D014006FF6A4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A37F4B0FDCFA73011CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
+		8D15AC340486D014006FF6A4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A7FEA54F5311CA2CBB /* Cocoa.framework */; };
+		F217F14905F9EC0700286411 /* SvnFileStatusToColourTransformer.h in Headers */ = {isa = PBXBuildFile; fileRef = F217F14705F9EC0700286411 /* SvnFileStatusToColourTransformer.h */; };
+		F217F14A05F9EC0700286411 /* SvnFileStatusToColourTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = F217F14805F9EC0700286411 /* SvnFileStatusToColourTransformer.m */; };
+		F22004DE08099C6900F2CC97 /* Tasks.m in Sources */ = {isa = PBXBuildFile; fileRef = F22004DC08099C6900F2CC97 /* Tasks.m */; };
+		F22004DF08099C6900F2CC97 /* Tasks.h in Headers */ = {isa = PBXBuildFile; fileRef = F22004DD08099C6900F2CC97 /* Tasks.h */; };
+		F223717C06AD6CF80053F451 /* mkdir.tiff in Resources */ = {isa = PBXBuildFile; fileRef = F223717B06AD6CF80053F451 /* mkdir.tiff */; };
+		F22371D406AD74530053F451 /* svnMkdir.nib in Resources */ = {isa = PBXBuildFile; fileRef = F22371D306AD74530053F451 /* svnMkdir.nib */; };
+		F22964D306B2617700441FA8 /* MyWorkingCopyToolbar.h in Headers */ = {isa = PBXBuildFile; fileRef = F22964D106B2617700441FA8 /* MyWorkingCopyToolbar.h */; };
+		F22964D406B2617700441FA8 /* MyWorkingCopyToolbar.m in Sources */ = {isa = PBXBuildFile; fileRef = F22964D206B2617700441FA8 /* MyWorkingCopyToolbar.m */; };
+		F229659E06B270AF00441FA8 /* MyWorkingCopy.h in Headers */ = {isa = PBXBuildFile; fileRef = F229659C06B270AF00441FA8 /* MyWorkingCopy.h */; };
+		F229659F06B270AF00441FA8 /* MyWorkingCopy.m in Sources */ = {isa = PBXBuildFile; fileRef = F229659D06B270AF00441FA8 /* MyWorkingCopy.m */; };
+		F22965C506B2714600441FA8 /* MyWorkingCopy.nib in Resources */ = {isa = PBXBuildFile; fileRef = F22965C306B2714600441FA8 /* MyWorkingCopy.nib */; };
+		F229660B06B29C0500441FA8 /* svnUUID.sh in Resources */ = {isa = PBXBuildFile; fileRef = F229660A06B29C0500441FA8 /* svnUUID.sh */; };
+		F229660F06B2ACDA00441FA8 /* getCachePathForUrl.php in Resources */ = {isa = PBXBuildFile; fileRef = F229660E06B2ACDA00441FA8 /* getCachePathForUrl.php */; };
+		F22CA53006A7AC6F00A27EDB /* MySvnView.h in Headers */ = {isa = PBXBuildFile; fileRef = F22CA52E06A7AC6F00A27EDB /* MySvnView.h */; };
+		F22CA53106A7AC6F00A27EDB /* MySvnView.m in Sources */ = {isa = PBXBuildFile; fileRef = F22CA52F06A7AC6F00A27EDB /* MySvnView.m */; };
+		F230F8D408045D9C0000E35F /* svnextract.sh in Resources */ = {isa = PBXBuildFile; fileRef = F230F8D308045D9C0000E35F /* svnextract.sh */; };
+		F230FC78080596A50000E35F /* checkout2.png in Resources */ = {isa = PBXBuildFile; fileRef = F230FC77080596A50000E35F /* checkout2.png */; };
+		F230FC8E08059A9B0000E35F /* export.png in Resources */ = {isa = PBXBuildFile; fileRef = F230FC8D08059A9B0000E35F /* export.png */; };
+		F233A3A006C3C32E00F77B90 /* svnMove.png in Resources */ = {isa = PBXBuildFile; fileRef = F233A39F06C3C32E00F77B90 /* svnMove.png */; };
+		F23B32F806029317005C11F2 /* MyTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = F23B32F606029316005C11F2 /* MyTableView.h */; };
+		F23B32F906029317005C11F2 /* MyTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = F23B32F706029317005C11F2 /* MyTableView.m */; };
+		F23B33EE0602A4AB005C11F2 /* svncopy.sh in Resources */ = {isa = PBXBuildFile; fileRef = F23B33ED0602A4AB005C11F2 /* svncopy.sh */; };
+		F23B3C6B06A997100021E613 /* MyRepositoryToolbar.h in Headers */ = {isa = PBXBuildFile; fileRef = F23B3C6906A997100021E613 /* MyRepositoryToolbar.h */; };
+		F23B3C6C06A997100021E613 /* MyRepositoryToolbar.m in Sources */ = {isa = PBXBuildFile; fileRef = F23B3C6A06A997100021E613 /* MyRepositoryToolbar.m */; };
+		F23B3C9E06A998DD0021E613 /* svnCopy.png in Resources */ = {isa = PBXBuildFile; fileRef = F23B3C9D06A998DD0021E613 /* svnCopy.png */; };
+		F23B407906AAFE210021E613 /* NSString+MyAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = F23B407706AAFE210021E613 /* NSString+MyAdditions.h */; };
+		F23B407A06AAFE210021E613 /* NSString+MyAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = F23B407806AAFE210021E613 /* NSString+MyAdditions.m */; };
+		F24FA87106AF90B100E2467B /* svnfilemerge.sh in Resources */ = {isa = PBXBuildFile; fileRef = F24FA87006AF90B100E2467B /* svnfilemerge.sh */; };
+		F24FA87506AF917800E2467B /* svndiff.sh in Resources */ = {isa = PBXBuildFile; fileRef = F24FA87406AF917800E2467B /* svndiff.sh */; };
+		F24FA96C06B037A200E2467B /* MySvnLogView2.h in Headers */ = {isa = PBXBuildFile; fileRef = F24FA96A06B037A200E2467B /* MySvnLogView2.h */; };
+		F24FA96D06B037A200E2467B /* MySvnLogView2.m in Sources */ = {isa = PBXBuildFile; fileRef = F24FA96B06B037A200E2467B /* MySvnLogView2.m */; };
+		F25913C206A1C0BD00B5FFA9 /* MySvnLogView.h in Headers */ = {isa = PBXBuildFile; fileRef = F25913C006A1C0BD00B5FFA9 /* MySvnLogView.h */; };
+		F26353FD06B17C98009C5ADF /* checkout.png in Resources */ = {isa = PBXBuildFile; fileRef = F26353FC06B17C98009C5ADF /* checkout.png */; };
+		F2695D960832637600B47C96 /* MySvnFilesArrayController.h in Headers */ = {isa = PBXBuildFile; fileRef = F2695D950832637500B47C96 /* MySvnFilesArrayController.h */; };
+		F2695D980832638300B47C96 /* MySvnFilesArrayController.m in Sources */ = {isa = PBXBuildFile; fileRef = F2695D970832638200B47C96 /* MySvnFilesArrayController.m */; };
+		F271B72106B83F7200D07CCB /* MyDocumentationWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = F271B71F06B83F7200D07CCB /* MyDocumentationWindow.h */; };
+		F271B72206B83F7200D07CCB /* MyDocumentationWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F271B72006B83F7200D07CCB /* MyDocumentationWindow.m */; };
+		F271B75A06B848ED00D07CCB /* Documentation.rtf in Resources */ = {isa = PBXBuildFile; fileRef = F271B75906B848ED00D07CCB /* Documentation.rtf */; };
+		F272E77B06BA5E5500F14502 /* MyDragSupportArrayController.m in Sources */ = {isa = PBXBuildFile; fileRef = F272E77906BA5E5500F14502 /* MyDragSupportArrayController.m */; };
+		F272E77C06BA5E5500F14502 /* MyDragSupportArrayController.h in Headers */ = {isa = PBXBuildFile; fileRef = F272E77A06BA5E5500F14502 /* MyDragSupportArrayController.h */; };
+		F272E84206BA753C00F14502 /* MyDragSupportTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = F272E84006BA753C00F14502 /* MyDragSupportTableView.h */; };
+		F272E84306BA753C00F14502 /* MyDragSupportTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = F272E84106BA753C00F14502 /* MyDragSupportTableView.m */; };
+		F27AA1EC06AD9395001A1B05 /* MySvnOperationController.h in Headers */ = {isa = PBXBuildFile; fileRef = F27AA1EA06AD9395001A1B05 /* MySvnOperationController.h */; };
+		F27AA1ED06AD9395001A1B05 /* MySvnOperationController.m in Sources */ = {isa = PBXBuildFile; fileRef = F27AA1EB06AD9395001A1B05 /* MySvnOperationController.m */; };
+		F27AA21906AD98C6001A1B05 /* delete.tiff in Resources */ = {isa = PBXBuildFile; fileRef = F27AA21806AD98C6001A1B05 /* delete.tiff */; };
+		F27AA22906AD9A6A001A1B05 /* svnDelete.nib in Resources */ = {isa = PBXBuildFile; fileRef = F27AA22806AD9A6A001A1B05 /* svnDelete.nib */; };
+		F27AA2AF06AE553C001A1B05 /* MySvnLogAC.h in Headers */ = {isa = PBXBuildFile; fileRef = F27AA2AD06AE553C001A1B05 /* MySvnLogAC.h */; };
+		F27AA2B006AE553C001A1B05 /* MySvnLogAC.m in Sources */ = {isa = PBXBuildFile; fileRef = F27AA2AE06AE553C001A1B05 /* MySvnLogAC.m */; };
+		F27AA43906AEA7CF001A1B05 /* svnFileMerge.nib in Resources */ = {isa = PBXBuildFile; fileRef = F27AA43806AEA7CF001A1B05 /* svnFileMerge.nib */; };
+		F27AA4B206AEC5F8001A1B05 /* MySvnLogView2.nib in Resources */ = {isa = PBXBuildFile; fileRef = F27AA4B106AEC5F8001A1B05 /* MySvnLogView2.nib */; };
+		F27AA51006AED870001A1B05 /* ArrayCountTransformer.h in Headers */ = {isa = PBXBuildFile; fileRef = F27AA50E06AED870001A1B05 /* ArrayCountTransformer.h */; };
+		F27AA51106AED870001A1B05 /* ArrayCountTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = F27AA50F06AED870001A1B05 /* ArrayCountTransformer.m */; };
+		F27CD112060241F500F19225 /* svnmove.sh in Resources */ = {isa = PBXBuildFile; fileRef = F27CD111060241F500F19225 /* svnmove.sh */; };
+		F27CD1E506028DC600F19225 /* MyOutlineView.h in Headers */ = {isa = PBXBuildFile; fileRef = F27CD1E306028DC600F19225 /* MyOutlineView.h */; };
+		F27CD1E606028DC600F19225 /* MyOutlineView.m in Sources */ = {isa = PBXBuildFile; fileRef = F27CD1E406028DC600F19225 /* MyOutlineView.m */; };
+		F2830106082BE24C008E002A /* DrawerLogView.h in Headers */ = {isa = PBXBuildFile; fileRef = F2830104082BE24C008E002A /* DrawerLogView.h */; };
+		F2830107082BE24C008E002A /* DrawerLogView.m in Sources */ = {isa = PBXBuildFile; fileRef = F2830105082BE24C008E002A /* DrawerLogView.m */; };
+		F2830131082BE371008E002A /* DrawerLogView.nib in Resources */ = {isa = PBXBuildFile; fileRef = F2830130082BE371008E002A /* DrawerLogView.nib */; };
+		F2830194082BEE22008E002A /* NSTextView+MyAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = F2830193082BEE22008E002A /* NSTextView+MyAdditions.m */; };
+		F286911906B7ED5F00D39166 /* repository.tiff in Resources */ = {isa = PBXBuildFile; fileRef = F286911806B7ED5F00D39166 /* repository.tiff */; };
+		F286912D06B7F51E00D39166 /* Reload.tiff in Resources */ = {isa = PBXBuildFile; fileRef = F286912C06B7F51E00D39166 /* Reload.tiff */; };
+		F286AC4006B680AC00FF0174 /* stop.tiff in Resources */ = {isa = PBXBuildFile; fileRef = F286AC3F06B680AC00FF0174 /* stop.tiff */; };
+		F286AC4406B680B600FF0174 /* stop_pressed.tiff in Resources */ = {isa = PBXBuildFile; fileRef = F286AC4306B680B600FF0174 /* stop_pressed.tiff */; };
+		F286AD0106B69D0900FF0174 /* FileMerge.tiff in Resources */ = {isa = PBXBuildFile; fileRef = F286AD0006B69D0900FF0174 /* FileMerge.tiff */; };
+		F286AE2606B6D3F000FF0174 /* svnFileMergeFromRepository.nib in Resources */ = {isa = PBXBuildFile; fileRef = F286AE2506B6D3F000FF0174 /* svnFileMergeFromRepository.nib */; };
+		F293DCB406B46ABF00B81B86 /* svnResult.nib in Resources */ = {isa = PBXBuildFile; fileRef = F293DCB306B46ABF00B81B86 /* svnResult.nib */; };
+		F2997D8F0609E60C00E0DA4A /* SplitViewDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = F2997D8D0609E60C00E0DA4A /* SplitViewDelegate.h */; };
+		F2997D900609E60C00E0DA4A /* SplitViewDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F2997D8E0609E60C00E0DA4A /* SplitViewDelegate.m */; };
+		F2997E370609FFBA00E0DA4A /* FilePathCleanUpTransformer.h in Headers */ = {isa = PBXBuildFile; fileRef = F2997E350609FFBA00E0DA4A /* FilePathCleanUpTransformer.h */; };
+		F2997E380609FFBA00E0DA4A /* FilePathCleanUpTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = F2997E360609FFBA00E0DA4A /* FilePathCleanUpTransformer.m */; };
+		F29E3EE5069C78C9007CE672 /* RepositoriesController.h in Headers */ = {isa = PBXBuildFile; fileRef = F29E3EE3069C78C9007CE672 /* RepositoriesController.h */; };
+		F29E3EE6069C78C9007CE672 /* RepositoriesController.m in Sources */ = {isa = PBXBuildFile; fileRef = F29E3EE4069C78C9007CE672 /* RepositoriesController.m */; };
+		F29E3F63069EEFE2007CE672 /* MyWorkingCopyController.h in Headers */ = {isa = PBXBuildFile; fileRef = F29E3F61069EEFE2007CE672 /* MyWorkingCopyController.h */; };
+		F29E3F64069EEFE2007CE672 /* MyWorkingCopyController.m in Sources */ = {isa = PBXBuildFile; fileRef = F29E3F62069EEFE2007CE672 /* MyWorkingCopyController.m */; };
+		F29E4136069F0E3D007CE672 /* MyRepository.m in Sources */ = {isa = PBXBuildFile; fileRef = F29E4134069F0E3D007CE672 /* MyRepository.m */; };
+		F29E4137069F0E3D007CE672 /* MyRepository.h in Headers */ = {isa = PBXBuildFile; fileRef = F29E4135069F0E3D007CE672 /* MyRepository.h */; };
+		F2A4D4B706A3E09A00665FF7 /* tiny-find.png in Resources */ = {isa = PBXBuildFile; fileRef = F2A4D4B406A3E09A00665FF7 /* tiny-find.png */; };
+		F2A4D4B806A3E09B00665FF7 /* tiny-reload.png in Resources */ = {isa = PBXBuildFile; fileRef = F2A4D4B506A3E09A00665FF7 /* tiny-reload.png */; };
+		F2A4D4B906A3E09B00665FF7 /* tiny-stop.png in Resources */ = {isa = PBXBuildFile; fileRef = F2A4D4B606A3E09A00665FF7 /* tiny-stop.png */; };
+		F2A62B6006A29E6B00EC533F /* MySvnLogParser.h in Headers */ = {isa = PBXBuildFile; fileRef = F2A62B5E06A29E6B00EC533F /* MySvnLogParser.h */; };
+		F2A62B6106A29E6B00EC533F /* MySvnLogParser.m in Sources */ = {isa = PBXBuildFile; fileRef = F2A62B5F06A29E6B00EC533F /* MySvnLogParser.m */; };
+		F2A62BF806A2B60E00EC533F /* SvnDateTransformer.h in Headers */ = {isa = PBXBuildFile; fileRef = F2A62BF606A2B60D00EC533F /* SvnDateTransformer.h */; };
+		F2A62BF906A2B60E00EC533F /* SvnDateTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = F2A62BF706A2B60D00EC533F /* SvnDateTransformer.m */; };
+		F2A62C4B06A2BEDD00EC533F /* MyRadioButtonTableColumn.m in Sources */ = {isa = PBXBuildFile; fileRef = F2A62C4906A2BEDD00EC533F /* MyRadioButtonTableColumn.m */; };
+		F2A62C4C06A2BEDD00EC533F /* MyRadioButtonTableColumn.h in Headers */ = {isa = PBXBuildFile; fileRef = F2A62C4A06A2BEDD00EC533F /* MyRadioButtonTableColumn.h */; };
+		F2A62DF906A2E36400EC533F /* MySvnLogView.m in Sources */ = {isa = PBXBuildFile; fileRef = F25913C106A1C0BD00B5FFA9 /* MySvnLogView.m */; };
+		F2A62F1F06A2EA7000EC533F /* svnX.nib in Resources */ = {isa = PBXBuildFile; fileRef = 2A37F4B6FDCFA73011CA2CEA /* svnX.nib */; };
+		F2A62F2006A2EA7100EC533F /* MyRepository.nib in Resources */ = {isa = PBXBuildFile; fileRef = F29E410B069F0D22007CE672 /* MyRepository.nib */; };
+		F2A62F2C06A2EAEA00EC533F /* MySvnLogView.nib in Resources */ = {isa = PBXBuildFile; fileRef = F25913BC06A1C09100B5FFA9 /* MySvnLogView.nib */; };
+		F2AFD0E205FFE153008F4267 /* OutlinerDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = F2AFD0E005FFE153008F4267 /* OutlinerDataSource.m */; };
+		F2AFD0E305FFE153008F4267 /* OutlinerDataSource.h in Headers */ = {isa = PBXBuildFile; fileRef = F2AFD0E105FFE153008F4267 /* OutlinerDataSource.h */; };
+		F2B0AA6E08321018009B9254 /* MyFileMergeController.h in Headers */ = {isa = PBXBuildFile; fileRef = F2B0AA6C08321018009B9254 /* MyFileMergeController.h */; };
+		F2B0AA6F08321018009B9254 /* MyFileMergeController.m in Sources */ = {isa = PBXBuildFile; fileRef = F2B0AA6D08321018009B9254 /* MyFileMergeController.m */; };
+		F2B0AA720832101D009B9254 /* MySvnCopyController.h in Headers */ = {isa = PBXBuildFile; fileRef = F2B0AA700832101D009B9254 /* MySvnCopyController.h */; };
+		F2B0AA730832101D009B9254 /* MySvnCopyController.m in Sources */ = {isa = PBXBuildFile; fileRef = F2B0AA710832101D009B9254 /* MySvnCopyController.m */; };
+		F2B0AA7608321022009B9254 /* MySvnDeleteController.h in Headers */ = {isa = PBXBuildFile; fileRef = F2B0AA7408321022009B9254 /* MySvnDeleteController.h */; };
+		F2B0AA7708321022009B9254 /* MySvnDeleteController.m in Sources */ = {isa = PBXBuildFile; fileRef = F2B0AA7508321022009B9254 /* MySvnDeleteController.m */; };
+		F2B0AA7A08321027009B9254 /* MySvnMkdirController.h in Headers */ = {isa = PBXBuildFile; fileRef = F2B0AA7808321027009B9254 /* MySvnMkdirController.h */; };
+		F2B0AA7B08321027009B9254 /* MySvnMkdirController.m in Sources */ = {isa = PBXBuildFile; fileRef = F2B0AA7908321027009B9254 /* MySvnMkdirController.m */; };
+		F2B0AA7E0832102C009B9254 /* MySvnMoveController.h in Headers */ = {isa = PBXBuildFile; fileRef = F2B0AA7C0832102C009B9254 /* MySvnMoveController.h */; };
+		F2B0AA7F0832102C009B9254 /* MySvnMoveController.m in Sources */ = {isa = PBXBuildFile; fileRef = F2B0AA7D0832102C009B9254 /* MySvnMoveController.m */; };
+		F2B2102D05F4EA100046FF94 /* MySVN.h in Headers */ = {isa = PBXBuildFile; fileRef = F2B2102B05F4EA100046FF94 /* MySVN.h */; };
+		F2B2102E05F4EA100046FF94 /* MySVN.m in Sources */ = {isa = PBXBuildFile; fileRef = F2B2102C05F4EA100046FF94 /* MySVN.m */; };
+		F2B2112305F4F3500046FF94 /* MyApp.m in Sources */ = {isa = PBXBuildFile; fileRef = F2B2112105F4F3500046FF94 /* MyApp.m */; };
+		F2B2112405F4F3500046FF94 /* MyApp.h in Headers */ = {isa = PBXBuildFile; fileRef = F2B2112205F4F3500046FF94 /* MyApp.h */; };
+		F2BBEF19076B6B48002160EB /* SingleFileInspector.nib in Resources */ = {isa = PBXBuildFile; fileRef = F2BBEF18076B6B47002160EB /* SingleFileInspector.nib */; };
+		F2BBEF87076B7679002160EB /* svnX.scriptTerminology in Resources */ = {isa = PBXBuildFile; fileRef = F2BBEF6B076B738B002160EB /* svnX.scriptTerminology */; };
+		F2BBEF88076B767A002160EB /* svnX.scriptSuite in Resources */ = {isa = PBXBuildFile; fileRef = F2BBEF6A076B738B002160EB /* svnX.scriptSuite */; };
+		F2BBF00B076B90BE002160EB /* Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = F2BBF009076B90BE002160EB /* Scripting.h */; };
+		F2BBF00C076B90BE002160EB /* Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = F2BBF00A076B90BE002160EB /* Scripting.m */; };
+		F2BE2319076B6534009313F2 /* SingleFileInspector.h in Headers */ = {isa = PBXBuildFile; fileRef = F2BE2317076B6534009313F2 /* SingleFileInspector.h */; };
+		F2BE231A076B6534009313F2 /* SingleFileInspector.m in Sources */ = {isa = PBXBuildFile; fileRef = F2BE2318076B6534009313F2 /* SingleFileInspector.m */; };
+		F2BFB5710827F3B7008476B7 /* TaskStatusToColorTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = F2BFB5700827F3B7008476B7 /* TaskStatusToColorTransformer.m */; };
+		F2C2001306008AE0004C843B /* Add.png in Resources */ = {isa = PBXBuildFile; fileRef = F2C2001206008AE0004C843B /* Add.png */; };
+		F2C2002606008B49004C843B /* Remove.png in Resources */ = {isa = PBXBuildFile; fileRef = F2C2002506008B49004C843B /* Remove.png */; };
+		F2C202940600A94D004C843B /* EditorProjectMode.tiff in Resources */ = {isa = PBXBuildFile; fileRef = F2C202930600A94D004C843B /* EditorProjectMode.tiff */; };
+		F2C2043D0600D7C0004C843B /* FolderRef.tiff in Resources */ = {isa = PBXBuildFile; fileRef = F2C2043C0600D7C0004C843B /* FolderRef.tiff */; };
+		F2C205C006012B59004C843B /* ImageAndTextCell.h in Headers */ = {isa = PBXBuildFile; fileRef = F2C205BF06012B59004C843B /* ImageAndTextCell.h */; };
+		F2C205C806012B68004C843B /* ImageAndTextCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F2C205C706012B68004C843B /* ImageAndTextCell.m */; };
+		F2C20625060136D0004C843B /* TableViewDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = F2C20623060136D0004C843B /* TableViewDelegate.h */; };
+		F2C20626060136D0004C843B /* TableViewDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F2C20624060136D0004C843B /* TableViewDelegate.m */; };
+		F2C2624A082B58D700077EFE /* sidebar.png in Resources */ = {isa = PBXBuildFile; fileRef = F2C26249082B58D700077EFE /* sidebar.png */; };
+		F2E114A20830A7A40026EEBF /* MyDragSupportWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F2E114A00830A7A40026EEBF /* MyDragSupportWindow.m */; };
+		F2E114A30830A7A40026EEBF /* MyDragSupportWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = F2E114A10830A7A40026EEBF /* MyDragSupportWindow.h */; };
+		F2E13A0B05FB2F2F0068B671 /* FavoriteWorkingCopies.m in Sources */ = {isa = PBXBuildFile; fileRef = F2E13A0905FB2F2F0068B671 /* FavoriteWorkingCopies.m */; };
+		F2E13A0C05FB2F2F0068B671 /* FavoriteWorkingCopies.h in Headers */ = {isa = PBXBuildFile; fileRef = F2E13A0A05FB2F2F0068B671 /* FavoriteWorkingCopies.h */; };
+		F2E4D7690803ECE500C13681 /* MyDragSupportMatrix.h in Headers */ = {isa = PBXBuildFile; fileRef = F2E4D7670803ECE500C13681 /* MyDragSupportMatrix.h */; };
+		F2E4D76A0803ECE500C13681 /* MyDragSupportMatrix.m in Sources */ = {isa = PBXBuildFile; fileRef = F2E4D7680803ECE500C13681 /* MyDragSupportMatrix.m */; };
+		F2E4D76E0803ED2500C13681 /* MyDragSupportBrowser.h in Headers */ = {isa = PBXBuildFile; fileRef = F2E4D76C0803ED2500C13681 /* MyDragSupportBrowser.h */; };
+		F2E4D76F0803ED2500C13681 /* MyDragSupportBrowser.m in Sources */ = {isa = PBXBuildFile; fileRef = F2E4D76D0803ED2500C13681 /* MyDragSupportBrowser.m */; };
+		F2EA1567080AD341008C6353 /* SvnFilePathTransformer.h in Headers */ = {isa = PBXBuildFile; fileRef = F2EA1565080AD341008C6353 /* SvnFilePathTransformer.h */; };
+		F2EA1568080AD341008C6353 /* SvnFilePathTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = F2EA1566080AD341008C6353 /* SvnFilePathTransformer.m */; };
+		F2EA161A080AE74D008C6353 /* TrimNewLinesTransformer.h in Headers */ = {isa = PBXBuildFile; fileRef = F2EA1618080AE74D008C6353 /* TrimNewLinesTransformer.h */; };
+		F2EA161B080AE74D008C6353 /* TrimNewLinesTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = F2EA1619080AE74D008C6353 /* TrimNewLinesTransformer.m */; };
+		F2EC3E4305F5E55500A67B01 /* find.tiff in Resources */ = {isa = PBXBuildFile; fileRef = F2EC3E4205F5E55500A67B01 /* find.tiff */; };
+		F2EE0FF206A9571400C08125 /* MySvnRepositoryBrowserView.nib in Resources */ = {isa = PBXBuildFile; fileRef = F2EE0FF106A9571400C08125 /* MySvnRepositoryBrowserView.nib */; };
+		F2EE11C106A972BA00C08125 /* MySvnRepositoryBrowserView.h in Headers */ = {isa = PBXBuildFile; fileRef = F2EE0FF706A95CD100C08125 /* MySvnRepositoryBrowserView.h */; };
+		F2EE11C406A972BB00C08125 /* MySvnRepositoryBrowserView.m in Sources */ = {isa = PBXBuildFile; fileRef = F2EE0FF606A95CD100C08125 /* MySvnRepositoryBrowserView.m */; };
+		F2F27B8A06ACD54900895CAE /* svnCopy.nib in Resources */ = {isa = PBXBuildFile; fileRef = F2F27B8906ACD54900895CAE /* svnCopy.nib */; };
+		F2F3006F05F94989008BCEFA /* svnXIcon2.icns in Resources */ = {isa = PBXBuildFile; fileRef = F2F3006E05F94989008BCEFA /* svnXIcon2.icns */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXBuildStyle section */
+		4A9504D0FFE6A4CB11CA0CBA /* Development */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				MACOSX_DEPLOYMENT_TARGET = "";
+				OPTIMIZATION_CFLAGS = "-O0";
+				ZERO_LINK = YES;
+			};
+			name = Development;
+		};
+		4A9504D1FFE6A4CB11CA0CBA /* Deployment */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEPLOYMENT_POSTPROCESSING = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				PRODUCT_NAME = svnX;
+				ZERO_LINK = NO;
+			};
+			name = Deployment;
+		};
+/* End PBXBuildStyle section */
+
+/* Begin PBXFileReference section */
+		089C1660FE840EACC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1058C7A7FEA54F5311CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
+		2A37F4B0FDCFA73011CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		2A37F4B7FDCFA73011CA2CEA /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/svnX.nib; sourceTree = "<group>"; };
+		2A37F4BAFDCFA73011CA2CEA /* English */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = English; path = English.lproj/Credits.rtf; sourceTree = "<group>"; };
+		2A37F4C4FDCFA73011CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
+		2A37F4C5FDCFA73011CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		32DBCF750370BD2300C91783 /* svnX_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = svnX_Prefix.pch; sourceTree = "<group>"; };
+		8D15AC360486D014006FF6A4 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8D15AC370486D014006FF6A4 /* svnX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = svnX.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F217F14705F9EC0700286411 /* SvnFileStatusToColourTransformer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SvnFileStatusToColourTransformer.h; sourceTree = "<group>"; };
+		F217F14805F9EC0700286411 /* SvnFileStatusToColourTransformer.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = SvnFileStatusToColourTransformer.m; sourceTree = "<group>"; };
+		F22004DC08099C6900F2CC97 /* Tasks.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = Tasks.m; sourceTree = "<group>"; };
+		F22004DD08099C6900F2CC97 /* Tasks.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Tasks.h; sourceTree = "<group>"; };
+		F223717B06AD6CF80053F451 /* mkdir.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = mkdir.tiff; sourceTree = "<group>"; };
+		F22371D306AD74530053F451 /* svnMkdir.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = svnMkdir.nib; sourceTree = "<group>"; };
+		F22964D106B2617700441FA8 /* MyWorkingCopyToolbar.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyWorkingCopyToolbar.h; sourceTree = "<group>"; };
+		F22964D206B2617700441FA8 /* MyWorkingCopyToolbar.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyWorkingCopyToolbar.m; sourceTree = "<group>"; };
+		F229659C06B270AF00441FA8 /* MyWorkingCopy.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyWorkingCopy.h; sourceTree = "<group>"; };
+		F229659D06B270AF00441FA8 /* MyWorkingCopy.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyWorkingCopy.m; sourceTree = "<group>"; };
+		F22965C406B2714600441FA8 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/MyWorkingCopy.nib; sourceTree = "<group>"; };
+		F229660A06B29C0500441FA8 /* svnUUID.sh */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.sh; path = svnUUID.sh; sourceTree = "<group>"; };
+		F229660E06B2ACDA00441FA8 /* getCachePathForUrl.php */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.php; path = getCachePathForUrl.php; sourceTree = "<group>"; };
+		F22AFE1F05F6541600D4ED0D /* Caution.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Caution.tiff; sourceTree = "<group>"; };
+		F22AFEE405F6B5CB00D4ED0D /* PhoneMinus.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = PhoneMinus.tiff; sourceTree = "<group>"; };
+		F22AFEE505F6B5CB00D4ED0D /* vCard.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = vCard.tiff; sourceTree = "<group>"; };
+		F22AFEE605F6B5CB00D4ED0D /* PhonePlus.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = PhonePlus.tiff; sourceTree = "<group>"; };
+		F22AFEEE05F6B7CC00D4ED0D /* defaultAction.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = defaultAction.png; sourceTree = "<group>"; };
+		F22AFF1205F743F500D4ED0D /* Action.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Action.tiff; sourceTree = "<group>"; };
+		F22AFF1605F7440900D4ED0D /* Card.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Card.tiff; sourceTree = "<group>"; };
+		F22CA52E06A7AC6F00A27EDB /* MySvnView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MySvnView.h; sourceTree = "<group>"; };
+		F22CA52F06A7AC6F00A27EDB /* MySvnView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MySvnView.m; sourceTree = "<group>"; };
+		F230F8D308045D9C0000E35F /* svnextract.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = svnextract.sh; sourceTree = "<group>"; };
+		F230FC77080596A50000E35F /* checkout2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checkout2.png; sourceTree = "<group>"; };
+		F230FC8D08059A9B0000E35F /* export.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = export.png; sourceTree = "<group>"; };
+		F233A39F06C3C32E00F77B90 /* svnMove.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = svnMove.png; sourceTree = "<group>"; };
+		F23B32F606029316005C11F2 /* MyTableView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyTableView.h; sourceTree = "<group>"; };
+		F23B32F706029317005C11F2 /* MyTableView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyTableView.m; sourceTree = "<group>"; };
+		F23B33ED0602A4AB005C11F2 /* svncopy.sh */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.sh; path = svncopy.sh; sourceTree = "<group>"; };
+		F23B3C6906A997100021E613 /* MyRepositoryToolbar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MyRepositoryToolbar.h; sourceTree = "<group>"; };
+		F23B3C6A06A997100021E613 /* MyRepositoryToolbar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MyRepositoryToolbar.m; sourceTree = "<group>"; };
+		F23B3C9D06A998DD0021E613 /* svnCopy.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = svnCopy.png; sourceTree = "<group>"; };
+		F23B407706AAFE210021E613 /* NSString+MyAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+MyAdditions.h"; sourceTree = "<group>"; };
+		F23B407806AAFE210021E613 /* NSString+MyAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+MyAdditions.m"; sourceTree = "<group>"; };
+		F24FA87006AF90B100E2467B /* svnfilemerge.sh */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.sh; path = svnfilemerge.sh; sourceTree = "<group>"; };
+		F24FA87406AF917800E2467B /* svndiff.sh */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.sh; path = svndiff.sh; sourceTree = "<group>"; };
+		F24FA96A06B037A200E2467B /* MySvnLogView2.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MySvnLogView2.h; sourceTree = "<group>"; };
+		F24FA96B06B037A200E2467B /* MySvnLogView2.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MySvnLogView2.m; sourceTree = "<group>"; };
+		F25913BC06A1C09100B5FFA9 /* MySvnLogView.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = MySvnLogView.nib; sourceTree = "<group>"; };
+		F25913C006A1C0BD00B5FFA9 /* MySvnLogView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MySvnLogView.h; sourceTree = "<group>"; };
+		F25913C106A1C0BD00B5FFA9 /* MySvnLogView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MySvnLogView.m; sourceTree = "<group>"; };
+		F26353FC06B17C98009C5ADF /* checkout.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checkout.png; sourceTree = "<group>"; };
+		F2695D950832637500B47C96 /* MySvnFilesArrayController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MySvnFilesArrayController.h; sourceTree = "<group>"; };
+		F2695D970832638200B47C96 /* MySvnFilesArrayController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MySvnFilesArrayController.m; sourceTree = "<group>"; };
+		F271B71F06B83F7200D07CCB /* MyDocumentationWindow.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyDocumentationWindow.h; sourceTree = "<group>"; };
+		F271B72006B83F7200D07CCB /* MyDocumentationWindow.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyDocumentationWindow.m; sourceTree = "<group>"; };
+		F271B75906B848ED00D07CCB /* Documentation.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = Documentation.rtf; sourceTree = "<group>"; };
+		F272E77906BA5E5500F14502 /* MyDragSupportArrayController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyDragSupportArrayController.m; sourceTree = "<group>"; };
+		F272E77A06BA5E5500F14502 /* MyDragSupportArrayController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyDragSupportArrayController.h; sourceTree = "<group>"; };
+		F272E84006BA753C00F14502 /* MyDragSupportTableView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyDragSupportTableView.h; sourceTree = "<group>"; };
+		F272E84106BA753C00F14502 /* MyDragSupportTableView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyDragSupportTableView.m; sourceTree = "<group>"; };
+		F27AA1EA06AD9395001A1B05 /* MySvnOperationController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MySvnOperationController.h; sourceTree = "<group>"; };
+		F27AA1EB06AD9395001A1B05 /* MySvnOperationController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MySvnOperationController.m; sourceTree = "<group>"; };
+		F27AA21806AD98C6001A1B05 /* delete.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = delete.tiff; sourceTree = "<group>"; };
+		F27AA22806AD9A6A001A1B05 /* svnDelete.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = svnDelete.nib; sourceTree = "<group>"; };
+		F27AA2AD06AE553C001A1B05 /* MySvnLogAC.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MySvnLogAC.h; sourceTree = "<group>"; };
+		F27AA2AE06AE553C001A1B05 /* MySvnLogAC.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MySvnLogAC.m; sourceTree = "<group>"; };
+		F27AA43806AEA7CF001A1B05 /* svnFileMerge.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = svnFileMerge.nib; sourceTree = "<group>"; };
+		F27AA4B106AEC5F8001A1B05 /* MySvnLogView2.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = MySvnLogView2.nib; sourceTree = "<group>"; };
+		F27AA50E06AED870001A1B05 /* ArrayCountTransformer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArrayCountTransformer.h; sourceTree = "<group>"; };
+		F27AA50F06AED870001A1B05 /* ArrayCountTransformer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ArrayCountTransformer.m; sourceTree = "<group>"; };
+		F27CD111060241F500F19225 /* svnmove.sh */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.sh; path = svnmove.sh; sourceTree = "<group>"; };
+		F27CD1E306028DC600F19225 /* MyOutlineView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyOutlineView.h; sourceTree = "<group>"; };
+		F27CD1E406028DC600F19225 /* MyOutlineView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyOutlineView.m; sourceTree = "<group>"; };
+		F2830104082BE24C008E002A /* DrawerLogView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DrawerLogView.h; sourceTree = "<group>"; };
+		F2830105082BE24C008E002A /* DrawerLogView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DrawerLogView.m; sourceTree = "<group>"; };
+		F2830130082BE371008E002A /* DrawerLogView.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = DrawerLogView.nib; sourceTree = "<group>"; };
+		F2830193082BEE22008E002A /* NSTextView+MyAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTextView+MyAdditions.m"; sourceTree = "<group>"; };
+		F286911806B7ED5F00D39166 /* repository.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = repository.tiff; sourceTree = "<group>"; };
+		F286912C06B7F51E00D39166 /* Reload.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Reload.tiff; sourceTree = "<group>"; };
+		F286AC3F06B680AC00FF0174 /* stop.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = stop.tiff; sourceTree = "<group>"; };
+		F286AC4306B680B600FF0174 /* stop_pressed.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = stop_pressed.tiff; sourceTree = "<group>"; };
+		F286AD0006B69D0900FF0174 /* FileMerge.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = FileMerge.tiff; sourceTree = "<group>"; };
+		F286AE2506B6D3F000FF0174 /* svnFileMergeFromRepository.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = svnFileMergeFromRepository.nib; sourceTree = "<group>"; };
+		F293DCB306B46ABF00B81B86 /* svnResult.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = svnResult.nib; sourceTree = "<group>"; };
+		F2997D8D0609E60C00E0DA4A /* SplitViewDelegate.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SplitViewDelegate.h; sourceTree = "<group>"; };
+		F2997D8E0609E60C00E0DA4A /* SplitViewDelegate.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = SplitViewDelegate.m; sourceTree = "<group>"; };
+		F2997E350609FFBA00E0DA4A /* FilePathCleanUpTransformer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FilePathCleanUpTransformer.h; sourceTree = "<group>"; };
+		F2997E360609FFBA00E0DA4A /* FilePathCleanUpTransformer.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = FilePathCleanUpTransformer.m; sourceTree = "<group>"; };
+		F29E3EE3069C78C9007CE672 /* RepositoriesController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = RepositoriesController.h; sourceTree = "<group>"; };
+		F29E3EE4069C78C9007CE672 /* RepositoriesController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = RepositoriesController.m; sourceTree = "<group>"; };
+		F29E3F61069EEFE2007CE672 /* MyWorkingCopyController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyWorkingCopyController.h; sourceTree = "<group>"; };
+		F29E3F62069EEFE2007CE672 /* MyWorkingCopyController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyWorkingCopyController.m; sourceTree = "<group>"; };
+		F29E410B069F0D22007CE672 /* MyRepository.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = MyRepository.nib; sourceTree = "<group>"; };
+		F29E4134069F0E3D007CE672 /* MyRepository.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyRepository.m; sourceTree = "<group>"; };
+		F29E4135069F0E3D007CE672 /* MyRepository.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyRepository.h; sourceTree = "<group>"; };
+		F2A4D4B406A3E09A00665FF7 /* tiny-find.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tiny-find.png"; sourceTree = "<group>"; };
+		F2A4D4B506A3E09A00665FF7 /* tiny-reload.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tiny-reload.png"; sourceTree = "<group>"; };
+		F2A4D4B606A3E09A00665FF7 /* tiny-stop.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tiny-stop.png"; sourceTree = "<group>"; };
+		F2A62B5E06A29E6B00EC533F /* MySvnLogParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MySvnLogParser.h; sourceTree = "<group>"; };
+		F2A62B5F06A29E6B00EC533F /* MySvnLogParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MySvnLogParser.m; sourceTree = "<group>"; };
+		F2A62BF606A2B60D00EC533F /* SvnDateTransformer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SvnDateTransformer.h; sourceTree = "<group>"; };
+		F2A62BF706A2B60D00EC533F /* SvnDateTransformer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SvnDateTransformer.m; sourceTree = "<group>"; };
+		F2A62C4906A2BEDD00EC533F /* MyRadioButtonTableColumn.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyRadioButtonTableColumn.m; sourceTree = "<group>"; };
+		F2A62C4A06A2BEDD00EC533F /* MyRadioButtonTableColumn.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyRadioButtonTableColumn.h; sourceTree = "<group>"; };
+		F2AFD0E005FFE153008F4267 /* OutlinerDataSource.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = OutlinerDataSource.m; sourceTree = "<group>"; };
+		F2AFD0E105FFE153008F4267 /* OutlinerDataSource.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = OutlinerDataSource.h; sourceTree = "<group>"; };
+		F2B0AA6C08321018009B9254 /* MyFileMergeController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyFileMergeController.h; sourceTree = "<group>"; };
+		F2B0AA6D08321018009B9254 /* MyFileMergeController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyFileMergeController.m; sourceTree = "<group>"; };
+		F2B0AA700832101D009B9254 /* MySvnCopyController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MySvnCopyController.h; sourceTree = "<group>"; };
+		F2B0AA710832101D009B9254 /* MySvnCopyController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MySvnCopyController.m; sourceTree = "<group>"; };
+		F2B0AA7408321022009B9254 /* MySvnDeleteController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MySvnDeleteController.h; sourceTree = "<group>"; };
+		F2B0AA7508321022009B9254 /* MySvnDeleteController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MySvnDeleteController.m; sourceTree = "<group>"; };
+		F2B0AA7808321027009B9254 /* MySvnMkdirController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MySvnMkdirController.h; sourceTree = "<group>"; };
+		F2B0AA7908321027009B9254 /* MySvnMkdirController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MySvnMkdirController.m; sourceTree = "<group>"; };
+		F2B0AA7C0832102C009B9254 /* MySvnMoveController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MySvnMoveController.h; sourceTree = "<group>"; };
+		F2B0AA7D0832102C009B9254 /* MySvnMoveController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MySvnMoveController.m; sourceTree = "<group>"; };
+		F2B2102B05F4EA100046FF94 /* MySVN.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MySVN.h; sourceTree = "<group>"; };
+		F2B2102C05F4EA100046FF94 /* MySVN.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MySVN.m; sourceTree = "<group>"; };
+		F2B2112105F4F3500046FF94 /* MyApp.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyApp.m; sourceTree = "<group>"; };
+		F2B2112205F4F3500046FF94 /* MyApp.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyApp.h; sourceTree = "<group>"; };
+		F2BBEF18076B6B47002160EB /* SingleFileInspector.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = SingleFileInspector.nib; sourceTree = "<group>"; };
+		F2BBEF6A076B738B002160EB /* svnX.scriptSuite */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = svnX.scriptSuite; sourceTree = "<group>"; };
+		F2BBEF6B076B738B002160EB /* svnX.scriptTerminology */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = svnX.scriptTerminology; sourceTree = "<group>"; };
+		F2BBF009076B90BE002160EB /* Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Scripting.h; sourceTree = "<group>"; };
+		F2BBF00A076B90BE002160EB /* Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Scripting.m; sourceTree = "<group>"; };
+		F2BE2317076B6534009313F2 /* SingleFileInspector.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SingleFileInspector.h; sourceTree = "<group>"; };
+		F2BE2318076B6534009313F2 /* SingleFileInspector.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = SingleFileInspector.m; sourceTree = "<group>"; };
+		F2BFB5700827F3B7008476B7 /* TaskStatusToColorTransformer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TaskStatusToColorTransformer.m; sourceTree = "<group>"; };
+		F2C2001206008AE0004C843B /* Add.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Add.png; sourceTree = "<group>"; };
+		F2C2002506008B49004C843B /* Remove.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Remove.png; sourceTree = "<group>"; };
+		F2C202930600A94D004C843B /* EditorProjectMode.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = EditorProjectMode.tiff; sourceTree = "<group>"; };
+		F2C2043C0600D7C0004C843B /* FolderRef.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = FolderRef.tiff; sourceTree = "<group>"; };
+		F2C205BF06012B59004C843B /* ImageAndTextCell.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ImageAndTextCell.h; sourceTree = "<group>"; };
+		F2C205C706012B68004C843B /* ImageAndTextCell.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = ImageAndTextCell.m; sourceTree = "<group>"; };
+		F2C20623060136D0004C843B /* TableViewDelegate.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TableViewDelegate.h; sourceTree = "<group>"; };
+		F2C20624060136D0004C843B /* TableViewDelegate.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = TableViewDelegate.m; sourceTree = "<group>"; };
+		F2C26249082B58D700077EFE /* sidebar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sidebar.png; sourceTree = "<group>"; };
+		F2E114A00830A7A40026EEBF /* MyDragSupportWindow.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyDragSupportWindow.m; sourceTree = "<group>"; };
+		F2E114A10830A7A40026EEBF /* MyDragSupportWindow.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyDragSupportWindow.h; sourceTree = "<group>"; };
+		F2E114B10830A7E20026EEBF /* MyDragSupportWindow.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyDragSupportWindow.m; sourceTree = "<group>"; };
+		F2E114B40830A7EC0026EEBF /* MyDragSupportWindow.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyDragSupportWindow.h; sourceTree = "<group>"; };
+		F2E13A0905FB2F2F0068B671 /* FavoriteWorkingCopies.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = FavoriteWorkingCopies.m; sourceTree = "<group>"; };
+		F2E13A0A05FB2F2F0068B671 /* FavoriteWorkingCopies.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FavoriteWorkingCopies.h; sourceTree = "<group>"; };
+		F2E4D7670803ECE500C13681 /* MyDragSupportMatrix.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyDragSupportMatrix.h; sourceTree = "<group>"; };
+		F2E4D7680803ECE500C13681 /* MyDragSupportMatrix.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyDragSupportMatrix.m; sourceTree = "<group>"; };
+		F2E4D76C0803ED2500C13681 /* MyDragSupportBrowser.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyDragSupportBrowser.h; sourceTree = "<group>"; };
+		F2E4D76D0803ED2500C13681 /* MyDragSupportBrowser.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyDragSupportBrowser.m; sourceTree = "<group>"; };
+		F2E9371E06B5C8B500F45019 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = /System/Library/Frameworks/ApplicationServices.framework; sourceTree = "<absolute>"; };
+		F2EA1565080AD341008C6353 /* SvnFilePathTransformer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SvnFilePathTransformer.h; sourceTree = "<group>"; };
+		F2EA1566080AD341008C6353 /* SvnFilePathTransformer.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = SvnFilePathTransformer.m; sourceTree = "<group>"; };
+		F2EA1618080AE74D008C6353 /* TrimNewLinesTransformer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrimNewLinesTransformer.h; sourceTree = "<group>"; };
+		F2EA1619080AE74D008C6353 /* TrimNewLinesTransformer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TrimNewLinesTransformer.m; sourceTree = "<group>"; };
+		F2EC3E4205F5E55500A67B01 /* find.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = find.tiff; sourceTree = "<group>"; };
+		F2EC3E4605F5E61F00A67B01 /* Rescan.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Rescan.tiff; sourceTree = "<group>"; };
+		F2EE0FF106A9571400C08125 /* MySvnRepositoryBrowserView.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = MySvnRepositoryBrowserView.nib; sourceTree = "<group>"; };
+		F2EE0FF606A95CD100C08125 /* MySvnRepositoryBrowserView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MySvnRepositoryBrowserView.m; sourceTree = "<group>"; };
+		F2EE0FF706A95CD100C08125 /* MySvnRepositoryBrowserView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MySvnRepositoryBrowserView.h; sourceTree = "<group>"; };
+		F2F27B8906ACD54900895CAE /* svnCopy.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = svnCopy.nib; sourceTree = "<group>"; };
+		F2F3006E05F94989008BCEFA /* svnXIcon2.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = svnXIcon2.icns; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D15AC330486D014006FF6A4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D15AC340486D014006FF6A4 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1058C7A6FEA54F5311CA2CBB /* Linked Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1058C7A7FEA54F5311CA2CBB /* Cocoa.framework */,
+			);
+			name = "Linked Frameworks";
+			sourceTree = "<group>";
+		};
+		1058C7A8FEA54F5311CA2CBB /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2A37F4C5FDCFA73011CA2CEA /* Foundation.framework */,
+				2A37F4C4FDCFA73011CA2CEA /* AppKit.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		19C28FB0FE9D524F11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8D15AC370486D014006FF6A4 /* svnX.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2A37F4AAFDCFA73011CA2CEA /* svnX */ = {
+			isa = PBXGroup;
+			children = (
+				2A37F4ABFDCFA73011CA2CEA /* Classes */,
+				2A37F4AFFDCFA73011CA2CEA /* Other Sources */,
+				2A37F4B8FDCFA73011CA2CEA /* Resources */,
+				2A37F4C3FDCFA73011CA2CEA /* Frameworks */,
+				19C28FB0FE9D524F11CA2CBB /* Products */,
+			);
+			name = svnX;
+			sourceTree = "<group>";
+		};
+		2A37F4ABFDCFA73011CA2CEA /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				F2E9371E06B5C8B500F45019 /* ApplicationServices.framework */,
+				F21DC4EB069FBBC4007CB4C0 /* Headers */,
+				F2B2112105F4F3500046FF94 /* MyApp.m */,
+				F23B407806AAFE210021E613 /* NSString+MyAdditions.m */,
+				F2830193082BEE22008E002A /* NSTextView+MyAdditions.m */,
+				F272E77906BA5E5500F14502 /* MyDragSupportArrayController.m */,
+				F272E84106BA753C00F14502 /* MyDragSupportTableView.m */,
+				F2E4D76D0803ED2500C13681 /* MyDragSupportBrowser.m */,
+				F22004DC08099C6900F2CC97 /* Tasks.m */,
+				F2B2102C05F4EA100046FF94 /* MySVN.m */,
+				F2830105082BE24C008E002A /* DrawerLogView.m */,
+				F21DC4BE069FBB68007CB4C0 /* WorkingCopies */,
+				F21DC4AF069FBB4B007CB4C0 /* Repositories */,
+				F2B0AA810832103F009B9254 /* svn operation nib owners */,
+				F217F13C05F9EBDF00286411 /* Transformers */,
+				F29A6A3008335E2C00C1AD3B /* Applescript */,
+			);
+			name = Classes;
+			sourceTree = "<group>";
+		};
+		2A37F4AFFDCFA73011CA2CEA /* Other Sources */ = {
+			isa = PBXGroup;
+			children = (
+				F271B71F06B83F7200D07CCB /* MyDocumentationWindow.h */,
+				F271B72006B83F7200D07CCB /* MyDocumentationWindow.m */,
+				F2C205BF06012B59004C843B /* ImageAndTextCell.h */,
+				F2C205C706012B68004C843B /* ImageAndTextCell.m */,
+				32DBCF750370BD2300C91783 /* svnX_Prefix.pch */,
+				2A37F4B0FDCFA73011CA2CEA /* main.m */,
+			);
+			name = "Other Sources";
+			sourceTree = "<group>";
+		};
+		2A37F4B8FDCFA73011CA2CEA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				F230F8D308045D9C0000E35F /* svnextract.sh */,
+				F23B33ED0602A4AB005C11F2 /* svncopy.sh */,
+				F27CD111060241F500F19225 /* svnmove.sh */,
+				F24FA87006AF90B100E2467B /* svnfilemerge.sh */,
+				F229660A06B29C0500441FA8 /* svnUUID.sh */,
+				F229660E06B2ACDA00441FA8 /* getCachePathForUrl.php */,
+				F24FA87406AF917800E2467B /* svndiff.sh */,
+				F2C2001206008AE0004C843B /* Add.png */,
+				F230FC77080596A50000E35F /* checkout2.png */,
+				F230FC8D08059A9B0000E35F /* export.png */,
+				F2C2002506008B49004C843B /* Remove.png */,
+				F2C202930600A94D004C843B /* EditorProjectMode.tiff */,
+				F2C2043C0600D7C0004C843B /* FolderRef.tiff */,
+				F2A4D4B406A3E09A00665FF7 /* tiny-find.png */,
+				F2A4D4B506A3E09A00665FF7 /* tiny-reload.png */,
+				F2A4D4B606A3E09A00665FF7 /* tiny-stop.png */,
+				F23B3C9D06A998DD0021E613 /* svnCopy.png */,
+				F233A39F06C3C32E00F77B90 /* svnMove.png */,
+				F27AA21806AD98C6001A1B05 /* delete.tiff */,
+				F286912C06B7F51E00D39166 /* Reload.tiff */,
+				F26353FC06B17C98009C5ADF /* checkout.png */,
+				F22AFF1605F7440900D4ED0D /* Card.tiff */,
+				F22AFF1205F743F500D4ED0D /* Action.tiff */,
+				F22AFEEE05F6B7CC00D4ED0D /* defaultAction.png */,
+				F22AFEE405F6B5CB00D4ED0D /* PhoneMinus.tiff */,
+				F22AFEE505F6B5CB00D4ED0D /* vCard.tiff */,
+				F22AFEE605F6B5CB00D4ED0D /* PhonePlus.tiff */,
+				F286AD0006B69D0900FF0174 /* FileMerge.tiff */,
+				F2F3006E05F94989008BCEFA /* svnXIcon2.icns */,
+				F286911806B7ED5F00D39166 /* repository.tiff */,
+				F2EC3E4605F5E61F00A67B01 /* Rescan.tiff */,
+				F2C26249082B58D700077EFE /* sidebar.png */,
+				F22AFE1F05F6541600D4ED0D /* Caution.tiff */,
+				F223717B06AD6CF80053F451 /* mkdir.tiff */,
+				F2EC3E4205F5E55500A67B01 /* find.tiff */,
+				F286AC3F06B680AC00FF0174 /* stop.tiff */,
+				F286AC4306B680B600FF0174 /* stop_pressed.tiff */,
+				2A37F4B9FDCFA73011CA2CEA /* Credits.rtf */,
+				2A37F4B6FDCFA73011CA2CEA /* svnX.nib */,
+				F22965C306B2714600441FA8 /* MyWorkingCopy.nib */,
+				F29E410B069F0D22007CE672 /* MyRepository.nib */,
+				F25913BC06A1C09100B5FFA9 /* MySvnLogView.nib */,
+				F27AA4B106AEC5F8001A1B05 /* MySvnLogView2.nib */,
+				F2EE0FF106A9571400C08125 /* MySvnRepositoryBrowserView.nib */,
+				8D15AC360486D014006FF6A4 /* Info.plist */,
+				F2BBEF6A076B738B002160EB /* svnX.scriptSuite */,
+				F2BBEF6B076B738B002160EB /* svnX.scriptTerminology */,
+				F271B75906B848ED00D07CCB /* Documentation.rtf */,
+				089C165FFE840EACC02AAC07 /* InfoPlist.strings */,
+				F2F27B8906ACD54900895CAE /* svnCopy.nib */,
+				F22371D306AD74530053F451 /* svnMkdir.nib */,
+				F27AA22806AD9A6A001A1B05 /* svnDelete.nib */,
+				F27AA43806AEA7CF001A1B05 /* svnFileMerge.nib */,
+				F286AE2506B6D3F000FF0174 /* svnFileMergeFromRepository.nib */,
+				F293DCB306B46ABF00B81B86 /* svnResult.nib */,
+				F2BBEF18076B6B47002160EB /* SingleFileInspector.nib */,
+				F2830130082BE371008E002A /* DrawerLogView.nib */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		2A37F4C3FDCFA73011CA2CEA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1058C7A6FEA54F5311CA2CBB /* Linked Frameworks */,
+				1058C7A8FEA54F5311CA2CBB /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		F217F13C05F9EBDF00286411 /* Transformers */ = {
+			isa = PBXGroup;
+			children = (
+				F2EA1618080AE74D008C6353 /* TrimNewLinesTransformer.h */,
+				F2EA1619080AE74D008C6353 /* TrimNewLinesTransformer.m */,
+				F217F14705F9EC0700286411 /* SvnFileStatusToColourTransformer.h */,
+				F217F14805F9EC0700286411 /* SvnFileStatusToColourTransformer.m */,
+				F2A62BF606A2B60D00EC533F /* SvnDateTransformer.h */,
+				F2A62BF706A2B60D00EC533F /* SvnDateTransformer.m */,
+				F2997E350609FFBA00E0DA4A /* FilePathCleanUpTransformer.h */,
+				F2997E360609FFBA00E0DA4A /* FilePathCleanUpTransformer.m */,
+				F27AA50E06AED870001A1B05 /* ArrayCountTransformer.h */,
+				F27AA50F06AED870001A1B05 /* ArrayCountTransformer.m */,
+				F2EA1565080AD341008C6353 /* SvnFilePathTransformer.h */,
+				F2EA1566080AD341008C6353 /* SvnFilePathTransformer.m */,
+				F2BFB5700827F3B7008476B7 /* TaskStatusToColorTransformer.m */,
+				F2E114A00830A7A40026EEBF /* MyDragSupportWindow.m */,
+				F2E114A10830A7A40026EEBF /* MyDragSupportWindow.h */,
+			);
+			name = Transformers;
+			sourceTree = "<group>";
+		};
+		F21DC4AF069FBB4B007CB4C0 /* Repositories */ = {
+			isa = PBXGroup;
+			children = (
+				F29E3EE4069C78C9007CE672 /* RepositoriesController.m */,
+				F29E4134069F0E3D007CE672 /* MyRepository.m */,
+				F27AA2AE06AE553C001A1B05 /* MySvnLogAC.m */,
+				F22CA52F06A7AC6F00A27EDB /* MySvnView.m */,
+				F25913C106A1C0BD00B5FFA9 /* MySvnLogView.m */,
+				F24FA96B06B037A200E2467B /* MySvnLogView2.m */,
+				F2A62B5F06A29E6B00EC533F /* MySvnLogParser.m */,
+				F2EE0FF606A95CD100C08125 /* MySvnRepositoryBrowserView.m */,
+				F2A62C4906A2BEDD00EC533F /* MyRadioButtonTableColumn.m */,
+				F2E4D7680803ECE500C13681 /* MyDragSupportMatrix.m */,
+				F23B3C6A06A997100021E613 /* MyRepositoryToolbar.m */,
+			);
+			name = Repositories;
+			sourceTree = "<group>";
+		};
+		F21DC4BE069FBB68007CB4C0 /* WorkingCopies */ = {
+			isa = PBXGroup;
+			children = (
+				F2E13A0905FB2F2F0068B671 /* FavoriteWorkingCopies.m */,
+				F229659D06B270AF00441FA8 /* MyWorkingCopy.m */,
+				F29E3F62069EEFE2007CE672 /* MyWorkingCopyController.m */,
+				F2695D970832638200B47C96 /* MySvnFilesArrayController.m */,
+				F27CD1E406028DC600F19225 /* MyOutlineView.m */,
+				F2E114B10830A7E20026EEBF /* MyDragSupportWindow.m */,
+				F2AFD0E005FFE153008F4267 /* OutlinerDataSource.m */,
+				F23B32F706029317005C11F2 /* MyTableView.m */,
+				F2C20624060136D0004C843B /* TableViewDelegate.m */,
+				F2997D8E0609E60C00E0DA4A /* SplitViewDelegate.m */,
+				F22964D206B2617700441FA8 /* MyWorkingCopyToolbar.m */,
+			);
+			name = WorkingCopies;
+			sourceTree = "<group>";
+		};
+		F21DC4EB069FBBC4007CB4C0 /* Headers */ = {
+			isa = PBXGroup;
+			children = (
+				F2BBF009076B90BE002160EB /* Scripting.h */,
+				F2695D950832637500B47C96 /* MySvnFilesArrayController.h */,
+				F2E114B40830A7EC0026EEBF /* MyDragSupportWindow.h */,
+				F272E84006BA753C00F14502 /* MyDragSupportTableView.h */,
+				F2E4D7670803ECE500C13681 /* MyDragSupportMatrix.h */,
+				F2E4D76C0803ED2500C13681 /* MyDragSupportBrowser.h */,
+				F2BE2317076B6534009313F2 /* SingleFileInspector.h */,
+				F22004DD08099C6900F2CC97 /* Tasks.h */,
+				F2830104082BE24C008E002A /* DrawerLogView.h */,
+				F272E77A06BA5E5500F14502 /* MyDragSupportArrayController.h */,
+				F22964D106B2617700441FA8 /* MyWorkingCopyToolbar.h */,
+				F2B2112205F4F3500046FF94 /* MyApp.h */,
+				F2B2102B05F4EA100046FF94 /* MySVN.h */,
+				F29E3EE3069C78C9007CE672 /* RepositoriesController.h */,
+				F29E4135069F0E3D007CE672 /* MyRepository.h */,
+				F29E3F61069EEFE2007CE672 /* MyWorkingCopyController.h */,
+				F2E13A0A05FB2F2F0068B671 /* FavoriteWorkingCopies.h */,
+				F229659C06B270AF00441FA8 /* MyWorkingCopy.h */,
+				F27CD1E306028DC600F19225 /* MyOutlineView.h */,
+				F2AFD0E105FFE153008F4267 /* OutlinerDataSource.h */,
+				F23B32F606029316005C11F2 /* MyTableView.h */,
+				F2C20623060136D0004C843B /* TableViewDelegate.h */,
+				F2997D8D0609E60C00E0DA4A /* SplitViewDelegate.h */,
+				F25913C006A1C0BD00B5FFA9 /* MySvnLogView.h */,
+				F27AA2AD06AE553C001A1B05 /* MySvnLogAC.h */,
+				F24FA96A06B037A200E2467B /* MySvnLogView2.h */,
+				F2A62B5E06A29E6B00EC533F /* MySvnLogParser.h */,
+				F2EE0FF706A95CD100C08125 /* MySvnRepositoryBrowserView.h */,
+				F22CA52E06A7AC6F00A27EDB /* MySvnView.h */,
+				F27AA1EA06AD9395001A1B05 /* MySvnOperationController.h */,
+				F2A62C4A06A2BEDD00EC533F /* MyRadioButtonTableColumn.h */,
+				F23B3C6906A997100021E613 /* MyRepositoryToolbar.h */,
+				F23B407706AAFE210021E613 /* NSString+MyAdditions.h */,
+				F2B0AA6C08321018009B9254 /* MyFileMergeController.h */,
+				F2B0AA700832101D009B9254 /* MySvnCopyController.h */,
+				F2B0AA7408321022009B9254 /* MySvnDeleteController.h */,
+				F2B0AA7808321027009B9254 /* MySvnMkdirController.h */,
+				F2B0AA7C0832102C009B9254 /* MySvnMoveController.h */,
+			);
+			name = Headers;
+			sourceTree = "<group>";
+		};
+		F29A6A3008335E2C00C1AD3B /* Applescript */ = {
+			isa = PBXGroup;
+			children = (
+				F2BBF00A076B90BE002160EB /* Scripting.m */,
+				F2BE2318076B6534009313F2 /* SingleFileInspector.m */,
+			);
+			name = Applescript;
+			sourceTree = "<group>";
+		};
+		F2B0AA810832103F009B9254 /* svn operation nib owners */ = {
+			isa = PBXGroup;
+			children = (
+				F27AA1EB06AD9395001A1B05 /* MySvnOperationController.m */,
+				F2B0AA6D08321018009B9254 /* MyFileMergeController.m */,
+				F2B0AA710832101D009B9254 /* MySvnCopyController.m */,
+				F2B0AA7508321022009B9254 /* MySvnDeleteController.m */,
+				F2B0AA7908321027009B9254 /* MySvnMkdirController.m */,
+				F2B0AA7D0832102C009B9254 /* MySvnMoveController.m */,
+			);
+			name = "svn operation nib owners";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		8D15AC280486D014006FF6A4 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D15AC290486D014006FF6A4 /* svnX_Prefix.pch in Headers */,
+				F2B2102D05F4EA100046FF94 /* MySVN.h in Headers */,
+				F2B2112405F4F3500046FF94 /* MyApp.h in Headers */,
+				F217F14905F9EC0700286411 /* SvnFileStatusToColourTransformer.h in Headers */,
+				F2E13A0C05FB2F2F0068B671 /* FavoriteWorkingCopies.h in Headers */,
+				F2AFD0E305FFE153008F4267 /* OutlinerDataSource.h in Headers */,
+				F2C205C006012B59004C843B /* ImageAndTextCell.h in Headers */,
+				F2C20625060136D0004C843B /* TableViewDelegate.h in Headers */,
+				F27CD1E506028DC600F19225 /* MyOutlineView.h in Headers */,
+				F23B32F806029317005C11F2 /* MyTableView.h in Headers */,
+				F2997D8F0609E60C00E0DA4A /* SplitViewDelegate.h in Headers */,
+				F2997E370609FFBA00E0DA4A /* FilePathCleanUpTransformer.h in Headers */,
+				F29E3EE5069C78C9007CE672 /* RepositoriesController.h in Headers */,
+				F29E3F63069EEFE2007CE672 /* MyWorkingCopyController.h in Headers */,
+				F29E4137069F0E3D007CE672 /* MyRepository.h in Headers */,
+				F25913C206A1C0BD00B5FFA9 /* MySvnLogView.h in Headers */,
+				F2A62B6006A29E6B00EC533F /* MySvnLogParser.h in Headers */,
+				F2A62BF806A2B60E00EC533F /* SvnDateTransformer.h in Headers */,
+				F2A62C4C06A2BEDD00EC533F /* MyRadioButtonTableColumn.h in Headers */,
+				F22CA53006A7AC6F00A27EDB /* MySvnView.h in Headers */,
+				F2EE11C106A972BA00C08125 /* MySvnRepositoryBrowserView.h in Headers */,
+				F23B3C6B06A997100021E613 /* MyRepositoryToolbar.h in Headers */,
+				F23B407906AAFE210021E613 /* NSString+MyAdditions.h in Headers */,
+				F27AA1EC06AD9395001A1B05 /* MySvnOperationController.h in Headers */,
+				F27AA2AF06AE553C001A1B05 /* MySvnLogAC.h in Headers */,
+				F27AA51006AED870001A1B05 /* ArrayCountTransformer.h in Headers */,
+				F24FA96C06B037A200E2467B /* MySvnLogView2.h in Headers */,
+				F22964D306B2617700441FA8 /* MyWorkingCopyToolbar.h in Headers */,
+				F229659E06B270AF00441FA8 /* MyWorkingCopy.h in Headers */,
+				F271B72106B83F7200D07CCB /* MyDocumentationWindow.h in Headers */,
+				F272E77C06BA5E5500F14502 /* MyDragSupportArrayController.h in Headers */,
+				F272E84206BA753C00F14502 /* MyDragSupportTableView.h in Headers */,
+				F2BE2319076B6534009313F2 /* SingleFileInspector.h in Headers */,
+				F2BBF00B076B90BE002160EB /* Scripting.h in Headers */,
+				F2E4D7690803ECE500C13681 /* MyDragSupportMatrix.h in Headers */,
+				F2E4D76E0803ED2500C13681 /* MyDragSupportBrowser.h in Headers */,
+				F22004DF08099C6900F2CC97 /* Tasks.h in Headers */,
+				F2EA1567080AD341008C6353 /* SvnFilePathTransformer.h in Headers */,
+				F2EA161A080AE74D008C6353 /* TrimNewLinesTransformer.h in Headers */,
+				F2830106082BE24C008E002A /* DrawerLogView.h in Headers */,
+				F2E114A30830A7A40026EEBF /* MyDragSupportWindow.h in Headers */,
+				F2B0AA6E08321018009B9254 /* MyFileMergeController.h in Headers */,
+				F2B0AA720832101D009B9254 /* MySvnCopyController.h in Headers */,
+				F2B0AA7608321022009B9254 /* MySvnDeleteController.h in Headers */,
+				F2B0AA7A08321027009B9254 /* MySvnMkdirController.h in Headers */,
+				F2B0AA7E0832102C009B9254 /* MySvnMoveController.h in Headers */,
+				F2695D960832637600B47C96 /* MySvnFilesArrayController.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		8D15AC270486D014006FF6A4 /* svnX */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F2FD1A1A0855F03C00550248 /* Build configuration list for PBXNativeTarget "svnX" */;
+			buildPhases = (
+				8D15AC280486D014006FF6A4 /* Headers */,
+				8D15AC2B0486D014006FF6A4 /* Resources */,
+				8D15AC300486D014006FF6A4 /* Sources */,
+				8D15AC330486D014006FF6A4 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			buildSettings = {
+				DEAD_CODE_STRIPPING = YES;
+				DEPLOYMENT_LOCATION = NO;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = svnX_Prefix.pch;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = /Users/dom/Documents/Development/svnX;
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = svnX;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			dependencies = (
+			);
+			name = svnX;
+			productInstallPath = "$(HOME)/Applications";
+			productName = svnX;
+			productReference = 8D15AC370486D014006FF6A4 /* svnX.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2A37F4A9FDCFA73011CA2CEA /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = F2FD1A1E0855F03C00550248 /* Build configuration list for PBXProject "svnX" */;
+			buildSettings = {
+			};
+			buildStyles = (
+				4A9504D0FFE6A4CB11CA0CBA /* Development */,
+				4A9504D1FFE6A4CB11CA0CBA /* Deployment */,
+			);
+			hasScannedForEncodings = 1;
+			mainGroup = 2A37F4AAFDCFA73011CA2CEA /* svnX */;
+			projectDirPath = "";
+			targets = (
+				8D15AC270486D014006FF6A4 /* svnX */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8D15AC2B0486D014006FF6A4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D15AC2C0486D014006FF6A4 /* Credits.rtf in Resources */,
+				8D15AC2F0486D014006FF6A4 /* InfoPlist.strings in Resources */,
+				F2EC3E4305F5E55500A67B01 /* find.tiff in Resources */,
+				F2F3006F05F94989008BCEFA /* svnXIcon2.icns in Resources */,
+				F2C2001306008AE0004C843B /* Add.png in Resources */,
+				F2C2002606008B49004C843B /* Remove.png in Resources */,
+				F2C202940600A94D004C843B /* EditorProjectMode.tiff in Resources */,
+				F2C2043D0600D7C0004C843B /* FolderRef.tiff in Resources */,
+				F27CD112060241F500F19225 /* svnmove.sh in Resources */,
+				F23B33EE0602A4AB005C11F2 /* svncopy.sh in Resources */,
+				F2A62F1F06A2EA7000EC533F /* svnX.nib in Resources */,
+				F2A62F2006A2EA7100EC533F /* MyRepository.nib in Resources */,
+				F2A62F2C06A2EAEA00EC533F /* MySvnLogView.nib in Resources */,
+				F2A4D4B706A3E09A00665FF7 /* tiny-find.png in Resources */,
+				F2A4D4B806A3E09B00665FF7 /* tiny-reload.png in Resources */,
+				F2A4D4B906A3E09B00665FF7 /* tiny-stop.png in Resources */,
+				F2EE0FF206A9571400C08125 /* MySvnRepositoryBrowserView.nib in Resources */,
+				F23B3C9E06A998DD0021E613 /* svnCopy.png in Resources */,
+				F2F27B8A06ACD54900895CAE /* svnCopy.nib in Resources */,
+				F223717C06AD6CF80053F451 /* mkdir.tiff in Resources */,
+				F22371D406AD74530053F451 /* svnMkdir.nib in Resources */,
+				F27AA21906AD98C6001A1B05 /* delete.tiff in Resources */,
+				F27AA22906AD9A6A001A1B05 /* svnDelete.nib in Resources */,
+				F27AA43906AEA7CF001A1B05 /* svnFileMerge.nib in Resources */,
+				F27AA4B206AEC5F8001A1B05 /* MySvnLogView2.nib in Resources */,
+				F24FA87106AF90B100E2467B /* svnfilemerge.sh in Resources */,
+				F24FA87506AF917800E2467B /* svndiff.sh in Resources */,
+				F26353FD06B17C98009C5ADF /* checkout.png in Resources */,
+				F22965C506B2714600441FA8 /* MyWorkingCopy.nib in Resources */,
+				F229660B06B29C0500441FA8 /* svnUUID.sh in Resources */,
+				F229660F06B2ACDA00441FA8 /* getCachePathForUrl.php in Resources */,
+				F293DCB406B46ABF00B81B86 /* svnResult.nib in Resources */,
+				F286AC4006B680AC00FF0174 /* stop.tiff in Resources */,
+				F286AC4406B680B600FF0174 /* stop_pressed.tiff in Resources */,
+				F286AD0106B69D0900FF0174 /* FileMerge.tiff in Resources */,
+				F286AE2606B6D3F000FF0174 /* svnFileMergeFromRepository.nib in Resources */,
+				F286911906B7ED5F00D39166 /* repository.tiff in Resources */,
+				F286912D06B7F51E00D39166 /* Reload.tiff in Resources */,
+				F271B75A06B848ED00D07CCB /* Documentation.rtf in Resources */,
+				F233A3A006C3C32E00F77B90 /* svnMove.png in Resources */,
+				F2BBEF19076B6B48002160EB /* SingleFileInspector.nib in Resources */,
+				F2BBEF87076B7679002160EB /* svnX.scriptTerminology in Resources */,
+				F2BBEF88076B767A002160EB /* svnX.scriptSuite in Resources */,
+				F230F8D408045D9C0000E35F /* svnextract.sh in Resources */,
+				F230FC78080596A50000E35F /* checkout2.png in Resources */,
+				F230FC8E08059A9B0000E35F /* export.png in Resources */,
+				F2C2624A082B58D700077EFE /* sidebar.png in Resources */,
+				F2830131082BE371008E002A /* DrawerLogView.nib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D15AC300486D014006FF6A4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D15AC320486D014006FF6A4 /* main.m in Sources */,
+				F2B2102E05F4EA100046FF94 /* MySVN.m in Sources */,
+				F2B2112305F4F3500046FF94 /* MyApp.m in Sources */,
+				F217F14A05F9EC0700286411 /* SvnFileStatusToColourTransformer.m in Sources */,
+				F2E13A0B05FB2F2F0068B671 /* FavoriteWorkingCopies.m in Sources */,
+				F2AFD0E205FFE153008F4267 /* OutlinerDataSource.m in Sources */,
+				F2C205C806012B68004C843B /* ImageAndTextCell.m in Sources */,
+				F2C20626060136D0004C843B /* TableViewDelegate.m in Sources */,
+				F27CD1E606028DC600F19225 /* MyOutlineView.m in Sources */,
+				F23B32F906029317005C11F2 /* MyTableView.m in Sources */,
+				F2997D900609E60C00E0DA4A /* SplitViewDelegate.m in Sources */,
+				F2997E380609FFBA00E0DA4A /* FilePathCleanUpTransformer.m in Sources */,
+				F29E3EE6069C78C9007CE672 /* RepositoriesController.m in Sources */,
+				F29E3F64069EEFE2007CE672 /* MyWorkingCopyController.m in Sources */,
+				F29E4136069F0E3D007CE672 /* MyRepository.m in Sources */,
+				F2A62B6106A29E6B00EC533F /* MySvnLogParser.m in Sources */,
+				F2A62BF906A2B60E00EC533F /* SvnDateTransformer.m in Sources */,
+				F2A62C4B06A2BEDD00EC533F /* MyRadioButtonTableColumn.m in Sources */,
+				F2A62DF906A2E36400EC533F /* MySvnLogView.m in Sources */,
+				F22CA53106A7AC6F00A27EDB /* MySvnView.m in Sources */,
+				F2EE11C406A972BB00C08125 /* MySvnRepositoryBrowserView.m in Sources */,
+				F23B3C6C06A997100021E613 /* MyRepositoryToolbar.m in Sources */,
+				F23B407A06AAFE210021E613 /* NSString+MyAdditions.m in Sources */,
+				F27AA1ED06AD9395001A1B05 /* MySvnOperationController.m in Sources */,
+				F27AA2B006AE553C001A1B05 /* MySvnLogAC.m in Sources */,
+				F27AA51106AED870001A1B05 /* ArrayCountTransformer.m in Sources */,
+				F24FA96D06B037A200E2467B /* MySvnLogView2.m in Sources */,
+				F22964D406B2617700441FA8 /* MyWorkingCopyToolbar.m in Sources */,
+				F229659F06B270AF00441FA8 /* MyWorkingCopy.m in Sources */,
+				F271B72206B83F7200D07CCB /* MyDocumentationWindow.m in Sources */,
+				F272E77B06BA5E5500F14502 /* MyDragSupportArrayController.m in Sources */,
+				F272E84306BA753C00F14502 /* MyDragSupportTableView.m in Sources */,
+				F2BE231A076B6534009313F2 /* SingleFileInspector.m in Sources */,
+				F2BBF00C076B90BE002160EB /* Scripting.m in Sources */,
+				F2E4D76A0803ECE500C13681 /* MyDragSupportMatrix.m in Sources */,
+				F2E4D76F0803ED2500C13681 /* MyDragSupportBrowser.m in Sources */,
+				F22004DE08099C6900F2CC97 /* Tasks.m in Sources */,
+				F2EA1568080AD341008C6353 /* SvnFilePathTransformer.m in Sources */,
+				F2EA161B080AE74D008C6353 /* TrimNewLinesTransformer.m in Sources */,
+				F2BFB5710827F3B7008476B7 /* TaskStatusToColorTransformer.m in Sources */,
+				F2830107082BE24C008E002A /* DrawerLogView.m in Sources */,
+				F2830194082BEE22008E002A /* NSTextView+MyAdditions.m in Sources */,
+				F2E114A20830A7A40026EEBF /* MyDragSupportWindow.m in Sources */,
+				F2B0AA6F08321018009B9254 /* MyFileMergeController.m in Sources */,
+				F2B0AA730832101D009B9254 /* MySvnCopyController.m in Sources */,
+				F2B0AA7708321022009B9254 /* MySvnDeleteController.m in Sources */,
+				F2B0AA7B08321027009B9254 /* MySvnMkdirController.m in Sources */,
+				F2B0AA7F0832102C009B9254 /* MySvnMoveController.m in Sources */,
+				F2695D980832638300B47C96 /* MySvnFilesArrayController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		089C165FFE840EACC02AAC07 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				089C1660FE840EACC02AAC07 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		2A37F4B6FDCFA73011CA2CEA /* svnX.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				2A37F4B7FDCFA73011CA2CEA /* English */,
+			);
+			name = svnX.nib;
+			sourceTree = "<group>";
+		};
+		2A37F4B9FDCFA73011CA2CEA /* Credits.rtf */ = {
+			isa = PBXVariantGroup;
+			children = (
+				2A37F4BAFDCFA73011CA2CEA /* English */,
+			);
+			name = Credits.rtf;
+			sourceTree = "<group>";
+		};
+		F22965C306B2714600441FA8 /* MyWorkingCopy.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F22965C406B2714600441FA8 /* English */,
+			);
+			name = MyWorkingCopy.nib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		F2FD1A1B0855F03C00550248 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUGGING_SYMBOLS = YES;
+				DEPLOYMENT_LOCATION = NO;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = svnX_Prefix.pch;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = /Users/dom/Documents/Development/svnX;
+				MACOSX_DEPLOYMENT_TARGET = "";
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = svnX;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = YES;
+			};
+			name = Development;
+		};
+		F2FD1A1C0855F03C00550248 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEPLOYMENT_LOCATION = NO;
+				DEPLOYMENT_POSTPROCESSING = NO;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = svnX_Prefix.pch;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = /Users/dom/Documents/Development/svnX;
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = svnX;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = Deployment;
+		};
+		F2FD1A1D0855F03C00550248 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEAD_CODE_STRIPPING = YES;
+				DEPLOYMENT_LOCATION = NO;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = svnX_Prefix.pch;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = /Users/dom/Documents/Development/svnX;
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = svnX;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
+		};
+		F2FD1A1F0855F03C00550248 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Development;
+		};
+		F2FD1A200855F03C00550248 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
+			};
+			name = Deployment;
+		};
+		F2FD1A210855F03C00550248 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Default;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F2FD1A1A0855F03C00550248 /* Build configuration list for PBXNativeTarget "svnX" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F2FD1A1B0855F03C00550248 /* Development */,
+				F2FD1A1C0855F03C00550248 /* Deployment */,
+				F2FD1A1D0855F03C00550248 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		F2FD1A1E0855F03C00550248 /* Build configuration list for PBXProject "svnX" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F2FD1A1F0855F03C00550248 /* Development */,
+				F2FD1A200855F03C00550248 /* Deployment */,
+				F2FD1A210855F03C00550248 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 2A37F4A9FDCFA73011CA2CEA /* Project object */;
+}

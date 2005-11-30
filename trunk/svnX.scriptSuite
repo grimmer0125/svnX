@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AppleEventCode</key>
+	<string>svnX</string>
+	<key>Classes</key>
+	<dict/>
+	<key>Commands</key>
+	<dict>
+		<key>openSingleFile</key>
+		<dict>
+			<key>AppleEventCode</key>
+			<string>opsf</string>
+			<key>CommandClass</key>
+			<string>Scripting</string>
+		</dict>
+	</dict>
+	<key>Name</key>
+	<string>svnX</string>
+</dict>
+</plist>

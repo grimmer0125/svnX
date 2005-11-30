@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Classes</key>
+	<dict>
+		<key>MyApp</key>
+		<dict>
+			<key>Attributes</key>
+			<dict/>
+			<key>Description</key>
+			<string>This class represents those, um, whatchamacallits.</string>
+			<key>Name</key>
+			<string>MyApp</string>
+			<key>PluralName</key>
+			<string>MyApps</string>
+		</dict>
+		<key>NSApplication</key>
+		<dict>
+			<key>Name</key>
+			<string>application</string>
+			<key>PluralName</key>
+			<string>applications</string>
+		</dict>
+	</dict>
+	<key>Commands</key>
+	<dict>
+		<key>openSingleFile</key>
+		<dict>
+			<key>Name</key>
+			<string>diff</string>
+		</dict>
+	</dict>
+	<key>Name</key>
+	<string>svnX</string>
+</dict>
+</plist>

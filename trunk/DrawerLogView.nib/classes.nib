@@ -1,0 +1,13 @@
+{
+    IBClasses = (
+        {
+            ACTIONS = {stopDisplayedTask = id; }; 
+            CLASS = DrawerLogView; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {"_view" = id; documentProxy = NSObjectController; logTextView = NSTextView; }; 
+            SUPERCLASS = NSView; 
+        }, 
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }
+    ); 
+    IBVersion = 1; 
+}

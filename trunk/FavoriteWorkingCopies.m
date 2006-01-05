@@ -303,14 +303,17 @@
 - (void) insertObject:(id)anObject inFavoriteWorkingCopiesAtIndex: (unsigned int)index {
 
     [favoriteWorkingCopies insertObject: anObject atIndex: index];
+	[self saveFavoriteWorkingCopiesPrefs];
 }
 
 - (void) removeObjectFromFavoriteWorkingCopiesAtIndex: (unsigned int)index {
     [favoriteWorkingCopies removeObjectAtIndex: index];
+	[self saveFavoriteWorkingCopiesPrefs];
 }
 
 - (void) replaceObjectInFavoriteWorkingCopiesAtIndex: (unsigned int)index withObject: (id)anObject {
     [favoriteWorkingCopies replaceObjectAtIndex: index withObject: anObject];
+	[self saveFavoriteWorkingCopiesPrefs];	
 }
 
 // - favoriteWorkingCopies:

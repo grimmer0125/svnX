@@ -25,6 +25,8 @@
 		F22965C506B2714600441FA8 /* MyWorkingCopy.nib in Resources */ = {isa = PBXBuildFile; fileRef = F22965C306B2714600441FA8 /* MyWorkingCopy.nib */; };
 		F229660B06B29C0500441FA8 /* svnUUID.sh in Resources */ = {isa = PBXBuildFile; fileRef = F229660A06B29C0500441FA8 /* svnUUID.sh */; };
 		F229660F06B2ACDA00441FA8 /* getCachePathForUrl.php in Resources */ = {isa = PBXBuildFile; fileRef = F229660E06B2ACDA00441FA8 /* getCachePathForUrl.php */; };
+		F22C6BC2096D51E500BAC56B /* SvnListParser.h in Headers */ = {isa = PBXBuildFile; fileRef = F22C6BC0096D51E500BAC56B /* SvnListParser.h */; };
+		F22C6BC3096D51E500BAC56B /* SvnListParser.m in Sources */ = {isa = PBXBuildFile; fileRef = F22C6BC1096D51E500BAC56B /* SvnListParser.m */; };
 		F22CA53006A7AC6F00A27EDB /* MySvnView.h in Headers */ = {isa = PBXBuildFile; fileRef = F22CA52E06A7AC6F00A27EDB /* MySvnView.h */; };
 		F22CA53106A7AC6F00A27EDB /* MySvnView.m in Sources */ = {isa = PBXBuildFile; fileRef = F22CA52F06A7AC6F00A27EDB /* MySvnView.m */; };
 		F230F8D408045D9C0000E35F /* svnextract.sh in Resources */ = {isa = PBXBuildFile; fileRef = F230F8D308045D9C0000E35F /* svnextract.sh */; };
@@ -216,6 +218,8 @@
 		F22AFEEE05F6B7CC00D4ED0D /* defaultAction.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = defaultAction.png; sourceTree = "<group>"; };
 		F22AFF1205F743F500D4ED0D /* Action.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Action.tiff; sourceTree = "<group>"; };
 		F22AFF1605F7440900D4ED0D /* Card.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Card.tiff; sourceTree = "<group>"; };
+		F22C6BC0096D51E500BAC56B /* SvnListParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SvnListParser.h; sourceTree = "<group>"; };
+		F22C6BC1096D51E500BAC56B /* SvnListParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SvnListParser.m; sourceTree = "<group>"; };
 		F22CA52E06A7AC6F00A27EDB /* MySvnView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MySvnView.h; sourceTree = "<group>"; };
 		F22CA52F06A7AC6F00A27EDB /* MySvnView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MySvnView.m; sourceTree = "<group>"; };
 		F230F8D308045D9C0000E35F /* svnextract.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = svnextract.sh; sourceTree = "<group>"; };
@@ -538,6 +542,7 @@
 				F25913C106A1C0BD00B5FFA9 /* MySvnLogView.m */,
 				F24FA96B06B037A200E2467B /* MySvnLogView2.m */,
 				F2A62B5F06A29E6B00EC533F /* MySvnLogParser.m */,
+				F22C6BC1096D51E500BAC56B /* SvnListParser.m */,
 				F2EE0FF606A95CD100C08125 /* MySvnRepositoryBrowserView.m */,
 				F2A62C4906A2BEDD00EC533F /* MyRadioButtonTableColumn.m */,
 				F2E4D7680803ECE500C13681 /* MyDragSupportMatrix.m */,
@@ -567,6 +572,7 @@
 		F21DC4EB069FBBC4007CB4C0 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				F22C6BC0096D51E500BAC56B /* SvnListParser.h */,
 				F2BBF009076B90BE002160EB /* Scripting.h */,
 				F2695D950832637500B47C96 /* MySvnFilesArrayController.h */,
 				F2E114B40830A7EC0026EEBF /* MyDragSupportWindow.h */,
@@ -685,6 +691,7 @@
 				F2B0AA7A08321027009B9254 /* MySvnMkdirController.h in Headers */,
 				F2B0AA7E0832102C009B9254 /* MySvnMoveController.h in Headers */,
 				F2695D960832637600B47C96 /* MySvnFilesArrayController.h in Headers */,
+				F22C6BC2096D51E500BAC56B /* SvnListParser.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -870,6 +877,7 @@
 				F2B0AA7B08321027009B9254 /* MySvnMkdirController.m in Sources */,
 				F2B0AA7F0832102C009B9254 /* MySvnMoveController.m in Sources */,
 				F2695D980832638300B47C96 /* MySvnFilesArrayController.m in Sources */,
+				F22C6BC3096D51E500BAC56B /* SvnListParser.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

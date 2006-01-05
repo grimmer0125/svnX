@@ -2,6 +2,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "MySvnView.h"
+#import "SvnListParser.h"
 
 @interface MySvnRepositoryBrowserView : MySvnView
 {

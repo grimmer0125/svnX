@@ -187,7 +187,7 @@
 		
 		[MySvn		list: [cleanUrl absoluteString]
 		  generalOptions: [self svnOptionsInvocation]
-				 options: [NSArray arrayWithObjects:@"-v", [NSString stringWithFormat:@"-r%@", [self revision]], nil]
+				 options: [NSArray arrayWithObjects:@"--xml", [NSString stringWithFormat:@"-r%@", [self revision]], nil]
 
                 callback: [self makeCallbackInvocationOfKind:10]
 			callbackInfo: [NSDictionary dictionaryWithObjectsAndKeys:matrix, @"matrix", [NSNumber numberWithInt:column], @"column", cleanUrl, @"url", nil]
@@ -273,9 +273,10 @@
 		}
 		
 		[matrix addRowWithCells:[NSArray arrayWithObject:cell]];
-		[matrix setToolTip:[NSString stringWithFormat:@"Revision : %@\nAuthor : %@\nSize : %@ bytes\nTime : %@",  [row objectForKey:@"revision"],
+		[matrix setToolTip:[NSString stringWithFormat:@"Revision : %@\nAuthor : %@\nSize : %@ bytes\nDate : %@\nTime : %@",  [row objectForKey:@"revision"],
 																											[row objectForKey:@"author"],
 																											[row objectForKey:@"size"],
+																											[row objectForKey:@"date"],
 																											[row objectForKey:@"time"]] forCell:cell];
 		[matrix putCell:cell atRow:i column:0];
 		[cell setLoaded:NO]; // because we want browser:willDisplayCell... to be called
@@ -294,35 +295,11 @@
 
 
 -(NSMutableArray *)parseSvnListResult:(NSString *)resultString
-{
-	NSArray *arr = [resultString componentsSeparatedByString:@"\n"]; 
-	NSMutableArray *resultArr = [NSMutableArray array];
-	int i;
-	
-	for ( i=0 ; i<[arr count]-1 ; i++ ) // last line is a blank line !
-	{
-		NSString *row =		[arr objectAtIndex:i];
-		NSString *rev =		[[row substringWithRange:NSMakeRange(0, 7)] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-		NSString *author =  [[row substringWithRange:NSMakeRange(8, 8)] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-		NSString *size =	[[row substringWithRange:NSMakeRange(17, 10)] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-		NSString *time =	[row substringWithRange:NSMakeRange(28, 12)];
-		NSString *name =	[[row substringFromIndex:41] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-		
-		BOOL isDir = [[name substringFromIndex:[name length]-1] isEqualToString:@"/"];
-		
-		[resultArr addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:
-											rev, @"revision", 
-											author, @"author",
-											size, @"size",
-											time, @"time",
-											name, @"name",
-											(isDir)?([name substringWithRange:NSMakeRange(0, [name length]-1)]):(name), @"displayName",
-											[NSNumber numberWithBool:isDir], @"isDir",
-											
-															nil]];
-	}
-	
-	return resultArr;
+{	
+	SvnListParser *parser = [[SvnListParser alloc] init];	
+	NSMutableArray *parsedArray = [parser parseXmlString:resultString];
+
+	return parsedArray;	
 }
 
 #pragma mark -

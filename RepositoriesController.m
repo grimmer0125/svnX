@@ -310,6 +310,22 @@
 #pragma mark -
 #pragma mark Accessors
 
+- (void) insertObject:(id)anObject inRepositoriesAtIndex: (unsigned int)index {
+
+    [repositories insertObject: anObject atIndex: index];
+	[self saveRepositoriesPrefs];
+}
+
+- (void) removeObjectFromRepositoriesAtIndex: (unsigned int)index {
+    [repositories removeObjectAtIndex: index];
+	[self saveRepositoriesPrefs];
+}
+
+- (void) replaceObjectInRepositoriesAtIndex: (unsigned int)index withObject: (id)anObject {
+    [repositories replaceObjectAtIndex: index withObject: anObject];
+	[self saveRepositoriesPrefs];	
+}
+
 // - repositories:
 - (NSMutableArray *)repositories {
     return repositories; 

@@ -446,19 +446,41 @@
 	
 	} else
 	{
-		[self setRevision:[[lines objectAtIndex:3] substringFromIndex:10]];
-		[self setStatusInfo:[lines objectAtIndex:3]];
+		int i;
 
-		NSString *urlString = [[lines objectAtIndex:1] substringFromIndex:5];
-		NSString *repositoryUrlString;
-		
-		if ( ![[urlString substringFromIndex:([urlString length]-1)] isEqualToString:@"/"] )
+		for ( i=0; i<[lines count]; i++)
 		{
-			repositoryUrlString = [urlString stringByAppendingString:@"/"];
+			NSString *line = [lines objectAtIndex:i];
+			
+			if ( [line length] > 9 && [[line substringWithRange:NSMakeRange(0, 10)] isEqual:@"Revision: "] )
+			{
+				[self setRevision:[line substringFromIndex:10]];			
+				[self setStatusInfo:line];
+			}
+			else
+			if ( [line length] > 4 && [[line substringWithRange:NSMakeRange(0, 5)] isEqual:@"URL: "] )
+			{
+				NSString *urlString = [line substringFromIndex:5];
+				NSString *repositoryUrlString;
+				
+				if ( ![[urlString substringFromIndex:([urlString length]-1)] isEqualToString:@"/"] )
+				{
+					repositoryUrlString = [urlString stringByAppendingString:@"/"];
 
-		} else repositoryUrlString = urlString;
+				} else repositoryUrlString = urlString;
+				
+				[self setRepositoryUrl:[NSURL URLWithString:repositoryUrlString]];
+			}
+//			else
+//			if ( [line length] > 16 && [[line substringWithRange:NSMakeRange(0, 17)] isEqual:@"Repository Root: "] )
+//			{
+//				NSString *repositoryUrlString = [line substringFromIndex:17];
+//				
+//				[self setRepositoryUrl:[NSURL URLWithString:repositoryUrlString]];
+//			}
+					
 		
-		[self setRepositoryUrl:[NSURL URLWithString:repositoryUrlString]];
+		}
 	}
 }
 

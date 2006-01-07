@@ -13,5 +13,5 @@ cp History.rtf "$TARGET"/
 hdiutil detach "$TARGET"
 hdiutil convert -format UDZO /tmp/svnX.dmg -shadow -o ~/Desktop/svnX.dmg
 #gzip ~/Desktop/svnX.dmg  
-#rm /tmp/svnX.dmg
+rm /tmp/svnX.dmg
 rm /tmp/svnX.dmg.shadow

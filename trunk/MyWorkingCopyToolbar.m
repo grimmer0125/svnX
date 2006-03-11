@@ -126,6 +126,7 @@
 
 - (void)dealloc {
     [items release];
+    [super dealloc];
 }
 
 - (NSToolbarItem *)toolbar:(NSToolbar *)toolbar itemForItemIdentifier:(NSString *)itemIdentifier willBeInsertedIntoToolbar:(BOOL)flag {

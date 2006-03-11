@@ -155,17 +155,17 @@
 }
 
 
-- (void)fetchSvnListForUrl:(NSString *)url column:(int)column matrix:(NSMatrix *)matrix
+- (void)fetchSvnListForUrl:(NSString *)theURL column:(int)column matrix:(NSMatrix *)matrix
 {
 	NSString *url2;
 	
 	if ( [self showRoot] )
 	{
-		url2 = [url substringFromIndex:5]; // get rid of "root" prefix
+		url2 = [theURL substringFromIndex:5]; // get rid of "root" prefix
 	
 	} else
 	{
-		url2 = url;
+		url2 = theURL;
 	}
 
 	NSURL *cleanUrl = [NSURL URLWithString:[NSString stringByAddingPercentEscape:[url2 stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]]] relativeToURL:[self url]];
@@ -245,10 +245,10 @@
 		BOOL isDir = [[row objectForKey:@"isDir"] boolValue];
 		
 		NSString *path = [[[self pathToColumn:column] stringByAppendingPathComponent:name] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
-		NSURL *url= [NSURL URLWithString:[NSString stringWithFormat:@"%@%@", [NSString stringByAddingPercentEscape:path], ((isDir)?(@"/"):(@""))] relativeToURL:[self url]];
+		NSURL *theURL= [NSURL URLWithString:[NSString stringWithFormat:@"%@%@", [NSString stringByAddingPercentEscape:path], ((isDir)?(@"/"):(@""))] relativeToURL:[self url]];
 		
 		[row setObject:path forKey:@"path"];
-		[row setObject:url forKey:@"url"];
+		[row setObject:theURL forKey:@"url"];
 
 		if ( [fileType isEqualToString:@""] && [[row objectForKey:@"isDir"] boolValue] )
 		{
@@ -330,10 +330,10 @@
 	
 }
 
-- (NSString *)getCachePathForUrl:(NSURL *)url
+- (NSString *)getCachePathForUrl:(NSURL *)theURL
 {
 	NSString *logId = @"list.xml";
-	NSString *cachePath = [[MySvn cachePathForUrl:url revision:[self revision]] stringByAppendingPathComponent:logId];
+	NSString *cachePath = [[MySvn cachePathForUrl:theURL revision:[self revision]] stringByAppendingPathComponent:logId];
 
 	return cachePath;
 }

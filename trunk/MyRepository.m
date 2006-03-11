@@ -742,7 +742,7 @@
 
 - (NSInvocation *)svnOptionsInvocation
 {
-	[self makeSvnOptionInvocation];
+	return [self makeSvnOptionInvocation];
 }
 
 //  displayedTaskObj 

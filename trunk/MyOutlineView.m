@@ -29,6 +29,8 @@
 	{
 		return NSDragOperationCopy;
     }
+    // default
+    return NSDragOperationNone;
 }
 
 

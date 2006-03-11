@@ -210,6 +210,9 @@
 
 	if ( sourceMask & NSDragOperationMove ) return NSDragOperationMove;
 	if ( sourceMask & NSDragOperationCopy ) return NSDragOperationCopy;
+    
+    // default
+    return NSDragOperationNone;
 }
 
 

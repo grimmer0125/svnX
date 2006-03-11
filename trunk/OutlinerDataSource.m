@@ -63,6 +63,8 @@
 	{
 		return NSDragOperationCopy;
     }
+    // default
+    return NSDragOperationNone;
 }
 - (BOOL)outlineView:(NSOutlineView*)olv acceptDrop:(id <NSDraggingInfo>)sender item:(id)targetItem childIndex:(int)childIndex
 {

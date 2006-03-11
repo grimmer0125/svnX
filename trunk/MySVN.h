@@ -7,10 +7,11 @@
 
 }
 
-+(void)svnCommand:(NSString *)command items:(NSArray *)itemsPaths options:(NSArray *)options threadSelector:(SEL)selector target:(id)target info:(id)info;
++(NSMutableDictionary *)launchTask:(NSString *)taskLaunchPath arguments:(NSArray *)arguments callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo additionalTaskInfo:(id)additionalTaskInfo;
 
 // CLASS VARIABLES ACCESSORS
 + (NSString *) svnPath;
 + (void) setSvnPath: (NSString *) aSvnPath;
++ (NSString *)bundleScriptPath:(NSString *)script;
 
 @end

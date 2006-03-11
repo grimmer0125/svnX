@@ -172,7 +172,7 @@
 
 		NSString *revisionCurrent;
 		NSString *revisionLastChanged;
-		NSString *user;
+		NSString *theUser;
 
 		NSString *column1;
 		NSString *column2;
@@ -236,7 +236,7 @@
 			}
 
 			revisionLastChanged = @"";
-			user = @"";
+			theUser = @"";
 		}
 		else
 		{
@@ -246,7 +246,7 @@
 			
 			revisionCurrent = [[itemString substringWithRange:NSMakeRange(9, 8)] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 			revisionLastChanged = [[itemString substringWithRange:NSMakeRange(18, 8)] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-			user = [[itemString substringWithRange:NSMakeRange(27, 12)] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+			theUser = [[itemString substringWithRange:NSMakeRange(27, 12)] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 			
 			if ( [self showUpdates] )
 			{
@@ -380,7 +380,7 @@
 																				column6, @"col6",
 																				revisionCurrent, @"revisionCurrent",
 																				revisionLastChanged, @"revisionLastChanged",
-																				user, @"user",
+																				theUser, @"user",
 																				[[NSWorkspace sharedWorkspace] iconForFile:itemFullPath], @"icon",
 																				(([self flatMode])?(itemPath):([itemPath lastPathComponent])), @"displayPath",
 																				itemPath, @"path",
@@ -734,7 +734,7 @@
 //
 - (NSInvocation *)svnOptionsInvocation
 {
-	[self makeSvnOptionInvocation];
+	return [self makeSvnOptionInvocation];
 }
 
 //  displayedTaskObj 

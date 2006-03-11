@@ -28,6 +28,8 @@
 	[dictionary setObject:@"/usr/local/bin" forKey:@"svnBinariesFolder"];
 	[dictionary setObject:[NSNumber numberWithBool:YES] forKey:@"cacheSvnQueries"];
 	[dictionary setObject:[NSNumber numberWithInt:0] forKey:@"defaultDiffApplication"];
+
+	[dictionary setObject:[NSNumber numberWithBool:YES] forKey:@"addWorkingCopyOnCheckout"];
 	
 	[[NSUserDefaultsController sharedUserDefaultsController] setInitialValues:dictionary];
 

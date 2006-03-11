@@ -34,7 +34,9 @@
 }
 
 - (void)dealloc {
-    [self setFavoriteWorkingCopies:nil];
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	
+	[self setFavoriteWorkingCopies:nil];
     [super dealloc];
 }
 
@@ -53,6 +55,9 @@
 	[workingCopiesTableView setTarget:self];
 	
 //	[self addObserver:self forKeyPath:@"favoriteWorkingCopies" options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:nil];
+
+	// Notification for user creating a new working copy - now add item into favorites list.
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(newWorkingCopyNotificationHandler:) name:@"newWorkingCopy" object:nil];
 }
 
 //
@@ -63,10 +68,23 @@
 //
 //}
 
+-(void)newWorkingCopyNotificationHandler:(NSNotification *)notification
+{
+	[self newWorkingCopyItemWithPath:[notification object]];
+	
+	[window makeKeyAndOrderFront:nil];
+}
+
 - (IBAction)newWorkingCopyItem:(id)sender
 {
+	[self newWorkingCopyItemWithPath:NSHomeDirectory()];
+}
+
+// Adds a new working copy with the given path.
+- (void)newWorkingCopyItemWithPath:(NSString *)workingCopyPath
+{
 	[favoriteWorkingCopiesAC addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:@"My Project", @"name",
-																									NSHomeDirectory(), @"fullPath",
+																									workingCopyPath, @"fullPath",
 																									@"", @"user",
 																									@"", @"pass",
 																									nil]];
@@ -74,6 +92,7 @@
 	
 	[window makeFirstResponder:nameTextField];	
 }
+
 
 - (void)onDoubleClick:(id)sender
 {

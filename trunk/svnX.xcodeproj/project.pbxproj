@@ -12,6 +12,7 @@
 		8D15AC2F0486D014006FF6A4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165FFE840EACC02AAC07 /* InfoPlist.strings */; };
 		8D15AC320486D014006FF6A4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A37F4B0FDCFA73011CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		8D15AC340486D014006FF6A4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A7FEA54F5311CA2CBB /* Cocoa.framework */; };
+		F203D9E409C2E78100857915 /* Finder.icns in Resources */ = {isa = PBXBuildFile; fileRef = F203D9E309C2E78100857915 /* Finder.icns */; };
 		F217F14905F9EC0700286411 /* SvnFileStatusToColourTransformer.h in Headers */ = {isa = PBXBuildFile; fileRef = F217F14705F9EC0700286411 /* SvnFileStatusToColourTransformer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F217F14A05F9EC0700286411 /* SvnFileStatusToColourTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = F217F14805F9EC0700286411 /* SvnFileStatusToColourTransformer.m */; };
 		F22004DE08099C6900F2CC97 /* Tasks.m in Sources */ = {isa = PBXBuildFile; fileRef = F22004DC08099C6900F2CC97 /* Tasks.m */; };
@@ -198,6 +199,7 @@
 		32DBCF750370BD2300C91783 /* svnX_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = svnX_Prefix.pch; sourceTree = "<group>"; };
 		8D15AC360486D014006FF6A4 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8D15AC370486D014006FF6A4 /* svnX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = svnX.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F203D9E309C2E78100857915 /* Finder.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Finder.icns; sourceTree = "<group>"; };
 		F217F14705F9EC0700286411 /* SvnFileStatusToColourTransformer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SvnFileStatusToColourTransformer.h; sourceTree = "<group>"; };
 		F217F14805F9EC0700286411 /* SvnFileStatusToColourTransformer.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = SvnFileStatusToColourTransformer.m; sourceTree = "<group>"; };
 		F22004DC08099C6900F2CC97 /* Tasks.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = Tasks.m; sourceTree = "<group>"; };
@@ -497,6 +499,7 @@
 				F293DCB306B46ABF00B81B86 /* svnResult.nib */,
 				F2BBEF18076B6B47002160EB /* SingleFileInspector.nib */,
 				F2830130082BE371008E002A /* DrawerLogView.nib */,
+				F203D9E309C2E78100857915 /* Finder.icns */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -818,6 +821,7 @@
 				F230FC8E08059A9B0000E35F /* export.png in Resources */,
 				F2C2624A082B58D700077EFE /* sidebar.png in Resources */,
 				F2830131082BE371008E002A /* DrawerLogView.nib in Resources */,
+				F203D9E409C2E78100857915 /* Finder.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

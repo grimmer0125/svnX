@@ -13,7 +13,7 @@
 
 + (NSString *)stringByAddingPercentEscape:(NSString *)url
 {
-	return CFURLCreateStringByAddingPercentEscapes(NULL, (CFStringRef)url, NULL, NULL, kCFStringEncodingUTF8);
+	return [(id)CFURLCreateStringByAddingPercentEscapes(NULL, (CFStringRef)url, NULL, NULL, kCFStringEncodingUTF8) autorelease];
 }
 
 @end

@@ -9,7 +9,7 @@
 
 @implementation NSTextView (MyAdditions)
 
--  appendString:(NSString *)string isErrorStyle:(BOOL)isErrorStyle
+- (void)appendString:(NSString *)string isErrorStyle:(BOOL)isErrorStyle
 {
 	NSFont *txtFont = [NSFont fontWithName:@"Courier" size:11];
 	NSDictionary *txtDict;
@@ -23,14 +23,9 @@
 		txtDict = [NSDictionary dictionaryWithObjectsAndKeys:txtFont, NSFontAttributeName, [NSColor blackColor], NSForegroundColorAttributeName, nil];
 	}
 	
-	NSAttributedString *attrStr = [[[NSAttributedString alloc] initWithString:string attributes:txtDict] autorelease];
-
-	NSRange theEnd = NSMakeRange([[self textStorage] length], 0);
-
-	[[self textStorage] replaceCharactersInRange:theEnd withAttributedString:attrStr];
-
-	theEnd.location += [string length];
-//	[self scrollRangeToVisible:theEnd];
+	NSAttributedString *attrStr = [[NSAttributedString alloc] initWithString:string attributes:txtDict] ;
+    [[self textStorage] appendAttributedString:attrStr];
+    [attrStr release];
 }
 
 @end

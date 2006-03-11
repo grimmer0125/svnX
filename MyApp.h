@@ -22,7 +22,5 @@
 - (IBAction)closePreferences:(id)sender;
 
 - (IBAction)openFavorite:(id)sender;
-- (IBAction)closeFavorite:(id)sender;
-
 
 @end

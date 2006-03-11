@@ -79,7 +79,7 @@
 {
 	if ( [[favoriteWorkingCopiesAC selectedObjects] count] != 0 )
 	{
-		NSDocument * newDoc = [[NSDocumentController sharedDocumentController ] openUntitledDocumentOfType:@"workingCopy" display:YES ];	
+		id newDoc = [[NSDocumentController sharedDocumentController ] openUntitledDocumentOfType:@"workingCopy" display:YES ];	
 		
 		[newDoc setWindowTitle:[favoriteWorkingCopiesAC valueForKeyPath:@"selection.name"]];
 		[newDoc setUser:[favoriteWorkingCopiesAC valueForKeyPath:@"selection.user"]];

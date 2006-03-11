@@ -229,6 +229,8 @@
 	[outliner reloadData];
 	[outliner expandItem:[outliner itemAtRow:0] expandChildren:YES];
 	[outliner selectRowIndexes:selectedRows byExtendingSelection:NO];
+	if ( [selectedRows count] )
+		[outliner scrollRowToVisible:[selectedRows firstIndex]];
 	
 	svnStatusPending = NO;
 }

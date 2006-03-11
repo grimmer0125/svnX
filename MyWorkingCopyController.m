@@ -666,4 +666,19 @@
 {
 	return window;
 }
+
+// Have the Finder show the parent folder for the selected files.
+- (void)revealInFinder:(id)sender
+{
+	NSEnumerator *enumerator = [[svnFilesAC selectedObjects] objectEnumerator];
+	id file;
+			
+	NSWorkspace *ws = [NSWorkspace sharedWorkspace];
+	while(file = [enumerator nextObject]) 
+	{
+		NSURL *fileURL = [NSURL fileURLWithPath:[file valueForKey:@"fullPath"]];
+		[ws selectFile:[fileURL path] inFileViewerRootedAtPath:nil];
+	}	
+}
+
 @end

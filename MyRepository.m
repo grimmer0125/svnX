@@ -285,7 +285,14 @@
 					  callback: [self makeCallbackInvocationOfKind:SVNXCallbackExtractedToFileSystem]
 				  callbackInfo: destinationPath
 					  taskInfo: [NSDictionary dictionaryWithObjectsAndKeys:[self windowTitle], @"documentName", nil]]];
-    }
+
+		// TL : Creating new working copy for the checked out path.
+		BOOL addWorkingCopy = [[[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"addWorkingCopyOnCheckout"] boolValue];
+		if(addWorkingCopy)
+		{
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"newWorkingCopy" object:destinationPath];
+		}
+	}
 }
 
 - (void)exportPanelDidEnd:(NSOpenPanel *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo
@@ -398,7 +405,6 @@
 	}
 	
 	[self extractFiles:validatedFiles toDestinationURL:destinationURL checkout:checkoutOrExport];
-
 }
 
 -(void)dragExternalFiles:(NSArray *)files ToRepositoryAt:(NSDictionary *)representedObject
@@ -468,6 +474,12 @@
 					  taskInfo: [NSDictionary dictionaryWithObjectsAndKeys:[self windowTitle], @"documentName", nil]
 					  				  ]];
 
+		// TL : Creating new working copy for the checked out path.
+		BOOL addWorkingCopy = [[[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"addWorkingCopyOnCheckout"] boolValue];
+		if(addWorkingCopy)
+		{
+			[[NSNotificationCenter defaultCenter] postNotificationName:@"newWorkingCopy" object:destinationPath];
+		}
 	
 	} else // => export
 	{

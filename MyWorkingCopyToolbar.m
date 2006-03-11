@@ -12,6 +12,7 @@
     NSToolbarItem *smartModeItem =[[NSToolbarItem alloc] initWithItemIdentifier:@"Smart Mode"];
     NSToolbarItem *refreshItem=[[NSToolbarItem alloc] initWithItemIdentifier:@"Refresh"];
     NSToolbarItem *fileMergeItem=[[NSToolbarItem alloc] initWithItemIdentifier:@"svnFileMerge"];
+    NSToolbarItem *revealInFinderItem=[[NSToolbarItem alloc] initWithItemIdentifier:@"revealInFinder"];
     NSToolbarItem *svnUpdateItem=[[NSToolbarItem alloc] initWithItemIdentifier:@"svnUpdate"];
     NSToolbarItem *openRepositoryItem=[[NSToolbarItem alloc] initWithItemIdentifier:@"openRepository"];
     NSToolbarItem *toggleSidebarItem=[[NSToolbarItem alloc] initWithItemIdentifier:@"toggleSidebar"];
@@ -86,6 +87,15 @@
 	[items setObject:fileMergeItem forKey:@"svnFileMerge"];
 	[fileMergeItem release];
 
+	[revealInFinderItem setPaletteLabel:@"Reveal In Finder"];
+	[revealInFinderItem setLabel:@"Reveal In Finder"];
+	[revealInFinderItem setToolTip:@"Display the selected file in the Finder"];
+	[revealInFinderItem setTarget:controller];
+	[revealInFinderItem setAction:@selector(revealInFinder:)];
+	[revealInFinderItem setImage:[NSImage imageNamed:@"Finder"]];
+	[items setObject:revealInFinderItem forKey:@"revealInFinder"];
+	[revealInFinderItem release];
+
 	[svnUpdateItem setPaletteLabel:@"Update"];
 	[svnUpdateItem setLabel:@"Update"];
 	[svnUpdateItem setToolTip:@"Performs an 'svn update' on current working copy."];
@@ -139,6 +149,7 @@
 				@"Smart Mode",
 				NSToolbarSeparatorItemIdentifier,
 				@"svnFileMerge",
+				@"revealInFinder",
 				NSToolbarFlexibleSpaceItemIdentifier,
 				@"Search",
 				NSToolbarSeparatorItemIdentifier,
@@ -159,6 +170,7 @@
 				@"Filter",
 				@"Search",
 				@"svnFileMerge",
+				@"revealInFinder",
 				@"svnUpdate",
 				@"openRepository",
 				@"Refresh",

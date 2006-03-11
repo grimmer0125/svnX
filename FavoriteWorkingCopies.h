@@ -43,4 +43,7 @@
 - (void) removeObjectFromFavoriteWorkingCopiesAtIndex: (unsigned int)index;
 - (void) replaceObjectInFavoriteWorkingCopiesAtIndex: (unsigned int)index withObject: (id)anObject;
 
+// Adds a new working copy with the given path.
+- (void)newWorkingCopyItemWithPath:(NSString *)workingCopyPath;
+
 @end

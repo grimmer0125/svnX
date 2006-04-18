@@ -276,9 +276,8 @@
     if (returnCode == NSOKButton)
 	{
         destinationPath = [[sheet filenames] objectAtIndex:0];
-
 		[self setDisplayedTaskObj:
-				[MySvn        checkout: [[[[[svnBrowserView selectedItems] objectAtIndex:0] objectForKey:@"url"] absoluteString] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]]
+				[MySvn        checkout: [NSString stringWithFormat:@"%@@%@", [[[[[svnBrowserView selectedItems] objectAtIndex:0] objectForKey:@"url"] absoluteString] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]], [self revision]]
 				   destination: destinationPath
 				generalOptions: [self svnOptionsInvocation]
 					   options: [NSArray arrayWithObjects:[NSString stringWithFormat:@"-r%@", [self revision]],  nil]
@@ -326,7 +325,7 @@
 	while ( item = [e nextObject] )
 	{
 		NSString *destinationPath = [[destinationURL path] stringByAppendingPathComponent:[item valueForKey:@"name"]];
-		NSString *sourcePath = [[[item valueForKey:@"url"] absoluteString] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
+		NSString *sourcePath = [NSString stringWithFormat:@"%@@%@", [[[item valueForKey:@"url"] absoluteString] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]], [self revision]];
 		
 		if ( [[item valueForKey:@"isDir"] boolValue] )
 		{														   
@@ -463,9 +462,9 @@
 	{				
 		id item = [validatedFiles objectAtIndex:0]; // one checks out no more than one directory
 		NSString *destinationPath = [[destinationURL path] stringByAppendingPathComponent:[item valueForKey:@"name"]];
-		
+
 		[self setDisplayedTaskObj:
-		[MySvn		  checkout: [[[item valueForKey:@"url"] absoluteString] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]]
+		[MySvn		  checkout: [NSString stringWithFormat:@"%@@%@", [[[item valueForKey:@"url"] absoluteString] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]], [self revision]]
 				   destination: destinationPath
 				generalOptions: [self svnOptionsInvocation]
 					   options: [NSArray arrayWithObjects:[NSString stringWithFormat:@"-r%@", [self revision]],  nil]

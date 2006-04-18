@@ -71,6 +71,6 @@ else
 	then
 		/usr/bin/twdiff --case-sensitive "$firstTempFile" "$secondTempFile"
 	else #elif [ "$appToDoDiffWith" == "opendiff" ]
-		/usr/bin/opendiff "$firstTempFile" "$secondTempFile"
+		/usr/bin/opendiff "$firstTempFile" "$secondTempFile" &> /dev/null
 	fi
 fi

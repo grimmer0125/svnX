@@ -6,7 +6,7 @@
 #	echo $1
 #	shift
 #done
-echo "app2: $DIFFAPPINDEX" > /tmp/app.txt
+#echo "app2: $DIFFAPPINDEX" > /tmp/app.txt
 
 # Sometimes, the temp file created by svn diff is deleted before
 # opendiff had a chance to open it...
@@ -55,7 +55,7 @@ then
 	then
 		/usr/bin/twdiff --case-sensitive "$firstTempFile" "$f"
 	else #elif [ "$appToDoDiffWith" == "opendiff" ]
-		/usr/bin/opendiff "$firstTempFile" "$f" -merge "$f"
+		/usr/bin/opendiff "$firstTempFile" "$f" -merge "$f" &> /dev/null
 	fi
 else
 	if [ "$appToDoDiffWith" == "codewarrior" ]

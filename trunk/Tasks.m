@@ -419,6 +419,9 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 	
 	[taskObj setValue:[NSNumber numberWithBool:NO] forKey:@"canBeKilled"];
 	
+	[[taskObj objectForKey:@"handle"] closeFile];
+	[[taskObj objectForKey:@"errorHandle"] closeFile];
+
 	//see file:///Developer/ADC%20Reference%20Library/documentation/Cocoa/Conceptual/DistrObjects/Tasks/invocations.html#//apple_ref/doc/uid/20000744/CJBBACJH
 	[callback setArgument:&taskObj atIndex:2]; // index 2 because of the two hidden default arguments (see NSInvocation doc).
 	

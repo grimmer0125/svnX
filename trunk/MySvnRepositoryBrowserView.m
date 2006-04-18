@@ -185,7 +185,7 @@
 
 		[self setPendingTask:
 		
-		[MySvn		list: [cleanUrl absoluteString]
+		[MySvn		list: [NSString stringWithFormat:@"%@@%@", [cleanUrl absoluteString], [self revision]]
 		  generalOptions: [self svnOptionsInvocation]
 				 options: [NSArray arrayWithObjects:@"--xml", [NSString stringWithFormat:@"-r%@", [self revision]], nil]
 

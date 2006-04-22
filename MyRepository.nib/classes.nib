@@ -20,7 +20,7 @@
             SUPERCLASS = NSObject; 
         }, 
         {
-            ACTIONS = {importCommitPanelValidate = id; }; 
+            ACTIONS = {importCommitPanelValidate = id; pickedAFolderInBrowserView = id; }; 
             CLASS = MyRepository; 
             LANGUAGE = ObjC; 
             OUTLETS = {
@@ -38,6 +38,7 @@
                 svnMkdirController = MySvnMkdirController; 
                 svnMoveController = MySvnMoveController; 
                 svnOperationController = MySvnOperationController; 
+                urlTextView = NSTextView; 
             }; 
             SUPERCLASS = NSDocument; 
         }, 
@@ -87,7 +88,12 @@
             }; 
             SUPERCLASS = NSObject; 
         }, 
-        {CLASS = MySvnRepositoryBrowserView; LANGUAGE = ObjC; SUPERCLASS = MySvnView; }, 
+        {
+            CLASS = MySvnRepositoryBrowserView; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {browserContextMenu = NSMenu; }; 
+            SUPERCLASS = MySvnView; 
+        }, 
         {
             ACTIONS = {refetch = id; }; 
             CLASS = MySvnView; 

@@ -8,6 +8,7 @@
 {
 	IBOutlet NSBrowser *browser;
 	IBOutlet NSTextField *revisionTextField;
+	IBOutlet NSMenu *browserContextMenu;
 		
 	BOOL showRoot;
 	BOOL disallowLeaves;

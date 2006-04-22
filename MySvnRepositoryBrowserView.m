@@ -265,6 +265,15 @@
 		[cell setFont:[NSFont fontWithName:@"Lucida Grande" size:10]];
 		[cell setImage:icon];
 		[cell setLeaf:![[row objectForKey:@"isDir"] boolValue]];
+		
+		// set the contextual menu on folders
+		if ( [[row objectForKey:@"isDir"] boolValue] )
+		{
+			NSMenu *m = [browserContextMenu copy];
+			[[m itemAtIndex:0] setRepresentedObject:row];
+			[cell setMenu:m];
+		}
+		
 		[cell setRepresentedObject:row];
 		
 		if ( [self disallowLeaves] && [cell isLeaf] )

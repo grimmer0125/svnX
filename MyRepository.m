@@ -183,7 +183,7 @@
 {
 	[self setUrl:anUrl];
 	[svnBrowserView setUrl:[self url]];
-	[svnLogView setUrl:[self url]];
+	[svnLogView resetUrl:[self url]];
 	[self displayUrlTextView];
 	[svnLogView fetchSvnLog];
 	[svnBrowserView fetchSvn];

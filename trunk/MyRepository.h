@@ -24,6 +24,7 @@
 	IBOutlet NSDrawer *sidebar;
 	IBOutlet DrawerLogView *drawerLogView;
 
+    IBOutlet NSTextView *urlTextView;
     IBOutlet NSTextView *commitTextView;
     IBOutlet NSTextField *fileNameTextField;
     IBOutlet NSPanel *importCommitPanel;
@@ -31,6 +32,7 @@
 	BOOL operationInProgress;
 	
 	NSURL *url;
+	NSURL *rootUrl;
 	NSString *revision;
 	NSString *user;
 	NSString *pass;
@@ -58,6 +60,9 @@
 
 - (NSURL *)url;
 - (void)setUrl:(NSURL *)anUrl;
+
+- (NSURL *)rootUrl;
+- (void)setRootUrl:(NSURL *)anUrl;
 
 - (NSString *)logViewKind;
 - (void)setLogViewKind:(NSString *)aLogViewKind;

@@ -8,6 +8,7 @@
 #define SVNXCallbackMkdir 4
 #define SVNXCallbackDelete 5
 #define SVNXCallbackImport 6
+#define SVNXCallbackSvnInfo 7
 
 @implementation MyRepository
 
@@ -88,16 +89,23 @@
 		[svnLogView fetchSvnLog];
 	}
 	
+	// fetch svn info in order to know the repository's root
+	[self fetchSvnInfo];
+	
+	// display the known url as raw text while svn info is fetching data
+	[urlTextView setBackgroundColor:[NSColor windowBackgroundColor]];
+	[urlTextView setString:[[self url] absoluteString]];
+
 	[drawerLogView setDocument:self];
 	[drawerLogView setUp];
 	
 }
 
+
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
 	if ( [keyPath isEqualToString:@"currentRevision"] )		// A new current revision was selected in the svnLogView
 	{		
-		//NSLog(@"%@", [change objectForKey:NSKeyValueChangeNewKey]);
 		[self setRevision:[change objectForKey:NSKeyValueChangeNewKey]];
 		[svnBrowserView setRevision:[change objectForKey:NSKeyValueChangeNewKey]];
 		[svnBrowserView fetchSvn];
@@ -107,6 +115,129 @@
 - (IBAction)toggleSidebar:(id)sender
 {
 	[sidebar toggle:sender];
+}
+
+- (IBAction)pickedAFolderInBrowserView:(NSMenuItem *)sender
+{
+	// "Browse as sub-repository" context menu item. (see "browserContextMenu" Menu in IB)
+	// representedObject of the sender menu item is the same as the row's in the browser. Was set in MySvnRepositoryBrowserView.
+	[self changeRepositoryUrl:[[sender representedObject] objectForKey:@"url"]];
+}
+
+#pragma mark -
+#pragma mark clickable url
+
+- (void)displayUrlTextView
+{
+	NSString *root = [[self rootUrl] absoluteString];
+	NSMutableString *tmpString = [NSMutableString stringWithString:[[self url] absoluteString]];
+	
+	[urlTextView setString:@""]; // workaround to clean-up the style for sure
+	[urlTextView setString:[[self url] absoluteString]];
+	[[urlTextView textStorage] setFont:[NSFont boldSystemFontOfSize:11]];
+	[[urlTextView layoutManager] addTemporaryAttributes:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool: NO] forKey:NSUnderlineStyleAttributeName] forCharacterRange:NSMakeRange(0, [[urlTextView string] length])];
+
+	// Make a link on each part of the url. Stop at the root of the repository.
+	while ( TRUE )
+	{
+		NSMutableDictionary		*linkAttributes;
+		NSString *tmp = [NSString stringWithFormat:@"%@/", [tmpString stringByDeletingLastComponent]]; // see NSString+MyAdditions
+		NSRange range = NSMakeRange([tmp length], [tmpString length]-[tmp length]-1);
+
+		if ( [tmp length] < [root length] )
+		{
+			int l = range.location;
+			range.location = 0;
+			range.length += l;
+		}
+	
+		linkAttributes = [NSMutableDictionary dictionaryWithObject:[tmpString copy] forKey: NSLinkAttributeName];
+		[linkAttributes setObject: [NSColor blackColor]  forKey: NSForegroundColorAttributeName];
+		[linkAttributes setObject: [NSNumber numberWithInt:NSUnderlineStyleThick]  forKey: NSUnderlineStyleAttributeName];
+		[linkAttributes setObject: [NSCursor pointingHandCursor] forKey: NSCursorAttributeName];
+		[linkAttributes setObject:[NSColor blueColor] forKey:NSUnderlineColorAttributeName];
+		
+		[[urlTextView textStorage] addAttributes: linkAttributes  range: range]; // required to set the link
+		[[urlTextView layoutManager] addTemporaryAttributes:linkAttributes forCharacterRange:range]; // required to turn it to black
+		
+		if ( [tmp length] < [root length] ) break;
+
+		[tmpString setString:tmp];
+	}
+
+}
+
+//	Handle a click on the repository url (MyRepository is urlTextView's delegate).
+- (BOOL) textView: (NSTextView *) textView clickedOnLink: (id)link atIndex: (unsigned) charIndex
+{	
+    if ([link isKindOfClass: [NSString class]])
+    {	
+		[self changeRepositoryUrl:[NSURL URLWithString:link]];					
+        return YES;
+    }
+
+    return NO;
+}
+
+- (void)changeRepositoryUrl:(NSURL *)anUrl
+{
+	[self setUrl:anUrl];
+	[svnBrowserView setUrl:[self url]];
+	[svnLogView setUrl:[self url]];
+	[self displayUrlTextView];
+	[svnLogView fetchSvnLog];
+	[svnBrowserView fetchSvn];
+}
+
+#pragma mark svn info
+
+- (void)fetchSvnInfo
+{
+	[MySvn    genericCommand: @"info"
+				   arguments: [NSArray arrayWithObject:[[self url] absoluteString]]
+              generalOptions: [self svnOptionsInvocation]
+					 options: nil
+					callback: [self makeCallbackInvocationOfKind:SVNXCallbackSvnInfo]
+				callbackInfo: nil
+					taskInfo: [NSDictionary dictionaryWithObjectsAndKeys:[self windowTitle], @"documentName", nil]];
+}
+
+- (void)svnInfoCompletedCallback:(id)taskObj
+{
+	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
+	{
+		[self fetchSvnInfoReceiveDataFinished:[taskObj valueForKey:@"stdout"]];
+	}
+	
+	if ( [[taskObj valueForKey:@"stderr"] length] > 0 ) [self svnError:[taskObj valueForKey:@"stderr"]];
+}
+
+- (void)fetchSvnInfoReceiveDataFinished:(NSString*)result
+{
+	NSArray *lines = [result componentsSeparatedByString:@"\n"];
+
+	if ( [lines count] < 5 )
+	{
+		[self svnError:result];
+	
+	} else
+	{
+		int i;
+
+		for ( i=0; i<[lines count]; i++)
+		{
+			NSString *line = [lines objectAtIndex:i];
+			
+			if ( [line length] > 16 && [[line substringWithRange:NSMakeRange(0, 17)] isEqual:@"Repository Root: "] )
+			{
+				NSString *repositoryUrlString = [line substringFromIndex:17];
+				[self setRootUrl:[NSURL URLWithString:repositoryUrlString]];
+				[self displayUrlTextView];
+			}
+					
+		
+		}
+	}
 }
 
 #pragma mark -
@@ -711,8 +842,14 @@
 			callbackSelector = @selector(svnCommandComplete:);
 
 		break;
+
+		case SVNXCallbackSvnInfo:
+		
+			callbackSelector = @selector(svnInfoCompletedCallback:);
+
+		break;
+		
 	}
-	
 	callback = [NSInvocation invocationWithMethodSignature:[MyRepository instanceMethodSignatureForSelector:callbackSelector]];
 	[callback setSelector:callbackSelector];
 	[callback setTarget:self];
@@ -773,6 +910,16 @@
 - (void)setUrl:(NSURL *)anUrl {
     id old = [self url];
     url = [anUrl retain];
+    [old release];
+}
+
+// - rootUrl:
+- (NSURL *)rootUrl {
+    return rootUrl; 
+}
+- (void)setRootUrl:(NSURL *)anUrl {
+    id old = [self rootUrl];
+    rootUrl = [anUrl retain];
     [old release];
 }
 

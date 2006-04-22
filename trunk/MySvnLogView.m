@@ -59,6 +59,12 @@
 	[super unload];
 }
 
+- (void)resetUrl:(NSURL *)anUrl
+{
+	[self setUrl:anUrl];
+	[self setMostRecentRevision:0];
+	[self setLogArray:nil];
+}
 
 #pragma mark -
 #pragma mark svn related methods
@@ -146,6 +152,8 @@
 	
 	
 	if ( [[self logArray] count] > 0 ) 	[[self logArray] removeObjectAtIndex:0];
+	
+	if ( logArray != nil )
 	[parsedArray addObjectsFromArray:[self logArray]];
 	
 	[self setLogArray:parsedArray];

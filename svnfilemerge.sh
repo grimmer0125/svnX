@@ -1,5 +1,17 @@
 #! /bin/sh
 
+# Define some strings to use as constants
+SVNX_FILEMERGE_DIFF="opendiff"
+SVNX_TEXTWRANGLER_DIFF="textwrangler"
+SVNX_CODEWARRIOR_DIFF="codewarrior"
+SVNX_BBEDIT_DIFF="bbedit"
+
+# Abstract out DiffAppIndex options
+filemergeDiffAppIndex=0
+textwranglerDiffAppIndex=1
+codewarriorDiffAppIndex=2
+bbeditDiffAppIndex=3
+
 svn=$1
 shift;
 svndiff=$1
@@ -7,16 +19,14 @@ shift;
 defaultDiffAppIndex=$1
 shift;
 
-if [ "$defaultDiffAppIndex" == "2" ]
-then
-	export appToDoDiffWith="codewarrior"
-		
-elif [ "$defaultDiffAppIndex" == "1" ]
-then	
-	export appToDoDiffWith="textwrangler"
-else
-	export appToDoDiffWith="opendiff" #default : FileMerge
-fi
+case "$defaultDiffAppIndex" in
+    $bbeditDiffAppIndex ) appToDoDiffWith="$SVNX_BBEDIT_DIFF" ;;
+    $codewarriorDiffAppIndex ) appToDoDiffWith="$SVNX_CODEWARRIOR_DIFF" ;;
+    $textwranglerDiffAppIndex ) appToDoDiffWith="$SVNX_TEXTWRANGLER_DIFF" ;;
+    * ) appToDoDiffWith="$SVNX_FILEMERGE_DIFF" ;;
+esac
+export appToDoDiffWith
+export SVNX_FILEMERGE_DIFF SVNX_TEXTWRANGLER_DIFF SVNX_CODEWARRIOR_DIFF SVNX_BBEDIT_DIFF
 
 # now invoke svn diff and pass the remaining arguments as-is
 "$svn" diff --diff-cmd "$svndiff" "$@" 

@@ -10,7 +10,7 @@
 	NSString *taskLaunchPath		= [MySvn bundleScriptPath:@"svnfilemerge.sh"];
 	NSMutableArray *arguments       = [NSMutableArray array];
 
-	// 0: FileMerge, 1: TextWrangler, 2: CodeWarrior
+	// 0: FileMerge, 1: TextWrangler, 2: CodeWarrior, 3: BBEdit
 	int defaultSvnApplicationIndex = [[[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"defaultDiffApplication"] intValue];
 	
 	[arguments			 addObject: [[MySvn svnPath] stringByAppendingPathComponent:@"svn"]];

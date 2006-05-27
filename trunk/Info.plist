@@ -7,14 +7,6 @@
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
-			<key>CFBundleTypeName</key>
-			<string>singleFile</string>
-			<key>CFBundleTypeRole</key>
-			<string>Viewer</string>
-			<key>NSDocumentClass</key>
-			<string>SingleFileInspector</string>
-		</dict>
-		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
 				<string>????</string>

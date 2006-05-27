@@ -25,10 +25,10 @@
 	</dict>
 	<key>Commands</key>
 	<dict>
-		<key>openSingleFile</key>
+		<key>fileHistoryOpenSheetForItem</key>
 		<dict>
 			<key>Name</key>
-			<string>diff</string>
+			<string>displayHistory</string>
 		</dict>
 	</dict>
 	<key>Name</key>

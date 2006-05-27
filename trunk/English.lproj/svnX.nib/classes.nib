@@ -20,6 +20,7 @@
             CLASS = MyApp; 
             LANGUAGE = ObjC; 
             OUTLETS = {
+                favoriteWorkingCopies = FavoriteWorkingCopies; 
                 favoriteWorkingCopiesWindow = id; 
                 preferencesWindow = id; 
                 repositoriesController = id; 

@@ -2,8 +2,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class RepositoriesController;
-@class SingleFileInspector;
+@class RepositoriesController, FavoriteWorkingCopies;
 
 /* " Application's main controller." */
 @interface MyApp : NSObject
@@ -12,11 +11,12 @@
 	IBOutlet id favoriteWorkingCopiesWindow;
 	IBOutlet id tasksManager;
 	IBOutlet RepositoriesController *repositoriesController;
+	IBOutlet FavoriteWorkingCopies *favoriteWorkingCopies;
 }
 
 + (MyApp *)myApp;
 
-- (void)openSingleFile:(NSString *)path; // Compare a single file in a svnX window. Invoked from Applescript.
+- (void)fileHistoryOpenSheetForItem:(NSString *)path; // Compare a single file in a svnX window. Invoked from Applescript.
 
 - (IBAction)openPreferences:(id)sender;
 - (IBAction)closePreferences:(id)sender;

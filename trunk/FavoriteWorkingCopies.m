@@ -152,6 +152,77 @@
     }
 }
 
+- (void)fileHistoryOpenSheetForItem:(NSString *)aPath
+{
+	
+	id wc;	
+	id bestMatchWc;
+	int bestMatchScore = 0;
+	id matchingOpenWorkingCopyDocument;
+
+	// Find among the known working copies one that has a matching path
+	
+	NSEnumerator *e = [[favoriteWorkingCopiesAC arrangedObjects] objectEnumerator];
+	
+	while ( wc = [e nextObject] )
+	{
+		NSRange r = [aPath rangeOfString:[wc valueForKey:@"fullPath"] options:NSLiteralSearch];
+	
+	
+		if ( r.location == 0 && r.length > 0 )
+		{
+			if ( r.length > bestMatchScore )
+			{
+				bestMatchWc = wc;
+				bestMatchScore = r.length;
+				
+				NSEnumerator *openDocumentsEnumerator = [[[NSDocumentController sharedDocumentController] documents] objectEnumerator];
+				
+				id anOpenDocument;
+				
+				// if the working copy is currently open in svnx we stop there and use it
+				
+				while ( anOpenDocument = [openDocumentsEnumerator nextObject] )
+				{
+					if ( [anOpenDocument respondsToSelector:@selector(workingCopyPath)] )
+					{
+						if ( [[anOpenDocument workingCopyPath] isEqualToString:[wc valueForKey:@"fullPath"]] )
+						{
+							matchingOpenWorkingCopyDocument = anOpenDocument;
+							break;
+						}
+					}
+				
+					if ( matchingOpenWorkingCopyDocument != nil ) break;
+				}
+			}
+		}
+	}
+
+	if ( matchingOpenWorkingCopyDocument != nil )
+	{
+		// we found a matching working copy that is currently open in svnX
+		[[matchingOpenWorkingCopyDocument controller] fileHistoryOpenSheetForItem:[NSDictionary dictionaryWithObject:aPath forKey:@"fullPath"]];	
+	}
+	else
+	if ( bestMatchScore > 0 )
+	{
+		// we found a matching working copy that is not currently open, so let's open it
+		id newDoc = [[NSDocumentController sharedDocumentController ] openUntitledDocumentOfType:@"workingCopy" display:YES ];	
+		
+		[newDoc setWindowTitle:[bestMatchWc valueForKey:@"name"]];
+		[newDoc setUser:[bestMatchWc valueForKey:@"user"]];
+		[newDoc setPass:[bestMatchWc valueForKey:@"pass"]];
+		[newDoc setWorkingCopyPath:[bestMatchWc valueForKey:@"fullPath"]];
+	
+		[[newDoc controller] fileHistoryOpenSheetForItem:[NSDictionary dictionaryWithObject:aPath forKey:@"fullPath"]];
+	}
+	else
+	{
+		NSRunAlertPanel(@"No working copy found", [NSString stringWithFormat:@"svnX cannot find a working copy corresponding to file \n%@.\n\nPlease make sure the working copy the file belongs to is defined in svnX's Working Copies Window.", aPath], @"Dismiss", nil, nil);
+	}
+}
+
 #pragma mark -
 #pragma mark Drag & drop
 

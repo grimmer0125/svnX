@@ -337,6 +337,28 @@
 
 #pragma mark FileMerge
 
+- (void)fileHistoryOpenSheetForItem:(id)item;
+{
+	// close the sheet if it is already open
+	if ( [fileMergeController window] )
+	[NSApp endSheet:[fileMergeController window]];	
+	
+	if ( [NSBundle loadNibNamed:@"svnFileMerge" owner:fileMergeController] )
+	{
+		[fileMergeController setPath:[item objectForKey:@"fullPath"]];
+		[fileMergeController setSvnOptionsInvocation:[[self document] svnOptionsInvocation]];
+		[fileMergeController setSourceItem:item];
+		[fileMergeController setup]; 
+
+		[NSApp beginSheet:[fileMergeController window]
+		   modalForWindow:[document windowForSheet]
+			modalDelegate:self
+		   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
+			  contextInfo:nil];
+	}	
+
+}
+
 - (void)svnFileMerge:(id)sender
 {
 	if ( [[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask )
@@ -348,21 +370,8 @@
 			return;	
 		} 
 
-		id item = [[svnFilesAC selectedObjects] objectAtIndex:0];
+		[self fileHistoryOpenSheetForItem:[[svnFilesAC selectedObjects] objectAtIndex:0]];
 
-		if ( [NSBundle loadNibNamed:@"svnFileMerge" owner:fileMergeController] )
-		{
-			[fileMergeController setPath:[item objectForKey:@"fullPath"]];
-			[fileMergeController setSvnOptionsInvocation:[[self document] svnOptionsInvocation]];
-			[fileMergeController setSourceItem:item];
-			[fileMergeController setup]; 
-
-			[NSApp beginSheet:[fileMergeController window]
-			   modalForWindow:[document windowForSheet]
-				modalDelegate:self
-			   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
-				  contextInfo:nil];
-		}	
 	}
 	else
 	{

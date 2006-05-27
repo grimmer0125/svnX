@@ -15,11 +15,11 @@
 {
 	NSString *commandName = [[self commandDescription] commandName];
 	
-	if ( [commandName isEqualToString:@"openSingleFile"] )
+	if ( [commandName isEqualToString:@"fileHistoryOpenSheetForItem"] )
 	{
 		NSString *path = (NSString *)[self directParameter];
 
-		[[NSApp delegate] openSingleFile:path];
+		[[NSApp delegate] fileHistoryOpenSheetForItem:path];
 	}
 	return nil;
 }

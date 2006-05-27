@@ -120,13 +120,10 @@
 		F2B2102E05F4EA100046FF94 /* MySVN.m in Sources */ = {isa = PBXBuildFile; fileRef = F2B2102C05F4EA100046FF94 /* MySVN.m */; };
 		F2B2112305F4F3500046FF94 /* MyApp.m in Sources */ = {isa = PBXBuildFile; fileRef = F2B2112105F4F3500046FF94 /* MyApp.m */; };
 		F2B2112405F4F3500046FF94 /* MyApp.h in Headers */ = {isa = PBXBuildFile; fileRef = F2B2112205F4F3500046FF94 /* MyApp.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		F2BBEF19076B6B48002160EB /* SingleFileInspector.nib in Resources */ = {isa = PBXBuildFile; fileRef = F2BBEF18076B6B47002160EB /* SingleFileInspector.nib */; };
 		F2BBEF87076B7679002160EB /* svnX.scriptTerminology in Resources */ = {isa = PBXBuildFile; fileRef = F2BBEF6B076B738B002160EB /* svnX.scriptTerminology */; };
 		F2BBEF88076B767A002160EB /* svnX.scriptSuite in Resources */ = {isa = PBXBuildFile; fileRef = F2BBEF6A076B738B002160EB /* svnX.scriptSuite */; };
 		F2BBF00B076B90BE002160EB /* Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = F2BBF009076B90BE002160EB /* Scripting.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F2BBF00C076B90BE002160EB /* Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = F2BBF00A076B90BE002160EB /* Scripting.m */; };
-		F2BE2319076B6534009313F2 /* SingleFileInspector.h in Headers */ = {isa = PBXBuildFile; fileRef = F2BE2317076B6534009313F2 /* SingleFileInspector.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		F2BE231A076B6534009313F2 /* SingleFileInspector.m in Sources */ = {isa = PBXBuildFile; fileRef = F2BE2318076B6534009313F2 /* SingleFileInspector.m */; };
 		F2BFB5710827F3B7008476B7 /* TaskStatusToColorTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = F2BFB5700827F3B7008476B7 /* TaskStatusToColorTransformer.m */; };
 		F2C2001306008AE0004C843B /* Add.png in Resources */ = {isa = PBXBuildFile; fileRef = F2C2001206008AE0004C843B /* Add.png */; };
 		F2C2002606008B49004C843B /* Remove.png in Resources */ = {isa = PBXBuildFile; fileRef = F2C2002506008B49004C843B /* Remove.png */; };
@@ -313,13 +310,10 @@
 		F2B2102C05F4EA100046FF94 /* MySVN.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MySVN.m; sourceTree = "<group>"; };
 		F2B2112105F4F3500046FF94 /* MyApp.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyApp.m; sourceTree = "<group>"; };
 		F2B2112205F4F3500046FF94 /* MyApp.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyApp.h; sourceTree = "<group>"; };
-		F2BBEF18076B6B47002160EB /* SingleFileInspector.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = SingleFileInspector.nib; sourceTree = "<group>"; };
 		F2BBEF6A076B738B002160EB /* svnX.scriptSuite */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = svnX.scriptSuite; sourceTree = "<group>"; };
 		F2BBEF6B076B738B002160EB /* svnX.scriptTerminology */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = svnX.scriptTerminology; sourceTree = "<group>"; };
 		F2BBF009076B90BE002160EB /* Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Scripting.h; sourceTree = "<group>"; };
 		F2BBF00A076B90BE002160EB /* Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Scripting.m; sourceTree = "<group>"; };
-		F2BE2317076B6534009313F2 /* SingleFileInspector.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SingleFileInspector.h; sourceTree = "<group>"; };
-		F2BE2318076B6534009313F2 /* SingleFileInspector.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = SingleFileInspector.m; sourceTree = "<group>"; };
 		F2BFB5700827F3B7008476B7 /* TaskStatusToColorTransformer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TaskStatusToColorTransformer.m; sourceTree = "<group>"; };
 		F2C2001206008AE0004C843B /* Add.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Add.png; sourceTree = "<group>"; };
 		F2C2002506008B49004C843B /* Remove.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Remove.png; sourceTree = "<group>"; };
@@ -497,7 +491,6 @@
 				F27AA43806AEA7CF001A1B05 /* svnFileMerge.nib */,
 				F286AE2506B6D3F000FF0174 /* svnFileMergeFromRepository.nib */,
 				F293DCB306B46ABF00B81B86 /* svnResult.nib */,
-				F2BBEF18076B6B47002160EB /* SingleFileInspector.nib */,
 				F2830130082BE371008E002A /* DrawerLogView.nib */,
 				F203D9E309C2E78100857915 /* Finder.icns */,
 			);
@@ -582,7 +575,6 @@
 				F272E84006BA753C00F14502 /* MyDragSupportTableView.h */,
 				F2E4D7670803ECE500C13681 /* MyDragSupportMatrix.h */,
 				F2E4D76C0803ED2500C13681 /* MyDragSupportBrowser.h */,
-				F2BE2317076B6534009313F2 /* SingleFileInspector.h */,
 				F22004DD08099C6900F2CC97 /* Tasks.h */,
 				F2830104082BE24C008E002A /* DrawerLogView.h */,
 				F272E77A06BA5E5500F14502 /* MyDragSupportArrayController.h */,
@@ -622,7 +614,6 @@
 			isa = PBXGroup;
 			children = (
 				F2BBF00A076B90BE002160EB /* Scripting.m */,
-				F2BE2318076B6534009313F2 /* SingleFileInspector.m */,
 			);
 			name = Applescript;
 			sourceTree = "<group>";
@@ -679,7 +670,6 @@
 				F271B72106B83F7200D07CCB /* MyDocumentationWindow.h in Headers */,
 				F272E77C06BA5E5500F14502 /* MyDragSupportArrayController.h in Headers */,
 				F272E84206BA753C00F14502 /* MyDragSupportTableView.h in Headers */,
-				F2BE2319076B6534009313F2 /* SingleFileInspector.h in Headers */,
 				F2BBF00B076B90BE002160EB /* Scripting.h in Headers */,
 				F2E4D7690803ECE500C13681 /* MyDragSupportMatrix.h in Headers */,
 				F2E4D76E0803ED2500C13681 /* MyDragSupportBrowser.h in Headers */,
@@ -813,7 +803,6 @@
 				F286912D06B7F51E00D39166 /* Reload.tiff in Resources */,
 				F271B75A06B848ED00D07CCB /* Documentation.rtf in Resources */,
 				F233A3A006C3C32E00F77B90 /* svnMove.png in Resources */,
-				F2BBEF19076B6B48002160EB /* SingleFileInspector.nib in Resources */,
 				F2BBEF87076B7679002160EB /* svnX.scriptTerminology in Resources */,
 				F2BBEF88076B767A002160EB /* svnX.scriptSuite in Resources */,
 				F230F8D408045D9C0000E35F /* svnextract.sh in Resources */,
@@ -864,7 +853,6 @@
 				F271B72206B83F7200D07CCB /* MyDocumentationWindow.m in Sources */,
 				F272E77B06BA5E5500F14502 /* MyDragSupportArrayController.m in Sources */,
 				F272E84306BA753C00F14502 /* MyDragSupportTableView.m in Sources */,
-				F2BE231A076B6534009313F2 /* SingleFileInspector.m in Sources */,
 				F2BBF00C076B90BE002160EB /* Scripting.m in Sources */,
 				F2E4D76A0803ECE500C13681 /* MyDragSupportMatrix.m in Sources */,
 				F2E4D76F0803ED2500C13681 /* MyDragSupportBrowser.m in Sources */,

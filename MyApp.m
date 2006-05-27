@@ -58,20 +58,13 @@
 
 - (IBAction)test:(id)sender
 {
-//	[self openSingleFile:@"/Users/dom/Sites/alahup/flash/_classes/com/lachoseinteractive/SmartEdit/Inspector_text.as"];
-	NSMutableDictionary *obj = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"tadaa", @"name", nil];
-
+//	[self fileHistoryOpenSheetForItem:@"/Users/dom/Sites/alahup/flash/_classes/com/lachoseinteractive/SmartEdit/Inspector_text.as"];
 }
 
-- (void)openSingleFile:(NSString *)path  // Compare a single file in a svnX window. Invoked from Applescript.
+- (void)fileHistoryOpenSheetForItem:(NSString *)path  // Compare a single file in a svnX window. Invoked from Applescript.
 {
-	SingleFileInspector *newDoc = [[NSDocumentController sharedDocumentController] openUntitledDocumentOfType:@"singleFile" display:YES];	
-//	SingleFileInspector *newDoc = [[NSDocumentController sharedDocumentController] makeUntitledDocumentOfType:@"singleFile"];
-
-	[newDoc setPath:path];
-//	[newDoc makeWindowControllers];
-//	[[NSDocumentController sharedDocumentController ] addDocument:newDoc];
-//	[newDoc showWindows];
+	[[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+	[favoriteWorkingCopies fileHistoryOpenSheetForItem:path];
 }
 
 

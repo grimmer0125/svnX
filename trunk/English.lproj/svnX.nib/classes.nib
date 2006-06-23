@@ -35,6 +35,7 @@
             SUPERCLASS = NSArrayController; 
         }, 
         {CLASS = MyDragSupportTableView; LANGUAGE = ObjC; SUPERCLASS = NSTableView; }, 
+        {CLASS = NSObject; LANGUAGE = ObjC; }, 
         {
             ACTIONS = {newRepositoryItem = id; onValidate = id; openPath = id; }; 
             CLASS = RepositoriesController; 
@@ -44,6 +45,19 @@
                 repositoriesAC = NSArrayController; 
                 tableView = NSTableView; 
                 window = id; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {
+            ACTIONS = {checkForUpdates = id; closeProfileInfoSheet = id; }; 
+            CLASS = SUUpdater; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                checkForUpdatesText = NSTextField; 
+                delegate = id; 
+                profileMoreInfoButton = NSButton; 
+                profileMoreInfoView = NSView; 
+                profileMoreInfoWindow = NSWindow; 
             }; 
             SUPERCLASS = NSObject; 
         }, 

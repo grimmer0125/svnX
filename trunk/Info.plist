@@ -53,5 +53,7 @@
 	<string>svnX</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUFeedURL</key> 
+	<string>http://svnx-releases.lachoseinteractive.net/</string>
 </dict>
 </plist>

@@ -104,6 +104,8 @@
 		F2A62F1F06A2EA7000EC533F /* svnX.nib in Resources */ = {isa = PBXBuildFile; fileRef = 2A37F4B6FDCFA73011CA2CEA /* svnX.nib */; };
 		F2A62F2006A2EA7100EC533F /* MyRepository.nib in Resources */ = {isa = PBXBuildFile; fileRef = F29E410B069F0D22007CE672 /* MyRepository.nib */; };
 		F2A62F2C06A2EAEA00EC533F /* MySvnLogView.nib in Resources */ = {isa = PBXBuildFile; fileRef = F25913BC06A1C09100B5FFA9 /* MySvnLogView.nib */; };
+		F2AB95040A4C9E4F00C4627E /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2AB94F10A4C9E4F00C4627E /* Sparkle.framework */; };
+		F2AB96200A4CA41E00C4627E /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = F2AB94F10A4C9E4F00C4627E /* Sparkle.framework */; };
 		F2AFD0E205FFE153008F4267 /* OutlinerDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = F2AFD0E005FFE153008F4267 /* OutlinerDataSource.m */; };
 		F2AFD0E305FFE153008F4267 /* OutlinerDataSource.h in Headers */ = {isa = PBXBuildFile; fileRef = F2AFD0E105FFE153008F4267 /* OutlinerDataSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F2B0AA6E08321018009B9254 /* MyFileMergeController.h in Headers */ = {isa = PBXBuildFile; fileRef = F2B0AA6C08321018009B9254 /* MyFileMergeController.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -184,6 +186,19 @@
 			name = Deployment;
 		};
 /* End PBXBuildStyle section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F2AB961E0A4CA41300C4627E /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F2AB96200A4CA41E00C4627E /* Sparkle.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		089C1660FE840EACC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -294,6 +309,7 @@
 		F2A62BF706A2B60D00EC533F /* SvnDateTransformer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SvnDateTransformer.m; sourceTree = "<group>"; };
 		F2A62C4906A2BEDD00EC533F /* MyRadioButtonTableColumn.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyRadioButtonTableColumn.m; sourceTree = "<group>"; };
 		F2A62C4A06A2BEDD00EC533F /* MyRadioButtonTableColumn.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyRadioButtonTableColumn.h; sourceTree = "<group>"; };
+		F2AB94F10A4C9E4F00C4627E /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
 		F2AFD0E005FFE153008F4267 /* OutlinerDataSource.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = OutlinerDataSource.m; sourceTree = "<group>"; };
 		F2AFD0E105FFE153008F4267 /* OutlinerDataSource.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = OutlinerDataSource.h; sourceTree = "<group>"; };
 		F2B0AA6C08321018009B9254 /* MyFileMergeController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyFileMergeController.h; sourceTree = "<group>"; };
@@ -354,6 +370,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D15AC340486D014006FF6A4 /* Cocoa.framework in Frameworks */,
+				F2AB95040A4C9E4F00C4627E /* Sparkle.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -363,6 +380,7 @@
 		1058C7A6FEA54F5311CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F2AB94F10A4C9E4F00C4627E /* Sparkle.framework */,
 				1058C7A7FEA54F5311CA2CBB /* Cocoa.framework */,
 			);
 			name = "Linked Frameworks";
@@ -699,6 +717,7 @@
 				8D15AC2B0486D014006FF6A4 /* Resources */,
 				8D15AC300486D014006FF6A4 /* Sources */,
 				8D15AC330486D014006FF6A4 /* Frameworks */,
+				F2AB961E0A4CA41300C4627E /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -918,7 +937,10 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEBUGGING_SYMBOLS = YES;
 				DEPLOYMENT_LOCATION = NO;
-				FRAMEWORK_SEARCH_PATHS = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(SRCROOT)",
+				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_ENABLE_TRIGRAPHS = NO;
@@ -961,7 +983,10 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEPLOYMENT_LOCATION = NO;
 				DEPLOYMENT_POSTPROCESSING = NO;
-				FRAMEWORK_SEARCH_PATHS = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(SRCROOT)",
+				);
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_ENABLE_TRIGRAPHS = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
@@ -996,6 +1021,10 @@
 				ARCHS = (
 					ppc,
 					i386,
+				);
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(SRCROOT)",
 				);
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;

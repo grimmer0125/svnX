@@ -35,6 +35,7 @@
             SUPERCLASS = NSArrayController; 
         }, 
         {CLASS = MyDragSupportTableView; LANGUAGE = ObjC; SUPERCLASS = NSTableView; }, 
+        {CLASS = NSDatePicker; LANGUAGE = ObjC; SUPERCLASS = NSControl; }, 
         {CLASS = NSObject; LANGUAGE = ObjC; }, 
         {
             ACTIONS = {newRepositoryItem = id; onValidate = id; openPath = id; }; 
@@ -53,7 +54,6 @@
             CLASS = SUUpdater; 
             LANGUAGE = ObjC; 
             OUTLETS = {
-                checkForUpdatesText = NSTextField; 
                 delegate = id; 
                 profileMoreInfoButton = NSButton; 
                 profileMoreInfoView = NSView; 

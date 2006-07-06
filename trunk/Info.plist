@@ -46,7 +46,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>0.9.7</string>
+	<string>0.9.8</string>
 	<key>NSAppleScriptEnabled</key>
 	<string>YES</string>
 	<key>NSMainNibFile</key>
@@ -54,6 +54,6 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>SUFeedURL</key> 
-	<string>http://svnx-releases.lachoseinteractive.net/</string>
+	<string>http://www.lachoseinteractive.net/en/community/subversion/svnx/history/rss/</string>
 </dict>
 </plist>

@@ -13,6 +13,11 @@
 		8D15AC320486D014006FF6A4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A37F4B0FDCFA73011CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		8D15AC340486D014006FF6A4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A7FEA54F5311CA2CBB /* Cocoa.framework */; };
 		F203D9E409C2E78100857915 /* Finder.icns in Resources */ = {isa = PBXBuildFile; fileRef = F203D9E309C2E78100857915 /* Finder.icns */; };
+		F20521D10A5D2159003F966A /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F20521BE0A5D2159003F966A /* Sparkle.framework */; };
+		F20523280A5D2437003F966A /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = F20521BE0A5D2159003F966A /* Sparkle.framework */; };
+		F20524320A5D3C9A003F966A /* GetEthernetAddrSample.c in Sources */ = {isa = PBXBuildFile; fileRef = F20524300A5D3C9A003F966A /* GetEthernetAddrSample.c */; };
+		F20524330A5D3C9A003F966A /* GetEthernetAddrSample.h in Headers */ = {isa = PBXBuildFile; fileRef = F20524310A5D3C9A003F966A /* GetEthernetAddrSample.h */; };
+		F20525080A5D3D7F003F966A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F205246A0A5D3D7E003F966A /* IOKit.framework */; };
 		F217F14905F9EC0700286411 /* SvnFileStatusToColourTransformer.h in Headers */ = {isa = PBXBuildFile; fileRef = F217F14705F9EC0700286411 /* SvnFileStatusToColourTransformer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F217F14A05F9EC0700286411 /* SvnFileStatusToColourTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = F217F14805F9EC0700286411 /* SvnFileStatusToColourTransformer.m */; };
 		F22004DE08099C6900F2CC97 /* Tasks.m in Sources */ = {isa = PBXBuildFile; fileRef = F22004DC08099C6900F2CC97 /* Tasks.m */; };
@@ -104,8 +109,6 @@
 		F2A62F1F06A2EA7000EC533F /* svnX.nib in Resources */ = {isa = PBXBuildFile; fileRef = 2A37F4B6FDCFA73011CA2CEA /* svnX.nib */; };
 		F2A62F2006A2EA7100EC533F /* MyRepository.nib in Resources */ = {isa = PBXBuildFile; fileRef = F29E410B069F0D22007CE672 /* MyRepository.nib */; };
 		F2A62F2C06A2EAEA00EC533F /* MySvnLogView.nib in Resources */ = {isa = PBXBuildFile; fileRef = F25913BC06A1C09100B5FFA9 /* MySvnLogView.nib */; };
-		F2AB95040A4C9E4F00C4627E /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2AB94F10A4C9E4F00C4627E /* Sparkle.framework */; };
-		F2AB96200A4CA41E00C4627E /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = F2AB94F10A4C9E4F00C4627E /* Sparkle.framework */; };
 		F2AFD0E205FFE153008F4267 /* OutlinerDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = F2AFD0E005FFE153008F4267 /* OutlinerDataSource.m */; };
 		F2AFD0E305FFE153008F4267 /* OutlinerDataSource.h in Headers */ = {isa = PBXBuildFile; fileRef = F2AFD0E105FFE153008F4267 /* OutlinerDataSource.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F2B0AA6E08321018009B9254 /* MyFileMergeController.h in Headers */ = {isa = PBXBuildFile; fileRef = F2B0AA6C08321018009B9254 /* MyFileMergeController.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -157,13 +160,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		F2AB961E0A4CA41300C4627E /* CopyFiles */ = {
+		F20523130A5D2318003F966A /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				F2AB96200A4CA41E00C4627E /* Sparkle.framework in CopyFiles */,
+				F20523280A5D2437003F966A /* Sparkle.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -181,6 +184,11 @@
 		8D15AC360486D014006FF6A4 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8D15AC370486D014006FF6A4 /* svnX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = svnX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F203D9E309C2E78100857915 /* Finder.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Finder.icns; sourceTree = "<group>"; };
+		F20521BE0A5D2159003F966A /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Sparkle.framework; path = sparkle/build/Release/Sparkle.framework; sourceTree = "<group>"; };
+		F20524020A5D3945003F966A /* SUUpdater.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = SUUpdater.h; path = sparkle/build/Release/Sparkle.framework/Versions/A/Headers/SUUpdater.h; sourceTree = "<group>"; };
+		F20524300A5D3C9A003F966A /* GetEthernetAddrSample.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = GetEthernetAddrSample.c; sourceTree = "<group>"; };
+		F20524310A5D3C9A003F966A /* GetEthernetAddrSample.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GetEthernetAddrSample.h; sourceTree = "<group>"; };
+		F205246A0A5D3D7E003F966A /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
 		F217F14705F9EC0700286411 /* SvnFileStatusToColourTransformer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SvnFileStatusToColourTransformer.h; sourceTree = "<group>"; };
 		F217F14805F9EC0700286411 /* SvnFileStatusToColourTransformer.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = SvnFileStatusToColourTransformer.m; sourceTree = "<group>"; };
 		F22004DC08099C6900F2CC97 /* Tasks.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = Tasks.m; sourceTree = "<group>"; };
@@ -278,7 +286,6 @@
 		F2A62BF706A2B60D00EC533F /* SvnDateTransformer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SvnDateTransformer.m; sourceTree = "<group>"; };
 		F2A62C4906A2BEDD00EC533F /* MyRadioButtonTableColumn.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = MyRadioButtonTableColumn.m; sourceTree = "<group>"; };
 		F2A62C4A06A2BEDD00EC533F /* MyRadioButtonTableColumn.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyRadioButtonTableColumn.h; sourceTree = "<group>"; };
-		F2AB94F10A4C9E4F00C4627E /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
 		F2AFD0E005FFE153008F4267 /* OutlinerDataSource.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = OutlinerDataSource.m; sourceTree = "<group>"; };
 		F2AFD0E105FFE153008F4267 /* OutlinerDataSource.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = OutlinerDataSource.h; sourceTree = "<group>"; };
 		F2B0AA6C08321018009B9254 /* MyFileMergeController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyFileMergeController.h; sourceTree = "<group>"; };
@@ -339,7 +346,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D15AC340486D014006FF6A4 /* Cocoa.framework in Frameworks */,
-				F2AB95040A4C9E4F00C4627E /* Sparkle.framework in Frameworks */,
+				F20521D10A5D2159003F966A /* Sparkle.framework in Frameworks */,
+				F20525080A5D3D7F003F966A /* IOKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -349,7 +357,8 @@
 		1058C7A6FEA54F5311CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				F2AB94F10A4C9E4F00C4627E /* Sparkle.framework */,
+				F205246A0A5D3D7E003F966A /* IOKit.framework */,
+				F20521BE0A5D2159003F966A /* Sparkle.framework */,
 				1058C7A7FEA54F5311CA2CBB /* Cocoa.framework */,
 			);
 			name = "Linked Frameworks";
@@ -410,6 +419,9 @@
 		2A37F4AFFDCFA73011CA2CEA /* Other Sources */ = {
 			isa = PBXGroup;
 			children = (
+				F20524300A5D3C9A003F966A /* GetEthernetAddrSample.c */,
+				F20524310A5D3C9A003F966A /* GetEthernetAddrSample.h */,
+				F20524020A5D3945003F966A /* SUUpdater.h */,
 				F271B71F06B83F7200D07CCB /* MyDocumentationWindow.h */,
 				F271B72006B83F7200D07CCB /* MyDocumentationWindow.m */,
 				F2C205BF06012B59004C843B /* ImageAndTextCell.h */,
@@ -672,6 +684,7 @@
 				F2B0AA7E0832102C009B9254 /* MySvnMoveController.h in Headers */,
 				F2695D960832637600B47C96 /* MySvnFilesArrayController.h in Headers */,
 				F22C6BC2096D51E500BAC56B /* SvnListParser.h in Headers */,
+				F20524330A5D3C9A003F966A /* GetEthernetAddrSample.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -686,7 +699,7 @@
 				8D15AC2B0486D014006FF6A4 /* Resources */,
 				8D15AC300486D014006FF6A4 /* Sources */,
 				8D15AC330486D014006FF6A4 /* Frameworks */,
-				F2AB961E0A4CA41300C4627E /* CopyFiles */,
+				F20523130A5D2318003F966A /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -705,6 +718,15 @@
 			isa = PBXProject;
 			buildConfigurationList = F2FD1A1E0855F03C00550248 /* Build configuration list for PBXProject "svnX" */;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+				Italian,
+				Polish,
+				zh_TW,
+			);
 			mainGroup = 2A37F4AAFDCFA73011CA2CEA /* svnX */;
 			projectDirPath = "";
 			targets = (
@@ -825,6 +847,7 @@
 				F2B0AA7F0832102C009B9254 /* MySvnMoveController.m in Sources */,
 				F2695D980832638300B47C96 /* MySvnFilesArrayController.m in Sources */,
 				F22C6BC3096D51E500BAC56B /* SvnListParser.m in Sources */,
+				F20524320A5D3C9A003F966A /* GetEthernetAddrSample.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -876,7 +899,9 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(FRAMEWORK_SEARCH_PATHS)",
 					"$(SRCROOT)",
+					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_1)",
 				);
+				FRAMEWORK_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)/sparkle/build/Release\"";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_ENABLE_TRIGRAPHS = NO;
@@ -890,7 +915,13 @@
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
-				LIBRARY_SEARCH_PATHS = /Users/dom/Documents/Development/svnX;
+				LIBRARY_SEARCH_PATHS = (
+					/Users/dom/Documents/Development/svnX,
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_1)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_2)",
+				);
+				LIBRARY_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)/sparkle/build/Sparkle.build/Release/Sparkle.build/Objects-normal/i386\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_2 = "\"$(SRCROOT)/sparkle/build/Sparkle.build/Release/Sparkle.build/Objects-normal/ppc\"";
 				MACOSX_DEPLOYMENT_TARGET = "";
 				OPTIMIZATION_CFLAGS = "-O0";
 				OTHER_CFLAGS = "";
@@ -922,7 +953,9 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(FRAMEWORK_SEARCH_PATHS)",
 					"$(SRCROOT)",
+					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_1)",
 				);
+				FRAMEWORK_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)/sparkle/build/Release\"";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_ENABLE_TRIGRAPHS = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
@@ -934,7 +967,13 @@
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
-				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_1)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_2)",
+				);
+				LIBRARY_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)/sparkle/build/Sparkle.build/Release/Sparkle.build/Objects-normal/i386\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_2 = "\"$(SRCROOT)/sparkle/build/Sparkle.build/Release/Sparkle.build/Objects-normal/ppc\"";
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
@@ -961,12 +1000,21 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(FRAMEWORK_SEARCH_PATHS)",
 					"$(SRCROOT)",
+					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_1)",
 				);
+				FRAMEWORK_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)/sparkle/build/Release\"";
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = svnX_Prefix.pch;
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_1)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_2)",
+				);
+				LIBRARY_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)/sparkle/build/Sparkle.build/Release/Sparkle.build/Objects-normal/i386\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_2 = "\"$(SRCROOT)/sparkle/build/Sparkle.build/Release/Sparkle.build/Objects-normal/ppc\"";
 				PRODUCT_NAME = svnX;
 				WRAPPER_EXTENSION = app;
 			};

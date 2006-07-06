@@ -1,4 +1,5 @@
 #import "MyApp.h"
+#import "GetEthernetAddrSample.h"
 
 @implementation MyApp
 
@@ -98,5 +99,46 @@
 	[tasksManager newTaskWithDictionary:taskObj];
 }
 
+#pragma mark -
+#pragma mark Sparkle Plus delegate methods
 
+- (NSMutableArray *)updaterCustomizeProfileInfo:(NSMutableArray *)profileInfo
+{
+	NSString *MACAddress = [self getMACAddress];
+	NSArray *profileDictKeys = [NSArray arrayWithObjects:@"key", @"visibleKey", @"value", @"visibleValue", nil];
+
+	[profileInfo addObject:[NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:@"MACAddr",@"MAC Address", MACAddress, MACAddress, nil] forKeys:profileDictKeys]];
+
+	NSLog(@"%@", profileInfo);
+	
+	return profileInfo;
+}
+
+- (NSString *)getMACAddress
+{	
+	EnetData data[10];
+	UInt32 entryCount = 10;
+	MACAddress mac;
+
+	int err = GetEthernetAddressInfo((EnetData*)&data, &entryCount);
+
+	if ( err == noErr )
+	{
+		NSValue *value = [NSValue valueWithBytes:&data[0].macAddress objCType:@encode(MACAddress)];
+		[value getValue:&mac];
+		NSMutableString *s = [NSMutableString string];
+		int i;
+		
+		for ( i=0; i<kIOEthernetAddressSize; i++ )
+		{
+			[s appendFormat:@"%02X", mac[i]];
+		
+			if(i < kIOEthernetAddressSize-1) [s appendString:@":"];
+		}
+		
+		return s;
+	}
+	
+	return @"";
+}
 @end

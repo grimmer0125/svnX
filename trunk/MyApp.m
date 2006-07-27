@@ -109,7 +109,7 @@
 
 	[profileInfo addObject:[NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:@"MACAddr",@"MAC Address", MACAddress, MACAddress, nil] forKeys:profileDictKeys]];
 
-	NSLog(@"%@", profileInfo);
+	//NSLog(@"%@", profileInfo);
 	
 	return profileInfo;
 }

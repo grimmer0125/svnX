@@ -677,17 +677,25 @@
 }
 
 // Have the Finder show the parent folder for the selected files.
+///if no row in the list is selected then 
+///open the root directory of the project
 - (void)revealInFinder:(id)sender
 {
-	NSEnumerator *enumerator = [[svnFilesAC selectedObjects] objectEnumerator];
-	id file;
-			
 	NSWorkspace *ws = [NSWorkspace sharedWorkspace];
-	while(file = [enumerator nextObject]) 
-	{
-		NSURL *fileURL = [NSURL fileURLWithPath:[file valueForKey:@"fullPath"]];
-		[ws selectFile:[fileURL path] inFileViewerRootedAtPath:nil];
-	}	
+	
+	if([[svnFilesAC selectedObjects] count] <= 0) {
+		NSURL *fileURL = [NSURL fileURLWithPath:[document workingCopyPath]];
+		[ws selectFile:[fileURL path] inFileViewerRootedAtPath:nil];		
+	} else {
+		NSEnumerator *enumerator = [[svnFilesAC selectedObjects] objectEnumerator];
+		id file;
+		
+		while(file = [enumerator nextObject]) 
+		{
+			NSURL *fileURL = [NSURL fileURLWithPath:[file valueForKey:@"fullPath"]];
+			[ws selectFile:[fileURL path] inFileViewerRootedAtPath:nil];
+		}
+	}
 }
 
 @end

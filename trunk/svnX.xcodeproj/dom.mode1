@@ -222,6 +222,8 @@
 			<key>Layout</key>
 			<array>
 				<dict>
+					<key>BecomeActive</key>
+					<true/>
 					<key>ContentConfiguration</key>
 					<dict>
 						<key>PBXBottomSmartGroupGIDs</key>
@@ -266,18 +268,19 @@
 								<string>2A37F4C3FDCFA73011CA2CEA</string>
 								<string>1058C7A6FEA54F5311CA2CBB</string>
 								<string>1C37FBAC04509CD000000102</string>
+								<string>F28FC4F40A7BA9A10008C757</string>
 								<string>1C37FABC05509CD000000102</string>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>73</integer>
-									<integer>28</integer>
-									<integer>0</integer>
+									<integer>95</integer>
+									<integer>94</integer>
+									<integer>93</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 0}, {279, 673}}</string>
+							<string>{{0, 1100}, {279, 673}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -309,8 +312,6 @@
 					<key>Dock</key>
 					<array>
 						<dict>
-							<key>BecomeActive</key>
-							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
@@ -328,7 +329,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>F21CC7E30A78AA5A00C83D18</string>
+										<string>F28FC4F90A7BA9E20008C757</string>
 										<key>history</key>
 										<array>
 											<string>F259B1E70825290B00D4BFD6</string>
@@ -437,7 +438,7 @@
 											<string>F20525460A5D49E5003F966A</string>
 											<string>F21CC7DA0A78AA4500C83D18</string>
 											<string>F21CC7DB0A78AA4500C83D18</string>
-											<string>F21CC7D00A78AA2D00C83D18</string>
+											<string>F21CC7E30A78AA5A00C83D18</string>
 										</array>
 										<key>prevStack</key>
 										<array>
@@ -519,7 +520,6 @@
 											<string>F205254B0A5D49E5003F966A</string>
 											<string>F205254C0A5D49E5003F966A</string>
 											<string>F21CC7DC0A78AA4500C83D18</string>
-											<string>F21CC7DD0A78AA4500C83D18</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -577,9 +577,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>F21CC7A50A789FEC00C83D18</string>
+				<string>F28FC4F60A7BA9A10008C757</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>F21CC7A60A789FEC00C83D18</string>
+				<string>F28FC4F70A7BA9A10008C757</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -713,9 +713,7 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>F2B0D064083369BC0098F5B4</string>
-		<string>1C0AD2B3069F1EA900FABCE6</string>
 		<string>/Users/dom/Documents/dev/svnX/svnX.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
@@ -757,6 +755,8 @@
 							<string>344pt</string>
 						</dict>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXBuildLogShowsTranscriptDefaultKey</key>
@@ -798,7 +798,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>F2B0D064083369BC0098F5B4</string>
-				<string>F21CC7CC0A78AA2700C83D18</string>
+				<string>F28FC4EE0A7BA9640008C757</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>

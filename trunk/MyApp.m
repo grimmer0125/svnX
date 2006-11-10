@@ -29,6 +29,7 @@
 	[dictionary setObject:@"/usr/local/bin" forKey:@"svnBinariesFolder"];
 	[dictionary setObject:[NSNumber numberWithBool:YES] forKey:@"cacheSvnQueries"];
 	[dictionary setObject:[NSNumber numberWithInt:0] forKey:@"defaultDiffApplication"];
+	[dictionary setObject:@"%m/%d/%y %H:%M:%S" forKey:@"dateformat"];
 
 	[dictionary setObject:[NSNumber numberWithBool:YES] forKey:@"addWorkingCopyOnCheckout"];
 	
@@ -63,7 +64,7 @@
 }
 
 - (void)fileHistoryOpenSheetForItem:(NSString *)path  // Compare a single file in a svnX window. Invoked from Applescript.
-{
+{	
 	[[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
 	[favoriteWorkingCopies fileHistoryOpenSheetForItem:path];
 }

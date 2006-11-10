@@ -13,7 +13,7 @@
 
 + (Class)transformedValueClass
 {
-    return [NSDate class];
+    return [NSString class];
 }
 
 + (BOOL)allowsReverseTransformation
@@ -25,8 +25,11 @@
 {
 	NSString *dateString = [NSString stringWithFormat:@"%@ %@ +0000", [aString substringToIndex:10], [aString substringWithRange:NSMakeRange(11, 8)]];
 	NSDate *date = [NSDate dateWithString:dateString];
+	NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] initWithDateFormat:[[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"dateformat"] allowNaturalLanguage:NO] autorelease];
+
+	NSString *formattedDateString = [dateFormatter stringFromDate:date];
 	
-	return date;
+	return formattedDateString;
 }
 
 

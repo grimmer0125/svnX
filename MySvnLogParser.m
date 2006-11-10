@@ -36,6 +36,7 @@
 	if ( [elementName isEqualToString:@"logentry"] )
 	{
 		[self setTmpDict:attributeDict];
+		[attributeDict setObject:[NSNumber numberWithInt:[[attributeDict objectForKey:@"revision"] intValue]] forKey:@"revision_n"];
 		[[self logArray] addObject:[self tmpDict]];
 	}
 	else

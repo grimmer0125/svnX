@@ -155,10 +155,10 @@
 - (void)fileHistoryOpenSheetForItem:(NSString *)aPath
 {
 	
-	id wc;	
+	id wc = nil;	
 	id bestMatchWc;
 	int bestMatchScore = 0;
-	id matchingOpenWorkingCopyDocument;
+	id matchingOpenWorkingCopyDocument = nil;
 
 	// Find among the known working copies one that has a matching path
 	

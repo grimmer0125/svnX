@@ -8,6 +8,9 @@
 // $3 : revision id (optional)
 //
  
+define("CACHE_VERSION", "1");
+define("CACHE_URL", "com.lachoseinteractive.svnX");
+
 $userCache = $_SERVER["argv"][1];
 $url = $_SERVER["argv"][2];
 
@@ -30,7 +33,7 @@ if ( chdir($userCache) )
       $url_path .=  implode('/_child_'.$rev.'/', explode('/', $url_arr['path']));
    }
    
-   $path = "com.lachoseinteractive.svnX/".$url_arr['scheme'].'/'.
+   $path = CACHE_URL."/".$url_arr['scheme'].'/'.
             $url_arr['host'].'/'.
             (($url_arr['port']=='')?('_'):($url_arr['port'])).'/' .
             (($url_arr['user']=='')?('_'):($url_arr['user'])).'/' .
@@ -38,7 +41,30 @@ if ( chdir($userCache) )
 
    $a = `/bin/mkdir -p '$path'`;
    
-   echo realpath("$userCache/$path");
+   //  check the cache version, destroy the cache if not compatible
+   $cache_version_path = CACHE_URL.'/cache_version.txt';
+   
+   if ( file_exists($cache_version_path) )
+   {
+	   $cache_version = file_get_contents($cache_version_path);
+   	
+		if ( intval($cache_version) < intval(CACHE_VERSION) )
+		{
+			// cache is outdated (because svnX must have a new way to deal with it) => destroy the cache
+			$a = shell_exec("rm -rf '".CACHE_URL."'/*");
+			mkdir(CACHE_URL);
+			shell_exec("echo '".CACHE_VERSION."' > '$cache_version_path'");
+		}
+   }
+   else
+	{
+		// cache has no version => destroy the cache
+		$a = shell_exec("rm -rf '".CACHE_URL."'/*");
+		mkdir(CACHE_URL);
+		shell_exec("echo '".CACHE_VERSION."' > '$cache_version_path'");
+	}
+ 
+  echo realpath("$userCache/$path");
 }
 
 ?>

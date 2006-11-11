@@ -1,4 +1,4 @@
-#! /usr/bin/php
+#! /usr/bin/env php
 <?
 //
 // Creates and a returns a unique path for caching items related to an url.

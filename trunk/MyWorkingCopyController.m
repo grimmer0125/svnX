@@ -200,6 +200,7 @@
 
 	[[self document] fetchSvnStatusVerbose];
 }
+
 - (void)fetchSvnInfo
 {
 	[self startProgressIndicator];
@@ -221,7 +222,6 @@
 	[self stopProgressIndicator];
 //	[textResult setString:[[self document] resultString]];
 //	[tableResult reloadData];
-
 
 	[outliner setIndentationPerLevel:8];
 	

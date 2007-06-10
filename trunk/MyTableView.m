@@ -11,11 +11,7 @@
 
 - (void)awakeFromNib
 {
-	[self setDoubleAction:@selector(onDoubleClick:)];
-	
-//	[[self tableColumnWithIdentifier:@"6"] setResizable:NO];
-//	[[self tableColumnWithIdentifier:@"path"] setMinWidth:(float)0];
-	[[self tableColumnWithIdentifier:@"path"] setWidth:(float)10000];
+	[self setDoubleAction:@selector(onDoubleClick:)];	
 }
 
 - (void)onDoubleClick:(id)sender

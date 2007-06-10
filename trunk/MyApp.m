@@ -32,6 +32,7 @@
 	[dictionary setObject:@"%m/%d/%y %H:%M:%S" forKey:@"dateformat"];
 
 	[dictionary setObject:[NSNumber numberWithBool:YES] forKey:@"addWorkingCopyOnCheckout"];
+	[dictionary setObject:[NSNumber numberWithBool:NO] forKey:@"useOldParsingMethod"];
 	
 	[[NSUserDefaultsController sharedUserDefaultsController] setInitialValues:dictionary];
 

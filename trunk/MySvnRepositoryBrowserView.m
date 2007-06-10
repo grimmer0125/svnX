@@ -250,7 +250,7 @@
 		[row setObject:path forKey:@"path"];
 		[row setObject:theURL forKey:@"url"];
 
-		if ( [fileType isEqualToString:@""] && [[row objectForKey:@"isDir"] boolValue] )
+		if ( [[row objectForKey:@"isDir"] boolValue] )
 		{
 			icon = [NSImage imageNamed:@"FolderRef"];
 			[row setObject:NSFileTypeDirectory forKey:@"fileType"];

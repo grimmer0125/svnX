@@ -47,11 +47,33 @@
 	[NSValueTransformer setValueTransformer:[[[TaskStatusToColorTransformer alloc] init] autorelease] forName:@"TaskStatusToColor"]; // used by Activity Window in svnX.nib
 }
 
+- (bool)checkSVNExistence:(bool)warn
+{
+	NSString *svnPath = [[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"svnBinariesFolder"];
+	NSFileManager* fm = [NSFileManager defaultManager];
+	NSString* svnFilePath = [svnPath stringByAppendingPathComponent:@"svn"];
+	bool exists = [fm fileExistsAtPath:svnFilePath];
+
+	if(!exists && warn) {
+		NSString* err = [NSString stringWithFormat:@"Make sure svn binary is present at path :\n%@.\nIs Subversion client installed ? If so, make sure the path is properly set in the preferences.", svnPath];
+		
+		NSAlert *alert = [NSAlert alertWithMessageText:@"Error: Unable to locate svn binary."
+										 defaultButton:@"Open Preferences"
+									   alternateButton:nil
+										   otherButton:nil
+							 informativeTextWithFormat:err];
+		
+		[alert setAlertStyle:NSCriticalAlertStyle];
+		[alert runModal];							 
+		[preferencesWindow makeKeyAndOrderFront:self];
+	}
+	return exists;
+}
 
 - (void)awakeFromNib
 {
-	[favoriteWorkingCopiesWindow makeKeyAndOrderFront:self];
-
+	[self checkSVNExistence:true];
+	[favoriteWorkingCopiesWindow makeKeyAndOrderFront:self];	
 }
 
 - (IBAction)openFavorite:(id)sender

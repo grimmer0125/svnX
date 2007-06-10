@@ -20,7 +20,7 @@
 BASE=`basename "$7"`
 fileExt2="${BASE##*.}"
 
-if [ "$fileExt2" == "$BASE" ]
+if [ "$fileExt2" == "$BASE" -o "$fileExt2" == "tmp" ]
 then
 	firstTempFile=/tmp/svnx-opendiff_$$.tmp
 	secondTempFile=/tmp/svnx-opendiff2_$$.tmp
@@ -35,7 +35,13 @@ cp -f "$7" "$secondTempFile"
 # Sometimes, svn diff wants us to diff from a tmp file. (don't know why)
 # We want to diff the real working copy file.
 
-f=`echo "$7" | sed -e 's/\.svn\/tmp\/\(.*\)\.tmp$/\1/'`
+tmpFileFlag=`echo "$7" | sed -E 's/.*svndiff(\.[0-9]+)?\.tmp$/1/'`
+if [ "$tmpFileFlag" == "1" ]
+then
+	f=`echo "$5" | sed -E 's/(.*)	\(working copy\)$/\1/'`
+else
+	f=`echo "$7" | sed -e 's/\.svn\/tmp\/\(.*\)\.tmp$/\1/'`
+fi
 
 name=$5
 workingCopyFlag=${name/*(working copy)/1}
@@ -62,7 +68,7 @@ codewarrior_diff()
 }
 
 case "$appToDoDiffWith" in
-	"$SVNX_CODEWARRIOR_DIFF" ) codewarrior_diff $firstFile $secondFile ;;
+	"$SVNX_CODEWARRIOR_DIFF" ) codewarrior_diff "$firstFile" "$secondFile" ;;
 	"$SVNX_TEXTWRANGLER_DIFF" ) /usr/bin/twdiff --case-sensitive "$firstFile" "$secondFile" ;;
 	"$SVNX_BBEDIT_DIFF" ) /usr/bin/bbdiff --case-sensitive "$firstFile" "$secondFile" ;;
 

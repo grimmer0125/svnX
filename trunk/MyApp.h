@@ -23,4 +23,5 @@
 
 - (IBAction)openFavorite:(id)sender;
 
+- (bool)checkSVNExistence:(bool)warn;
 @end

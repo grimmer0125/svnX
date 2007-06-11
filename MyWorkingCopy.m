@@ -123,7 +123,6 @@
 	if ( ![[[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"useOldParsingMethod"] boolValue] )
 	{
 		[options addObject:@"--xml"];
-		NSLog(@"Using new parsing method (xml) %@", options);
 	}
 	
 	[MySvn    statusAtWorkingCopyPath: [self workingCopyPath]
@@ -486,11 +485,12 @@
 			removable = YES;
 			lockable = NO;			
 		}
-		if ( [column1 isEqualToString:@"A"] )
+		if ( [column1 isEqualToString:@"A"] || [column1 isEqualToString:@"R"] )
 		{
 			revertable = YES;
 			committable = YES;
 			lockable = NO;
+			updatable = YES;
 		}
 		if ( [column1 isEqualToString:@"D"] )
 		{
@@ -498,6 +498,7 @@
 			if ( [[NSFileManager defaultManager] fileExistsAtPath:itemFullPath isDirectory:&isDir] ) addable = YES;
 			revertable = YES;
 			committable = YES;
+			updatable = YES;
 		}
 		if ( [column1 isEqualToString:@"C"] || [column2 isEqualToString:@"C"] )
 		{

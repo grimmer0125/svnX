@@ -78,8 +78,8 @@
 	[items setObject:refreshItem forKey:@"Refresh"];
 	[refreshItem release];
 	
-	[fileMergeItem setPaletteLabel:@"FileMerge"];
-	[fileMergeItem setLabel:@"FileMerge"];
+	[fileMergeItem setPaletteLabel:@"Diff"];
+	[fileMergeItem setLabel:@"Diff"];
 	[fileMergeItem setToolTip:@"Compares selected file with its pristine copy.\nPress Alt while clicking to compare to other revisions."];
 	[fileMergeItem setTarget:controller];
 	[fileMergeItem setAction:@selector(svnFileMerge:)];

@@ -72,8 +72,8 @@
 	[items setObject:svnExport forKey:@"svnExport"];
 	[svnExport release];
 	
-	[fileMergeItem setPaletteLabel:@"FileMerge"];
-	[fileMergeItem setLabel:@"FileMerge"];
+	[fileMergeItem setPaletteLabel:@"Diff"];
+	[fileMergeItem setLabel:@"Diff"];
 	[fileMergeItem setToolTip:@"Compare revisions of a file in the repository."];
 	[fileMergeItem setTarget:document];
 	[fileMergeItem setAction:@selector(svnFileMerge:)];

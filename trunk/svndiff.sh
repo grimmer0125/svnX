@@ -71,6 +71,7 @@ case "$appToDoDiffWith" in
 	"$SVNX_CODEWARRIOR_DIFF" ) codewarrior_diff "$firstFile" "$secondFile" ;;
 	"$SVNX_TEXTWRANGLER_DIFF" ) /usr/bin/twdiff --case-sensitive "$firstFile" "$secondFile" ;;
 	"$SVNX_BBEDIT_DIFF" ) /usr/bin/bbdiff --case-sensitive "$firstFile" "$secondFile" ;;
+	"$SVNX_ARAXISMRGE_DIFF" ) /usr/local/bin/araxissvndiff "$firstFile" "$secondFile" "$firstFile" "$secondFile" ;;
 
 	# $SVNX_FILEMERGE_DIFF | * is kind of redundant, as * matches $SVNX_FILEMERGE_DIFF
 	# as well, but it makes the code more explicit

@@ -244,7 +244,7 @@
 			if ( [wc_status attributeForName:@"revision"] != nil )
 			revisionCurrent = [[wc_status attributeForName:@"revision"] stringValue];
 
-			// working copy lock? (when --show-update is NOT usedˆ
+			// working copy lock? (when --show-update is NOT used)
 			NSArray *lockInWCElements = [wc_status elementsForName:@"lock"];
 			if ( [lockInWCElements count] > 0 )
 			{

@@ -806,7 +806,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "echo \"Patching Sparkle\"\ncd sparkle\npatch -Np0 < ../fixSUUpdater.patch\necho \"Building Sparkle\"\nxcodebuild\ncd ..\n";
+			shellScript = "#echo \"Patching Sparkle\"\ncd sparkle\n#patch -Np0 < ../fixSUUpdater.patch\necho \"Building Sparkle\"\nxcodebuild\ncd ..\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

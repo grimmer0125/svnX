@@ -356,7 +356,7 @@
 		else
 		if ( [itemStatus isEqualToString:@"conflicted"] )
 		{
-			column1 = @"R";
+			column1 = @"C";
 		}
 		else
 		if ( [itemStatus isEqualToString:@"ignored"] )

@@ -397,7 +397,10 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 	
 	if ( ![[taskObj objectForKey:@"status"] isEqualToString:@"error"] )
 	{
-		int exitCode = [[taskObj objectForKey:@"task"] terminationStatus];
+		int exitCode = 0;
+		if ( ![[taskObj objectForKey:@"task"] isRunning] )
+			exitCode = [[taskObj objectForKey:@"task"] terminationStatus];
+		
 		[taskObj setValue:[NSNumber numberWithInt:exitCode] forKey:@"exitCode"];
 		
 		// in case taskCompleted is late, which is likely, we set status value here too

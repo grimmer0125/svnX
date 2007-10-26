@@ -123,7 +123,7 @@
 {
 	// this delegate method gives us a chance to antialias the icon
 	[[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
-	NSImage *icon = [cell image];
+	NSImage *icon = [[cell image] retain];
 	[icon setSize:NSMakeSize(13, 13)];
 	[cell setImage:icon];
 

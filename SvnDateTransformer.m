@@ -7,6 +7,10 @@
 //
 
 #import "SvnDateTransformer.h"
+#include "CommonUtils.h"
+
+
+static NSDateFormatter* gDateFormatter = nil;
 
 
 @implementation SvnDateTransformer
@@ -16,21 +20,68 @@
     return [NSString class];
 }
 
+
 + (BOOL)allowsReverseTransformation
 {
     return NO;
 }
 
-- (id)transformedValue:(id)aString
-{
-	NSString *dateString = [NSString stringWithFormat:@"%@ %@ +0000", [aString substringToIndex:10], [aString substringWithRange:NSMakeRange(11, 8)]];
-	NSDate *date = [NSDate dateWithString:dateString];
-	NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] initWithDateFormat:[[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"dateformat"] allowNaturalLanguage:NO] autorelease];
 
-	NSString *formattedDateString = [dateFormatter stringFromDate:date];
-	
-	return formattedDateString;
+//----------------------------------------------------------------------------------------
+
++ (NSDateFormatter*) formatter
+{
+    return gDateFormatter;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (id) init
+{
+	self = [super init];
+	if (gDateFormatter == nil)
+	{
+		[[NSUserDefaultsController sharedUserDefaultsController]
+								addObserver: self
+								forKeyPath:  @"values.dateformat"
+								options:     NSKeyValueObservingOptionNew
+								context:     NULL];
+
+		gDateFormatter = [[NSDateFormatter alloc]
+								initWithDateFormat:   GetPreference(@"dateformat")
+								allowNaturalLanguage: NO];
+	}
+
+	return self;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) observeValueForKeyPath: (NSString*)     keyPath
+		 ofObject:               (id)            object
+		 change:                 (NSDictionary*) change
+		 context:                (void*)         context
+{
+	[gDateFormatter release];
+	gDateFormatter = [[NSDateFormatter alloc]
+							initWithDateFormat: GetPreference(@"dateformat")
+							allowNaturalLanguage: NO];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (id) transformedValue: (id) aString
+{
+	NSString* dateString = [NSString stringWithFormat: @"%@ %@ +0000",
+										[aString substringToIndex: 10],
+										[aString substringWithRange: NSMakeRange(11, 8)]];
+
+	return [gDateFormatter stringFromDate: [NSDate dateWithString: dateString]];
 }
 
 
 @end
+

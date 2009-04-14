@@ -1,108 +1,120 @@
 #import "MySvnLogAC.h"
+#include "CommonUtils.h"
+
 
 @implementation MySvnLogAC
 
-- (void)search:(id)sender
+- (void) search: (id) sender
 {
-    [self setSearchString:[sender stringValue]];
-    [self rearrangeObjects];    
-}
+	enum {
+		vSearchMsgs		=	404,
+		vSearchPaths	=	405
+	};
 
-- (void)rearrange:(id)sender
-{
-    [self rearrangeObjects];    
-}
-
-- (NSArray *)arrangeObjects:(NSArray *)objects
-{
-    NSMutableArray *matchedObjects = [NSMutableArray arrayWithCapacity:[objects count]];
-    NSString *lowerSearch = [searchString lowercaseString];
-    BOOL shouldSearchPathsOrMessages = [[[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"shouldSearchPathsOrMessages"] boolValue];
-
-	NSEnumerator *oEnum = [objects objectEnumerator];
-    id item;
-	
-	if ((searchString != nil) && (![searchString isEqualToString:@""]))
+	NSString** searchString = ([sender tag] == vSearchPaths) ? &searchPaths : &searchMessages;
+	NSString* newSearchString = [sender stringValue];
+//	if (!*searchString != newSearchString)
+	if (![*searchString isEqualToString: newSearchString])
 	{
-		while (item = [oEnum nextObject])
-		{
-			NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-			NSString *lowerName = [[item valueForKeyPath:@"msg"] lowercaseString];
-			BOOL test = TRUE;
-			
-			
-			if ( shouldSearchPathsOrMessages && [item valueForKeyPath:@"paths"] != NULL )
-			{
-				BOOL testPath = FALSE;
-				id pathDict;
-				NSEnumerator *pEnum = [[item valueForKeyPath:@"paths"] objectEnumerator];
-				
-				while (pathDict = [pEnum nextObject])
-				{
-					NSAutoreleasePool *pool2 = [[NSAutoreleasePool alloc] init];
+		[*searchString autorelease];
+		*searchString = [newSearchString length] ? [newSearchString copy] : nil;
 
-					if ([[[pathDict valueForKeyPath:@"path"] lowercaseString] rangeOfString:lowerSearch].location != NSNotFound)
-					{
-						testPath = testPath || TRUE;
-					}
-					
-					if ( [pathDict valueForKeyPath:@"copyfrompath"] != NULL )
-					if ([[[pathDict valueForKeyPath:@"copyfrompath"] lowercaseString] rangeOfString:lowerSearch].location != NSNotFound)
-					{
-						testPath = testPath || TRUE;
-					}
-
-					[pool2 release];
-				}
-			
-				test = testPath;
-				
-			} else
-			{
-					if ([lowerName rangeOfString:lowerSearch].location == NSNotFound)
-					{
-						test = FALSE;
-					}
-
-			}
-					
-			if ( test ) [matchedObjects addObject:item];
-			
-			[pool release];
-		
-		}
-
-	    return [super arrangeObjects:matchedObjects];
-		
-	} else
-	{
-		return [super arrangeObjects:objects];
+		[self rearrangeObjects];
 	}
 }
 
 
-//  - dealloc:
-- (void)dealloc
+- (void) rearrange: (id) sender
 {
-    [self setSearchString: nil];    
-    [super dealloc];
+	[self rearrangeObjects];
 }
 
 
-// - searchString:
-- (NSString *)searchString
+- (void) clearSearchPaths
 {
-	return searchString;
+	[searchPaths autorelease];
+	searchPaths = nil;
+	[self rearrangeObjects];
 }
-// - setSearchString:
-- (void)setSearchString:(NSString *)newSearchString
+
+
+- (NSArray*) arrangeObjects: (NSArray*) objects
 {
-    if (searchString != newSearchString)
+	if (searchMessages || searchPaths)
 	{
-        [searchString autorelease];
-        searchString = [newSearchString copy];
-    }
+		NSString* const lowerSearchMsgs  = [searchMessages lowercaseString];
+		NSString* const lowerSearchPaths = [searchPaths lowercaseString];
+		NSMutableArray* const matchedObjects = [NSMutableArray arrayWithCapacity: [objects count]];
+
+		NSEnumerator* oEnum = [objects objectEnumerator];
+		id item;
+		while (item = [oEnum nextObject])
+		{
+			NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+			BOOL test = TRUE;
+
+			if (lowerSearchMsgs)
+			{
+				NSString* text = [item objectForKey: @"msg"];
+				test = ([[text lowercaseString] rangeOfString: lowerSearchMsgs].location != NSNotFound);
+			}
+
+			if (test && lowerSearchPaths)
+			{
+				test = FALSE;
+				NSArray* paths = [item objectForKey: @"paths"];
+				if (paths != nil)
+				{
+					id pathDict;
+					NSEnumerator* pEnum = [paths objectEnumerator];
+
+					while (pathDict = [pEnum nextObject])
+					{
+				//		NSAutoreleasePool* pool2 = [[NSAutoreleasePool alloc] init];
+
+						NSString* text = [pathDict objectForKey: @"path"];
+						if (text != nil && [[text lowercaseString]
+													rangeOfString: lowerSearchPaths].location != NSNotFound)
+						{
+							test = TRUE;
+							break;
+						}
+
+						text = [pathDict objectForKey: @"copyfrompath"];
+						if (text != nil && [[text lowercaseString]
+													rangeOfString: lowerSearchPaths].location != NSNotFound)
+						{
+							test = TRUE;
+							break;
+						}
+
+				//		[pool2 release];
+					}
+				}
+			}
+
+			if (test)
+				[matchedObjects addObject: item];
+
+			[pool release];
+		}
+
+		objects = matchedObjects;
+	}
+
+	return [super arrangeObjects: objects];
+}
+
+
+// - dealloc:
+- (void) dealloc
+{
+	[searchMessages autorelease];
+	[searchPaths autorelease];
+
+	[super dealloc];
 }
 
 
 @end
+

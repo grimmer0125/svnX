@@ -9,8 +9,8 @@
 #import <Cocoa/Cocoa.h>
 
 
-@interface DrawerLogView : NSView {
-
+@interface DrawerLogView : NSView
+{
     IBOutlet id _view;
 	IBOutlet NSTextView *logTextView;
 	IBOutlet NSObjectController *documentProxy;
@@ -19,5 +19,9 @@
 	
 	id currentTaskObj;
 }
+
+- (void) setUp;
+- (void) unload;
+- (void) setDocument: (id) aDocument;
 
 @end

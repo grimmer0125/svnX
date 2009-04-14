@@ -1,0 +1,48 @@
+{
+    IBClasses = (
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {
+            ACTIONS = {compare = id; compareUrl = id; validate = id; }; 
+            CLASS = MyFileMergeController; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                objectController = NSObjectController; 
+                svnLogView = MySvnLogView; 
+                svnSheet = NSWindow; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {
+            ACTIONS = {addDirectory = id; compare = id; validate = id; }; 
+            CLASS = MySvnCopyController; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                arrayController = NSArrayController; 
+                commitMessage = NSTextView; 
+                objectController = NSObjectController; 
+                svnLogView1 = MySvnLogView; 
+                svnLogView2 = MySvnLogView2; 
+                svnSheet = NSWindow; 
+                targetBrowser = MySvnRepositoryBrowserView; 
+                targetName = NSTextField; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {
+            CLASS = MySvnLogView; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {logsAC = NSArrayController; svnLog = id; }; 
+            SUPERCLASS = MySvnView; 
+        }, 
+        {CLASS = MySvnLogView2; LANGUAGE = ObjC; SUPERCLASS = MySvnLogView; }, 
+        {CLASS = MySvnRepositoryBrowserView; LANGUAGE = ObjC; SUPERCLASS = MySvnView; }, 
+        {
+            ACTIONS = {refetch = id; }; 
+            CLASS = MySvnView; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {"_view" = id; progress = id; refetch = id; }; 
+            SUPERCLASS = NSView; 
+        }
+    ); 
+    IBVersion = 1; 
+}

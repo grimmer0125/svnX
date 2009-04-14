@@ -1,96 +1,153 @@
+//
+// MySvnFilesArrayController.m
+//
+
 #import "MySvnFilesArrayController.h"
+#import "MyWorkingCopy.h"
 
-@implementation MySvnFilesArrayController
+//----------------------------------------------------------------------------------------
+// Compare names alphabetically & case insensitively.
 
-- (void)search:(id)sender
+static int
+compareNames (id obj1, id obj2, void* context)
 {
-    [self setSearchString:[sender stringValue]];
-    [self rearrangeObjects];    
+	#pragma unused(context)
+	return [[obj1 objectForKey: @"displayPath"] caseInsensitiveCompare: [obj2 objectForKey: @"displayPath"]];
 }
 
 
-- (NSArray *)arrangeObjects:(NSArray *)objects
-{
-    NSMutableArray *matchedObjects = [NSMutableArray arrayWithCapacity:[objects count]];
-    NSString *lowerSearch = [searchString lowercaseString];
-    
-	NSEnumerator *oEnum = [objects objectEnumerator];
-    id item;
-	
-    while (item = [oEnum nextObject])
-	{
-			NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-			NSString *lowerName = [[item valueForKeyPath:@"path"] lowercaseString];
-			BOOL test = FALSE;
+//----------------------------------------------------------------------------------------
 
-			if ( [document filterMode] == 1 && ( ![[item valueForKeyPath:@"col1"] isEqualToString:@"M"] ) )
+@implementation MySvnFilesArrayController
+
+- (void) search: (id) sender
+{
+	[self setSearchString:[sender stringValue]];
+	[self rearrangeObjects];    
+}
+
+
+- (NSArray*) arrangeObjects: (NSArray*) objects
+{
+    NSMutableArray* matchedObjects = [NSMutableArray arrayWithCapacity: [objects count]];
+
+	const int filter = [document filterMode];
+	const BOOL treeMode = ![document flatMode];
+	NSString* const	selectedPath = [document outlineSelectedPath];
+    NSString* const lowerSearch = (searchString != nil && [searchString length] > 0) ? [searchString lowercaseString] : nil;
+	BOOL isCommittable = NO;
+
+	NSEnumerator* oEnum;
+	id item;
+	for (oEnum = [objects objectEnumerator]; item = [oEnum nextObject]; )
+	{
+		NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+		BOOL test = TRUE;
+
+		if (filter != kFilterAll)
+		{
+			const unichar c1 = [[item objectForKey: @"col1"] characterAtIndex: 0],
+						  c2 = [[item objectForKey: @"col2"] characterAtIndex: 0];
+
+			switch (filter)
 			{
-				test = FALSE;
-			
-			} else
-			
-			if ( [document filterMode] == 2 && ( ![[item valueForKeyPath:@"col1"] isEqualToString:@"?"] ) )
-			{
-				test = FALSE;
-			
-			} else
-			
-			if ( [document filterMode] == 3 && ( ![[item valueForKeyPath:@"col1"] isEqualToString:@"!"] ) )
-			{
-				test = FALSE;
-			
-			} else
-			if ( [document flatMode] == YES )
-			{
-				test = TRUE;
-			
-			} else
-			{
-				if ( [[item valueForKeyPath:@"dirPath"] isEqualToString:[document outlineSelectedPath]] && ![[item valueForKeyPath:@"path"] isEqualToString:[document outlineSelectedPath]] )
-				{
-					test = TRUE;
-				}
+				case kFilterModified:
+					test = (c1 == 'M' || c2 == 'M');
+					break;
+
+				case kFilterNew:
+					test = (c1 == '?');
+					break;
+
+				case kFilterMissing:
+					test = (c1 == '!');
+					break;
+
+				case kFilterConflict:
+					test = (c1 == 'C' || c2 == 'C');
+					break;
+
+				case kFilterChanged:	// Modified, added, deleted, replaced, conflict, missing, wrong kind
+					test = (c1 == 'M' || c1 == 'A' || c1 == 'D' || c1 == 'R' || c1 == 'C' || c1 == '!' || c1 == '~');
+					if (!test)
+						test = (c2 == 'M' || c2 == 'C');		// Modified or conflict property
+					break;
 			}
-			
-		    if ((searchString != nil) && (![searchString isEqualToString:@""]))
-			{
-				if ([lowerName rangeOfString:lowerSearch].location == NSNotFound)
-				{
-					test = FALSE;
-				}
-			}
-		
-			if ( test ) [matchedObjects addObject:item];
-			
-			[pool release];
-		
-    }
-	
-    return [super arrangeObjects:matchedObjects];
+		}
+
+		NSString* path = nil;
+		if (test && treeMode)
+		{
+			test = [[item objectForKey: @"dirPath"] isEqualToString: selectedPath] &&
+					![(path = [item objectForKey: @"path"]) isEqualToString: selectedPath];
+		}
+
+		if (test && lowerSearch)
+		{
+			if (path == nil)
+				path = [item objectForKey: @"path"];
+			test = ([[path lowercaseString] rangeOfString: lowerSearch].location != NSNotFound);
+		}
+
+		if (test)
+			[matchedObjects addObject: item];
+		if (!isCommittable)
+			isCommittable = [[item objectForKey: @"committable"] boolValue];
+
+		[pool release];
+	}
+
+	[self setCommittable: isCommittable];
+#if 0
+	if (!treeMode && [matchedObjects count])
+	{
+		[matchedObjects sortUsingFunction: compareNames context: NULL];
+	}
+#endif
+
+	return [super arrangeObjects: matchedObjects];
 }
 
 
 //  - dealloc:
-- (void)dealloc
+- (void) dealloc
 {
-    [self setSearchString: nil];    
-    [super dealloc];
+	[self setSearchString: nil];    
+	[super dealloc];
 }
 
 
 // - searchString:
-- (NSString *)searchString
+- (NSString*) searchString
 {
 	return searchString;
 }
+
 // - setSearchString:
-- (void)setSearchString:(NSString *)newSearchString
+- (void) setSearchString: (NSString*) newSearchString
 {
-    if (searchString != newSearchString)
+	if (searchString != newSearchString)
 	{
-        [searchString autorelease];
-        searchString = [newSearchString copy];
-    }
+		[searchString autorelease];
+		searchString = [newSearchString copy];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (BOOL) committable
+{
+	return committable;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) setCommittable: (BOOL) isCommittable
+{
+	committable = isCommittable;
 }
 
 @end
+

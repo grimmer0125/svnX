@@ -9,8 +9,10 @@
 #import <Foundation/Foundation.h>
 
 
-@interface SvnDateTransformer : NSObject {
-
+@interface SvnDateTransformer : NSObject
+{
 }
+
++ (NSDateFormatter*) formatter;
 
 @end

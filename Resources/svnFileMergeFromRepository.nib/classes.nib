@@ -1,0 +1,75 @@
+{
+    IBClasses = (
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {
+            ACTIONS = {compare = id; compareUrl = id; }; 
+            CLASS = MyFileMergeController; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                objectController = NSObjectController; 
+                svnLogView = MySvnLogView; 
+                svnSheet = NSWindow; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {
+            CLASS = MyObject; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                targetBrowser = MySvnRepositoryBrowserView; 
+                targetName = NSTextField; 
+                window = NSWindow; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {
+            ACTIONS = {compareUrl = id; validate = id; }; 
+            CLASS = MySvnCopyController; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                arrayController = NSArrayController; 
+                commitMessage = NSTextView; 
+                objectController = NSObjectController; 
+                svnLogView1 = MySvnLogView; 
+                svnLogView2 = MySvnLogView2; 
+                svnSheet = NSWindow; 
+                targetBrowser = MySvnRepositoryBrowserView; 
+                targetName = NSTextField; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {
+            CLASS = MySvnLogView; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {logsAC = NSArrayController; svnLog = id; }; 
+            SUPERCLASS = MySvnView; 
+        }, 
+        {CLASS = MySvnLogView2; LANGUAGE = ObjC; SUPERCLASS = MySvnLogView; }, 
+        {
+            ACTIONS = {addDirectory = id; addItems = id; validate = id; }; 
+            CLASS = MySvnOperationController; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                arrayController = NSArrayController; 
+                commitMessage = NSTextView; 
+                objectController = NSObjectController; 
+                svnLogView = MySvnLogView; 
+                svnLogView1 = MySvnLogView; 
+                svnLogView2 = MySvnLogView2; 
+                svnSheet = NSWindow; 
+                targetBrowser = MySvnRepositoryBrowserView; 
+                targetName = NSTextField; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {CLASS = MySvnRepositoryBrowserView; LANGUAGE = ObjC; SUPERCLASS = MySvnView; }, 
+        {
+            ACTIONS = {refetch = id; }; 
+            CLASS = MySvnView; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {"_view" = id; progress = id; refetch = id; }; 
+            SUPERCLASS = NSView; 
+        }
+    ); 
+    IBVersion = 1; 
+}

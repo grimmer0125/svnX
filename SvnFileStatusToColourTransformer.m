@@ -1,35 +1,41 @@
 
-
 #import "SvnFileStatusToColourTransformer.h"
+#include "CommonUtils.h"
 
 
 @implementation SvnFileStatusToColourTransformer
 
 
-+ (Class)transformedValueClass
++ (Class) transformedValueClass
 {
-    return [NSColor class];
+	return [NSColor class];
 }
 
-+ (BOOL)allowsReverseTransformation
+
++ (BOOL) allowsReverseTransformation
 {
-    return NO;
+	return NO;
 }
 
-- (id)transformedValue:(id)aString
-{	
-    //int priority = [aNumber intValue];
-    
-	if ( [aString isEqualToString:@"M"] )
-	return [NSUnarchiver unarchiveObjectWithData:[[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"svnFileStatusModifiedColor"]];
 
-	if ( [aString isEqualToString:@"?"] )
-	return [NSUnarchiver unarchiveObjectWithData:[[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"svnFileStatusNewColor"]];
+- (id) transformedValue: (id) aString
+{
+	//int priority = [aNumber intValue];
 
-	if ( [aString isEqualToString:@"!"] )
-	return [NSUnarchiver unarchiveObjectWithData:[[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"svnFileStatusMissingColor"]];
+	if ([aString length] == 1)
+	{
+		NSString* prefKey = nil;
+		switch ([aString characterAtIndex: 0])
+		{
+			case 'M':	prefKey = @"svnFileStatusModifiedColor";	break;
+			case '?':	prefKey = @"svnFileStatusNewColor";			break;
+			case '!':	prefKey = @"svnFileStatusMissingColor";		break;
+		}
+		if (prefKey != nil)
+			return [NSUnarchiver unarchiveObjectWithData: GetPreference(prefKey)];
+	}
 
-    return [NSColor blackColor];
+	return [NSColor blackColor];
 }
 
 

@@ -5,3 +5,17 @@
 {
 }
 @end
+
+
+@interface FilePathAbbreviatedTransformer : NSValueTransformer
+{
+}
+@end
+
+
+@interface FilePathWorkingCopy : FilePathAbbreviatedTransformer
+{
+	BOOL	fTransform;
+}
+@end
+

@@ -1,0 +1,77 @@
+/* Style sheet for displaying the Subversion log report. */
+
+body { margin: 0; padding: 0; font-family: sans-serif; }
+
+a { color: navy; }
+
+.footer {
+  margin-top: 4em;
+  padding: 0.5em 1em 0.5em;
+  border: 1px solid;
+  border-width: 1px 0;
+  font-size: 80%;
+}
+
+.toc { margin: 10px; font-size: 14px; }
+
+.toc * { padding: 3px 15px; }
+
+.toc span.O { background: #DDD; color: #777; }
+
+.toc span.X { background: #FF0; color: #000; }
+
+.toc a {
+  background: #BBF;
+  text-decoration: none;
+}
+
+.toc a:hover { background: #77F; }
+
+.toc td { border: 0; padding: 0; border-spacing: 20px; }
+
+.ar { width: 72pt; }
+
+.pg { }
+
+@media print {
+	.toc { visibility: hidden; }
+}
+
+.svn {
+  margin: 10px;
+  font-size: 11px;
+  border: 1px solid black;
+  border-spacing: 2px;
+  border-collapse: collapse;
+  width: 97%;
+}
+
+tbody {
+  border: 6px solid #CCCCCC;
+  margin-top: 8px;
+}
+
+td {
+  border-spacing: 1px;
+  border-width: 1px;
+  padding: 1px 5px;
+}
+
+.rev {
+  background: #CCFFBB;
+  width: 56px;
+  text-align: center;
+}
+
+.author { }
+
+.date { width: 200px; text-align: right; }
+
+.msg { padding: 5px; background: #FFFFDD; border: 1px solid #CCCCCC; }
+
+.act { border: 0px; background: #EEEEFF; text-align: center; }
+
+.path { border: 0px; background: #EEEEFF; }
+
+.from { border: 0px; background: #EEEEFF; }
+

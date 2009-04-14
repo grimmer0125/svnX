@@ -1,0 +1,54 @@
+{
+    IBClasses = (
+        {CLASS = CButtonCell; LANGUAGE = ObjC; SUPERCLASS = NSButtonCell; }, 
+        {CLASS = CStyledTextCell; LANGUAGE = ObjC; SUPERCLASS = NSTextFieldCell; }, 
+        {CLASS = CTableView; LANGUAGE = ObjC; SUPERCLASS = NSTableView; }, 
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {CLASS = ImageAndTextCell; LANGUAGE = ObjC; SUPERCLASS = NSTextFieldCell; }, 
+        {
+            CLASS = MyWorkingCopy; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                controller = MyWorkingCopyController; 
+                svnFilesAC = MySvnFilesArrayController; 
+            }; 
+            SUPERCLASS = NSDocument; 
+        }, 
+        {CLASS = NSSegmentedControl; LANGUAGE = ObjC; SUPERCLASS = NSControl; }, 
+        {
+            ACTIONS = {
+                addTemplate = id; 
+                changeEditView = id; 
+                checkAllFiles = id; 
+                checkNoFiles = id; 
+                commitFiles = id; 
+                diffSelectedFile = id; 
+                insertRecent = id; 
+                insertTemplate = id; 
+                openSelectedFile = id; 
+                refreshFiles = id; 
+                revealSelectedFile = id; 
+                toggleSelectedFile = id; 
+                validateTemplate = id; 
+            }; 
+            CLASS = ReviewController; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                fDiffView = WebView; 
+                fEditState = int; 
+                fFiles = NSMutableArray; 
+                fFilesAC = NSArrayController; 
+                fFilesView = NSTableView; 
+                fMessageView = NSTextView; 
+                fRecentAC = NSArrayController; 
+                fRecentView = NSTableView; 
+                fTemplatesAC = NSArrayController; 
+                fTemplatesView = NSTableView; 
+                fWindow = NSWindow; 
+            }; 
+            SUPERCLASS = NSResponder; 
+        }, 
+        {CLASS = WCTreeEntry; LANGUAGE = ObjC; SUPERCLASS = NSObject; }
+    ); 
+    IBVersion = 1; 
+}

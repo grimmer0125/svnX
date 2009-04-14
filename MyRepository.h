@@ -3,34 +3,24 @@
 #import <Cocoa/Cocoa.h>
 #import "MySVN.h";
 
-@class MySvnLogView, MySvnLogView2, MySvnRepositoryBrowserView, DrawerLogView;
-@class MySvnOperationController, MySvnMkdirController, MySvnMoveController, MySvnCopyController, MySvnDeleteController, MyFileMergeController;
+@class MySvnLogView, MySvnRepositoryBrowserView, DrawerLogView;
 
 /* Manages the repository inspector. */
 @interface MyRepository : NSDocument
 {
-	IBOutlet MySvnLogView *svnLogView1;
-	IBOutlet MySvnLogView2 *svnLogView2;
-	IBOutlet MySvnLogView *svnLogView;
-	IBOutlet MySvnRepositoryBrowserView *svnBrowserView;
+	IBOutlet MySvnLogView*					svnLogView;
+	IBOutlet MySvnRepositoryBrowserView*	svnBrowserView;
 
-	IBOutlet MySvnOperationController *svnOperationController;
-	IBOutlet MySvnMkdirController *svnMkdirController;
-	IBOutlet MySvnMoveController *svnMoveController;
-	IBOutlet MySvnCopyController *svnCopyController;
-	IBOutlet MySvnDeleteController *svnDeleteController;
-	IBOutlet MyFileMergeController *fileMergeController;
-	
-	IBOutlet NSDrawer *sidebar;
-	IBOutlet DrawerLogView *drawerLogView;
+	IBOutlet NSDrawer*						sidebar;
+	IBOutlet DrawerLogView*					drawerLogView;
 
-    IBOutlet NSTextView *urlTextView;
-    IBOutlet NSTextView *commitTextView;
-    IBOutlet NSTextField *fileNameTextField;
-    IBOutlet NSPanel *importCommitPanel;
-	
+	IBOutlet NSTextView*					urlTextView;
+	IBOutlet NSTextView*					commitTextView;
+	IBOutlet NSTextField*					fileNameTextField;
+	IBOutlet NSPanel*						importCommitPanel;
+
 	BOOL operationInProgress;
-	
+
 	NSURL *url;
 	NSURL *rootUrl;
 	NSString *revision;
@@ -38,33 +28,53 @@
 	NSString *pass;
 	NSString *windowTitle;
 	
-	NSString *logViewKind;
-	NSMutableDictionary *displayedTaskObj;
+	NSMutableDictionary*					displayedTaskObj;
+	struct SvnEnv*							fSvnEnv;		// The svn client environment
 }
 
-- (NSURL *)url;
-- (void)setUrl:(NSURL *)anUrl;
+- (IBAction) toggleSidebar: (id) sender;
+- (IBAction) svnCopy:       (id) sender;
+- (IBAction) svnMove:       (id) sender;
+- (IBAction) svnMkdir:      (id) sender;
+- (IBAction) svnDelete:     (id) sender;
+- (IBAction) svnFileMerge:  (id) sender;
+- (IBAction) svnBlame:      (id) sender;
+- (IBAction) svnReport:     (id) sender;
+- (IBAction) svnExport:     (id) sender;
+- (IBAction) svnCheckout:   (id) sender;
+- (IBAction) pickedAFolderInBrowserView: (NSMenuItem*) sender;
 
-- (NSString *)revision;
-- (void)setRevision:(NSString *)aRevision;
+- (void) setupTitle: (NSString*) title
+		 username:   (NSString*) username
+		 password:   (NSString*) password
+		 url:        (NSURL*)    repoURL;
 
-- (NSString *)user;
-- (void) setUser: (NSString *) aUser;
+- (void) setDisplayedTaskObj: (NSMutableDictionary*) aDisplayedTaskObj;
 
-- (NSString *)pass;
-- (void) setPass: (NSString *) aPass;
+- (void) openLogPath: (NSDictionary*) pathInfo
+		 revision:    (NSString*)     pegRevision;
+- (void) changeRepositoryUrl: (NSURL*) anUrl;
 
+- (NSString*) revision;
+- (void) setRevision: (NSString*) aRevision;
 
-- (NSString *)windowTitle;
-- (void) setWindowTitle: (NSString *) aWindowTitle;
+- (NSString*) windowTitle;
+- (struct svn_client_ctx_t*) svnClient;
 
-- (NSURL *)url;
-- (void)setUrl:(NSURL *)anUrl;
+- (NSURL*) url;
+- (void) setUrl: (NSURL*) anUrl;
 
-- (NSURL *)rootUrl;
-- (void)setRootUrl:(NSURL *)anUrl;
+- (void) fetchSvnInfo;
+- (void) fetchSvnInfoReceiveDataFinished: (NSString*) result;
 
-- (NSString *)logViewKind;
-- (void)setLogViewKind:(NSString *)aLogViewKind;
+- (void) svnErrorIf: (id) taskObj;
+- (void) svnError: (NSString*) errorString;
+- (NSArray*) userValidatedFiles: (NSArray*) files forDestination: (NSURL*) destinationURL;
+- (void) dragOutFilesFromRepository: (NSArray*) filesDicts toURL: (NSURL*) destinationURL;
+- (void) dragExternalFiles: (NSArray*) files ToRepositoryAt: (NSDictionary*) representedObject;
+
+- (NSInvocation*) makeSvnOptionInvocation;
+- (NSInvocation*) makeCallbackInvocationOfKind: (int) callbackKind;
+- (NSInvocation*) svnOptionsInvocation;
 
 @end

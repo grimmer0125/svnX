@@ -11,11 +11,25 @@
 
 @interface MySvnLogParser : NSObject
 {
-	NSMutableArray *logArray;
-	NSMutableDictionary *tmpDict;
-	NSMutableDictionary *tmpDict2;
-	NSMutableString *tmpString;
-	NSMutableArray *pathsArray;
+	struct {
+		NSString*			revision;
+		NSString*			msg;
+		NSString*			date;
+		NSString*			author;
+		NSMutableArray*		paths;
+	} entry;
+	NSMutableArray*			entries;
+	id						action,			// path attributes
+							copyfromPath,
+							copyfromRev;
+	NSMutableString*		bufString;
 }
 
++ (NSMutableArray*) parseData:   (NSData*)   data;
++ (NSMutableArray*) parseString: (NSString*) string;
+
+- (NSMutableArray*) parseXML:       (NSData*)   data;
+- (NSMutableArray*) parseXMLString: (NSString*) string;
+
 @end
+

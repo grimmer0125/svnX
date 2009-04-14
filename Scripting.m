@@ -7,6 +7,7 @@
 //
 
 #import "Scripting.h"
+#import "MyApp.h"
 
 
 @implementation Scripting

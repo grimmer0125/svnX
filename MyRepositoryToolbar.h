@@ -5,12 +5,10 @@
 
 @interface MyRepositoryToolbar : NSObject
 {
+	IBOutlet id				window;
+	IBOutlet MyRepository*	document;
 
-    NSToolbar *toolbar;
-    IBOutlet id window;
-    IBOutlet MyRepository *document;
-	
-    NSMutableDictionary *items; // all items that are allowed to be in the toolbar
+	NSMutableDictionary*	items; // all items that are allowed to be in the toolbar
 }
-
 @end
+

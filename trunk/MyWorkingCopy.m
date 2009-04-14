@@ -1,88 +1,359 @@
 #import "MyWorkingCopy.h"
+#import "MyWorkingCopyController.h"
+#import "MyApp.h"
+#import "MySVN.h"
+#import "Tasks.h"
+#import "NSString+MyAdditions.h"
+#import "AppKit/NSGraphicsContext.h"
+#include "CommonUtils.h"
+#include "DbgUtils.h"
+#include "SvnInterface.h"
 
-@class MySvn;
-@class SvnFileStatusToColourTransformer;
-@class SvnFilePathTransformer;
 
-#define SVNXCallbackSvnStatus 0
-#define SVNXCallbackSvnUpdate 1
-#define SVNXCallbackSvnInfo 2
-#define SVNXCallbackGeneric 3
-#define SVNXCallbackFileMerge 4
+enum {
+	SVNXCallbackSvnStatus,
+	SVNXCallbackSvnUpdate,
+	SVNXCallbackSvnInfo,
+	SVNXCallbackGeneric,
+	SVNXCallbackFileMerge
+};
+
+
+//----------------------------------------------------------------------------------------
+
+static BOOL
+useOldParsingMethod ()
+{
+	return GetPreferenceBool(@"useOldParsingMethod");
+}
+
+
+//----------------------------------------------------------------------------------------
+// Compare names alphabetically & case insensitively.
+
+static int
+compareDisplayPaths (id obj1, id obj2, void* context)
+{
+	#pragma unused(context)
+	return [[obj1 objectForKey: @"displayPath"] caseInsensitiveCompare: [obj2 objectForKey: @"displayPath"]];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+struct ICEntry
+{
+	IconRef		fIcon;
+	NSImage*	fImage;
+};
+
+typedef struct ICEntry ICEntry;
+enum { kMaxIcons = 128 };
+static ICEntry gIconFolder = { NULL },
+			   gIconFile   = { NULL },
+			   gIconCache[kMaxIcons] = { NULL };
+
+
+//----------------------------------------------------------------------------------------
+
+static NSImage*
+getImageForIcon (IconRef iconRef, const NSRect* rect)
+{
+	Assert(iconRef);
+
+	NSImage* image = [[NSImage alloc] initWithSize: rect->size];
+	[image lockFocus];
+	CGContextRef ctx = [[NSGraphicsContext currentContext] graphicsPort];
+//	CGContextSetInterpolationQuality(ctx, kCGInterpolationHigh);
+	WarnIf(PlotIconRefInContext(ctx, (CGRect*) rect, kAlignNone, kTransformNone,
+								NULL, kPlotIconRefNormalFlags, iconRef));
+	[image unlockFocus];
+
+	return image;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSImage*
+getImageForIconSize (IconRef iconRef, GCoord size)
+{
+	const NSRect rect = { 0, 0, size, size };
+
+	return getImageForIcon(iconRef, &rect);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSImage*
+getImageForIcon16 (IconRef iconRef)
+{
+	static const NSRect rect = { 0, 0, 16, 16 };
+
+	return getImageForIcon(iconRef, &rect);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSImage*
+getImageForIconType (OSType iconType, GCoord size)
+{
+	IconRef iconRef;
+	if (WarnIf(GetIconRef(kOnSystemDisk, kSystemIconsCreator, iconType, &iconRef)) == noErr)
+	{
+		NSImage* image = [getImageForIconSize(iconRef, size) retain];
+		WarnIf(ReleaseIconRef(iconRef));
+		return image;
+	}
+
+	return nil;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSImage*
+setImageForIconType (NSString* name, OSType iconType)
+{
+	NSImage* image = getImageForIconType(iconType, 32);
+	if (image == nil || ![image setName: name])
+		NSLog(@"WARNING: init image '%@' FAILED", name);
+
+	return image;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static void
+initICEntry (ICEntry* entry, OSType iconType)
+{
+	if (WarnIf(GetIconRef(kOnSystemDisk, kSystemIconsCreator, iconType, &entry->fIcon)) == noErr)
+		entry->fImage = [getImageForIcon16(entry->fIcon) retain];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static void
+initIconCache ()
+{
+	if (gIconFolder.fIcon == NULL)	// do only once
+	{
+		// 16 x 16 icons
+		initICEntry(&gIconFolder, kGenericFolderIcon);
+		initICEntry(&gIconFile, kGenericDocumentIcon);
+		if (![gIconFolder.fImage setName: @"FolderRef"])
+			NSLog(@"WARNING: init image 'FolderRef' FAILED");
+
+		// 32 x 32 icons
+		setImageForIconType(@"Finder", kFinderIcon);
+		setImageForIconType(@"delete", kToolbarDeleteIcon);
+		NSImage* image = setImageForIconType(@"mkdir", kGenericFolderIcon);
+		[image lockFocus];
+		[[NSImage imageNamed: @"PlusTopRight"] compositeToPoint: NSMakePoint(0, 0) operation: NSCompositeSourceOver];
+		[image unlockFocus];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static void
+resetIconCache ()
+{
+	int i;
+	ICEntry* entry = gIconCache;
+	for (i = 0; i < kMaxIcons; ++i, ++entry)
+	{
+		IconRef iconRef = entry->fIcon;
+		if (iconRef != NULL)
+		{
+			entry->fIcon = NULL;
+			WarnIf(ReleaseIconRef(iconRef));
+			[entry->fImage release];
+		}
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSImage*
+getIcon (ConstCStr path, Boolean* isDirectory)
+{
+	IconRef iconRef = NULL;
+	FSRef fsRef;
+	SInt16 label;
+	if (WarnIfNot(FSPathMakeRef((const UInt8*) path, &fsRef, isDirectory), fnfErr) == noErr)
+		WarnIf(GetIconRefFromFileInfo(&fsRef, 0, NULL,
+									  kFSCatInfoNone, NULL,
+									  kIconServicesNormalUsageFlag, &iconRef, &label));
+
+	NSImage* image;
+	if (iconRef == NULL)
+		image = *isDirectory ? gIconFolder.fImage : gIconFile.fImage;
+	else if (iconRef == gIconFolder.fIcon)
+		image = gIconFolder.fImage;
+	else if (iconRef == gIconFile.fIcon)
+		image = gIconFile.fImage;
+	else
+	{
+		int i;
+		ICEntry* entry = gIconCache;
+		// Check cache
+		for (i = 0; i < kMaxIcons; ++i, ++entry)
+		{
+			if (entry->fIcon == iconRef)
+				return entry->fImage;
+			else if (entry->fIcon == NULL)
+				break;
+		}
+
+		image = getImageForIcon16(iconRef);
+
+		// Add to cache
+		if (i < kMaxIcons)
+		{
+			Assert(entry->fIcon == NULL);
+			entry->fIcon = iconRef;
+			entry->fImage = image;
+		}
+	}
+
+	return image;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+NSImage* GenericFolderImage ();
+
+NSImage*
+GenericFolderImage ()
+{
+	initIconCache();
+	return gIconFolder.fImage;
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark -
+//----------------------------------------------------------------------------------------
 
 @implementation MyWorkingCopy
 
-- (id)init
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnError: (NSDictionary*) taskObj
 {
-    self = [super init];
-    if (self) {
-		
-		// initialize svnFiles :
+	NSString* errMsg = [taskObj valueForKey: @"stderr"];
+	if ([errMsg length] > 0)
+		[controller svnError: errMsg];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnRefresh
+{
+	if (useOldParsingMethod())
+		[controller fetchSvnInfo];
+	[controller fetchSvnStatus];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark -
+//----------------------------------------------------------------------------------------
+
++ (void) presetDocumentName: name
+{
+	[MyWorkingCopyController presetDocumentName: name];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (id) init
+{
+	if (self = [super init])
+	{
+		flatMode   =
+		smartMode  = TRUE;
+		filterMode = kFilterAll;
+
+		// initialize svnFiles:
 		// svnFilesAC is bound in Interface Builder to this variable.
-		//
-		[self setSvnFiles:[NSMutableArray array]];
+		[self setSvnFiles: [NSArray array]];
+		[self setSvnDirectories: [[WCTreeEntry alloc] init]];
 
-		[self setSvnDirectories:[NSMutableDictionary dictionary]];
-
-		[self setFlatMode:TRUE];
-		[self setSmartMode:TRUE];
-		
 		[self setOutlineSelectedPath:@""];
-		[self setStatusInfo:@""];
 
-	
-		// register self as an observer for bound workingCopyPath variable
-		//
+		// register self as an observer for bound variables
 		[self   addObserver:self forKeyPath:@"smartMode"
-				options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:nil];
-		[self   addObserver:self forKeyPath:@"workingCopyPath"
-				options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:nil];
-		[self   addObserver:self forKeyPath:@"outlineSelectedPath"
 				options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:nil];
 		[self   addObserver:self forKeyPath:@"flatMode"
 				options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:nil];
 		[self   addObserver:self forKeyPath:@"filterMode"
 				options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:nil];
-
+		initIconCache();
 	}
-    
+
 	return self;
 }
 
 
-- (void)dealloc {
-	
-	[self removeObserver:self forKeyPath:@"smartMode"];
-	[self removeObserver:self forKeyPath:@"workingCopyPath"];
-	[self removeObserver:self forKeyPath:@"outlineSelectedPath"];
-	[self removeObserver:self forKeyPath:@"flatMode"];
-	[self removeObserver:self forKeyPath:@"filterMode"];
+//----------------------------------------------------------------------------------------
 
-    [self setUser: nil];
-    [self setPass: nil];
+- (void) setup: (NSString*) title
+		 user:  (NSString*) username
+		 pass:  (NSString*) password
+		 path:  (NSString*) fullPath
+{
+	[self setFileURL: [NSURL fileURLWithPath: fullPath]];
+	[self setWindowTitle:     title];
+	[self setUser:            username];
+	[self setPass:            password];
+	[self setWorkingCopyPath: fullPath];
+	[controller setup];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) dealloc
+{
+	resetIconCache();
+	[self setUser: nil];
+	[self setPass: nil];
 	[self setRevision:nil];
-    [self setWorkingCopyPath: nil];
-    [self setWindowTitle: nil];
-    [self setOutlineSelectedPath: nil];
-    [self setResultString: nil];
-    [self setSvnFiles: nil];
-    [self setSvnDirectories: nil];
-    [self setRepositoryUrl: nil];
-    [self setStatusInfo: nil];
-    [self setDisplayedTaskObj: nil];
+	[self setWorkingCopyPath: nil];
+	[self setWindowTitle: nil];
+	[self setSvnFiles: nil];
+	[self setSvnDirectories: nil];
+	[self setOutlineSelectedPath: nil];
+	[self setRepositoryUrl: nil];
+	[self setDisplayedTaskObj: nil];
+	SvnEndClient(fSvnEnv);
 
-//	NSLog(@"Working copy` dealloc'ed");
-//	
-    [super dealloc];
+	[super dealloc];
 }
 
-- (NSString *)windowNibName
+
+- (NSString*) windowNibName
 {
-    return @"MyWorkingCopy";
+	return @"MyWorkingCopy";
 }
 
-- (void)windowControllerDidLoadNib:(NSWindowController *) aController
+
+- (void) windowControllerDidLoadNib: (NSWindowController*) aController
 {
+	[aController setShouldCascadeWindows: NO];
+
 	// set table view's default sorting to status type column
 	
 	[svnFilesAC setSortDescriptors:[NSArray arrayWithObjects: [[[NSSortDescriptor alloc] 
@@ -93,141 +364,495 @@
     [super windowControllerDidLoadNib:aController];
 }
 
-- (void)canCloseDocumentWithDelegate:(id)delegate shouldCloseSelector:(SEL)shouldCloseSelector contextInfo:(void *)contextInfo
+
+- (int*) reviewCount
+{
+	return &reviewCount;
+}
+
+
+- (void) close
 {
 	// tell the task center to cancel pending callbacks to prevent crash
 	[[Tasks sharedInstance] cancelCallbacksOnTarget:self];
+
+	[self removeObserver:self forKeyPath:@"smartMode"];
+	[self removeObserver:self forKeyPath:@"flatMode"];
+	[self removeObserver:self forKeyPath:@"filterMode"];
+
 	[controller cleanup];
-	
-	[super canCloseDocumentWithDelegate:delegate shouldCloseSelector:shouldCloseSelector contextInfo:contextInfo];
+
+	[super close];
 }
 
 
-#pragma mark -
-#pragma mark svn status
+- (NSInvocation*) genericCompletedCallback
+{
+	return MakeCallbackInvocation(self, @selector(svnGenericCompletedCallback:));
+}
 
-- (void)fetchSvnStatusVerbose
-{	
-	NSMutableArray *options = [NSMutableArray array];
 
-	if ( [self smartMode] )
+- (NSDictionary*) documentNameDict
+{
+	return [NSDictionary dictionaryWithObject: windowTitle ? windowTitle : @"" forKey: @"documentName"];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	svn status
+//----------------------------------------------------------------------------------------
+
+struct SvnStatusEnv
+{
+	MyWorkingCopy*			fInterface;
+	NSMutableDictionary*	fTree;
+	NSMutableArray*			newSvnFiles;
+	NSFileManager*			fileManager;
+	int						wcPathLength;
+	BOOL					flatMode, showUpdates;
+};
+
+typedef struct SvnStatusEnv SvnStatusEnv;
+
+
+//----------------------------------------------------------------------------------------
+
+static NSMutableArray*
+addDirToTree (const SvnStatusEnv* env, NSString* const fullPath, NSImage* icon)
+{
+	NSMutableArray* children = [env->fTree objectForKey: fullPath];
+	if (children == nil)
 	{
+		NSString* const parent = [fullPath stringByDeletingLastPathComponent];
+		int parentLen = [parent length];
+		NSString* const name = [fullPath substringFromIndex: parentLen + 1];
+		children = [NSMutableArray array];
+		[env->fTree setObject: children forKey: fullPath];
+		id entry = [[WCTreeEntry alloc] initWithChildren: children
+										name: name
+										path: [fullPath substringFromIndex: env->wcPathLength + 1]
+										icon: icon];
+		[addDirToTree(env, parent, nil) addObject: entry];
+	}
+	return children;
+}
 
-	} else
+
+//----------------------------------------------------------------------------------------
+// WC 'svn status' callback.
+
+static void
+svnStatusReceiver (void*       baton,
+				   const char* path,
+				   SvnStatus   status)
+{
+	const SvnStatusEnv* const env = (const SvnStatusEnv*) baton;
+	const svn_wc_entry_t* const entry = status->entry;
+
+	NSString* const kCurrentDir = @".";
+	NSString* const itemFullPath = UTF8(path);
+	NSString* const itemPath = (env->wcPathLength < [itemFullPath length])
+								? [itemFullPath substringFromIndex: env->wcPathLength + 1] : kCurrentDir;
+
+	const SvnWCStatusKind text_status = status->text_status,
+						  prop_status = status->prop_status;
+	// see all meanings at http://svnbook.red-bean.com/nightly/en/svn.ref.svn.c.status.html
+	// COLUMN 1
+	NSString* const column1 = SvnStatusToString(text_status);
+		
+	// COLUMN 2
+	NSString* const column2 = SvnStatusToString(prop_status);
+
+	// COLUMN 3
+	NSString* const column3 = status->locked ? @"L" : @" ";
+
+	// COLUMN 4
+	NSString* const column4 = status->copied ? @"+" : @" ";
+
+	// COLUMN 5
+	NSString* const column5 = status->switched ? @"S" : @" ";
+
+	// COLUMN 6
+	// see <http://svn.collab.net/repos/svn/trunk/subversion/svn/status.c>, ~ line 112 for explanation
+	NSString* const kIsLocked = @"K";
+	NSString* column6 = @" ";
+	const char* const wc_token = entry ? entry->lock_token : NULL;
+	if (env->showUpdates)
 	{
-		[options addObject:@"-v"];
+		const svn_lock_t* const repos_lock = status->repos_lock;
+		const char* const repos_token = repos_lock ? repos_lock->token : NULL;
+		if (repos_token)
+		{
+			if (wc_token)
+			{
+				column6 = !strcmp(wc_token, repos_token)
+							? kIsLocked	// File is locked in this working copy
+							: @"T";		// File was locked in this working copy, but the lock has been 'stolen'
+										// and is invalid. The file is currently locked in the repository
+			}
+			else
+				column6 = @"O";			// File is locked either by another user or in another working copy
+		}
+		else if (wc_token)				// File was locked in this working copy, but the lock has
+			 column6 = @"B";			// been 'broken' and is invalid. The file is no longer locked
+	}
+	else if (wc_token)
+		column6 = kIsLocked;			// File is locked in this working copy
+
+	// COLUMN 7
+	SvnWCStatusKind repos_status = status->repos_text_status;
+	if (repos_status == svn_wc_status_none || repos_status == svn_wc_status_normal)
+		repos_status = status->repos_prop_status;
+	NSString* const column7 = SvnStatusToString(repos_status);
+
+	// COLUMN 8
+	NSString* const column8 = (prop_status != svn_wc_status_none &&
+							   prop_status != svn_wc_status_normal) ? @"P" : @" ";
+
+	BOOL renamable = NO, addable = NO, removable = NO, updatable = NO, revertable = NO, committable = NO,
+		 copiable = NO, movable = NO, resolvable = NO, lockable = YES, unlockable = NO;
+
+	if (text_status == svn_wc_status_modified || prop_status == svn_wc_status_modified)
+	{
+		removable = YES;
+		updatable = YES;
+		revertable = YES;
+		committable = YES;
+	}
+	if (text_status == svn_wc_status_normal)
+	{
+		removable = YES;
+		renamable = YES;
+		updatable = YES;
+		copiable = YES;
+		movable = YES;
+	}		
+	else if (text_status == svn_wc_status_unversioned)
+	{
+		addable = YES;
+		lockable = NO;
+	}
+	else if (text_status == svn_wc_status_missing ||
+			 text_status == svn_wc_status_incomplete)
+	{
+		revertable = YES;
+		updatable = YES;
+		removable = YES;
+		lockable = NO;			
+	}
+	else if (text_status == svn_wc_status_added || text_status == svn_wc_status_replaced)
+	{
+		revertable = YES;
+		committable = YES;
+		lockable = NO;
+		updatable = YES;
+	}
+	else if (text_status == svn_wc_status_deleted)
+	{
+		if ([env->fileManager fileExistsAtPath: itemFullPath])
+			addable = YES;
+		revertable = YES;
+		committable = YES;
+		updatable = YES;
+	}
+	if (text_status == svn_wc_status_conflicted || prop_status == svn_wc_status_conflicted)
+	{
+		revertable = YES;
+		resolvable = YES;
+	}
+	if (column6 == kIsLocked)
+	{
+		lockable = NO;
+		unlockable = YES;
 	}
 
-	if ( [self showUpdates] ) [options addObject:@"-u"];
-
-	if ( ![[[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"useOldParsingMethod"] boolValue] )
+	Boolean isDirectory = FALSE;
+	NSImage* icon = getIcon(path, &isDirectory);
+	if (isDirectory && !env->flatMode && itemPath != kCurrentDir &&
+		(entry == NULL || entry->kind != svn_node_file))
 	{
+	//	if (entry && entry->kind != svn_node_dir)
+	//		NSLog(@"svnStatusReceiver %@ kind=%d", itemFullPath, entry->kind);
+		addDirToTree(env, itemFullPath, icon);
+	}
+
+	NSString* const revisionCurrent     = entry ? SvnRevNumToString(entry->revision) : @"";
+	NSString* const revisionLastChanged = entry ? SvnRevNumToString(entry->cmt_rev)  : @"";
+	NSString* const theUser             = entry ? UTF8(entry->cmt_author)            : @"";
+	NSString* const dirPath = [itemPath stringByDeletingLastPathComponent];
+	[env->newSvnFiles addObject: [NSMutableDictionary dictionaryWithObjectsAndKeys:
+									column1,             @"col1",
+									column2,             @"col2",
+									column3,             @"col3",
+									column4,             @"col4",
+									column5,             @"col5",
+									column6,             @"col6",
+									column7,             @"col7",
+									column8,             @"col8",
+									revisionCurrent,     @"revisionCurrent",
+									revisionLastChanged, @"revisionLastChanged",
+									theUser,             @"user",
+									icon,                @"icon",
+									(env->flatMode ? itemPath : [itemPath lastPathComponent]),
+														 @"displayPath",
+									itemPath,            @"path",
+									itemFullPath,        @"fullPath",
+									dirPath,             @"dirPath",
+
+									NSBool(text_status == svn_wc_status_modified   ), @"modified",
+									NSBool(text_status == svn_wc_status_unversioned), @"new",
+									NSBool(text_status == svn_wc_status_missing    ), @"missing",
+									NSBool(text_status == svn_wc_status_added      ), @"added",
+									NSBool(text_status == svn_wc_status_deleted    ), @"deleted",
+
+									NSBool(renamable  ), @"renamable",
+									NSBool(addable    ), @"addable",
+									NSBool(removable  ), @"removable",
+									NSBool(updatable  ), @"updatable",
+									NSBool(revertable ), @"revertable",
+									NSBool(committable), @"committable",
+									NSBool(resolvable ), @"resolvable",
+									NSBool(lockable   ), @"lockable",
+									NSBool(unlockable ), @"unlockable",
+									nil]];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+struct SvnInfoEnv
+{
+	MyWorkingCopy*	fInterface;
+	char			fURL[2048];
+};
+
+typedef struct SvnInfoEnv SvnInfoEnv;
+
+
+//----------------------------------------------------------------------------------------
+// WC 'svn info' callback.  Sets <revision> and <repositoryUrl>.
+
+SvnError
+svnInfoReceiver (void*       baton,
+				 const char* path,
+				 SvnInfo     info,
+				 SvnPool     pool)
+{
+	#pragma unused(pool)
+	SvnInfoEnv* env = (SvnInfoEnv*) baton;
+	[env->fInterface svnInfo: info forPath: path];
+	strncpy(env->fURL, info->URL, sizeof(env->fURL));
+
+	return SVN_NO_ERROR;
+}
+
+
+//----------------------------------------------------------------------------------------
+// svn status of <workingCopyPath> via SvnInterface
+
+- (void) svnDoStatus: (BOOL)    showUpdates_
+         pool:        (SvnPool) pool
+{
+	SvnClient ctx = SvnSetupClient(&fSvnEnv, self);
+
+	char path[2048];
+	if (ToUTF8(workingCopyPath, path, sizeof(path)))
+	{
+		// Set revision to always be unspecified.
+		// Makes svn_client_info retrive WC rev num whereas svn_opt_revision_head retrives HEAD rev num.
+		const svn_opt_revision_t rev_opt = { svn_opt_revision_unspecified };
+
+		SvnInfoEnv infoEnv;
+		infoEnv.fInterface = self;
+
+		SvnThrowIf(svn_client_info(path, &rev_opt, &rev_opt,
+								   svnInfoReceiver, &infoEnv, !kSvnRecurse, ctx, pool));
+
+		SvnStatusEnv env;
+		env.fInterface   = self;
+		env.newSvnFiles  = [NSMutableArray arrayWithCapacity: 100];
+		env.fileManager  = [NSFileManager defaultManager];
+		WCTreeEntry* treeDirs = nil;
+		if (!flatMode)	// will build folder tree
+		{
+			id rootChildren = [NSMutableArray array];
+			treeDirs = [[WCTreeEntry alloc] initWithChildren: rootChildren
+											name: [workingCopyPath lastPathComponent]
+											path: @""
+											icon: nil];
+
+			env.fTree = [NSMutableDictionary dictionaryWithObject: rootChildren forKey: workingCopyPath];
+		}
+		env.wcPathLength = [workingCopyPath length];
+		env.flatMode     = flatMode;
+		env.showUpdates  = showUpdates_;
+
+		svn_revnum_t result_rev = SVN_INVALID_REVNUM;
+		SvnThrowIf(svn_client_status2(&result_rev, path, &rev_opt,
+									  svnStatusReceiver, &env, kSvnRecurse,
+									  ![self smartMode],	// get_all
+									  showUpdates_,			// update
+									  FALSE,				// no_ignore
+									  FALSE,				// ignore_externals
+									  ctx, pool));
+
+		if (treeDirs)
+			[self setSvnDirectories: treeDirs];
+		[controller saveSelection];
+	//	[env.newSvnFiles sortUsingFunction: compareDisplayPaths context: NULL];
+		[self setSvnFiles: env.newSvnFiles];
+		[controller fetchSvnStatusVerboseReceiveDataFinished];
+		[controller restoreSelection];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) fetchSvnStatus: (BOOL) showUpdates_
+{
+	BOOL useSvnLib = !useOldParsingMethod();
+	if (useSvnLib && !SvnInitialize())		// Can't use svn lib
+	{
+		useSvnLib = FALSE;
+		SetPreference(@"useOldParsingMethod", kNSTrue);
+	}
+
+	[controller setStatusMessage: @"Refreshing"];
+	if (useSvnLib)
+	{
+		NSAutoreleasePool* autoPool = [[NSAutoreleasePool alloc] init];
+		// Create top-level memory pool.
+		SvnPool pool = SvnNewPool();
+		@try
+		{
+			[self svnDoStatus: showUpdates_ pool: pool];
+		}
+		@catch (SvnException* ex)
+		{
+			SvnReportCatch(ex);
+			[controller stopProgressIndicator];
+			[controller performSelector: @selector(svnError:) withObject: [ex message] afterDelay: 0.1];
+		}
+		@finally
+		{
+			SvnDeletePool(pool);
+			[autoPool release];
+			[controller setStatusMessage: nil];
+		}
+	}
+	else
+	{
+		showUpdates = showUpdates_;
+		NSMutableArray *options = [NSMutableArray array];
+
+		if ( ![self smartMode] )
+		{
+			[options addObject:@"-v"];
+		}
+
+		if (showUpdates_)
+		{
+			[options addObject:@"-u"];
+		}
+
 		[options addObject:@"--xml"];
+		
+		[MySvn    statusAtWorkingCopyPath: [self workingCopyPath]
+						   generalOptions: [self svnOptionsInvocation]
+								  options: options
+								 callback: [self makeCallbackInvocation: @selector(svnStatusCompletedCallback:)]
+							 callbackInfo: nil
+								 taskInfo: [self documentNameDict]];
 	}
-	
-	[MySvn    statusAtWorkingCopyPath: [self workingCopyPath]
-					   generalOptions: [self svnOptionsInvocation]
-							  options: options
-							 callback: [self makeCallbackInvocationOfKind:SVNXCallbackSvnStatus]
-						 callbackInfo: nil
-							 taskInfo: [NSDictionary dictionaryWithObjectsAndKeys:[self windowTitle], @"documentName", nil]];
-
 }
 
--(void)svnStatusCompletedCallback:(NSMutableDictionary *)taskObj
+
+- (void) fetchSvnStatusVerbose
+{
+	[self fetchSvnStatus: showUpdates];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnStatusCompletedCallback: (NSMutableDictionary*) taskObj
 {
 	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
 	{
-		[self fetchSvnStatusVerboseReceiveDataFinished:[taskObj valueForKey:@"stdout"]];
-		
+		[self computesVerboseResultArray: [taskObj valueForKey:@"stdout"]];
+
+		[controller fetchSvnStatusVerboseReceiveDataFinished];
 	}
-	
-	if ( [[taskObj valueForKey:@"stderr"] length] > 0 ) [controller svnError:[taskObj valueForKey:@"stderr"]];
+
+	[self svnError: taskObj];
 }
 
 
-- (void)fetchSvnStatusVerboseReceiveDataFinished:(NSString*)result
+//----------------------------------------------------------------------------------------
+
+- (void) computesNewVerboseResultArray: (NSString*) xmlString
 {
-	[self setResultString:result]; // this will feed the log file
+    NSError* err = nil;
+	NSXMLDocument* xmlDoc = [[NSXMLDocument alloc] initWithXMLString: xmlString
+												   options: NSXMLDocumentTidyXML error: &err];
 
-	[self computesVerboseResultArray];
+	if (err)
+		NSLog(@"Error parsing xml %@", err);
 
-	[controller fetchSvnStatusVerboseReceiveDataFinished];
-}
-
-- (void)computesVerboseResultArray
-{
-	if ( [[[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"useOldParsingMethod"] boolValue] )
-	{
-		[self computesOldVerboseResultArray];
-	
-	} else
-	{
-		[self computesNewVerboseResultArray];
-	}
-}
-
-- (void)computesNewVerboseResultArray
-{
-    NSXMLDocument *xmlDoc;
-    NSError *err=nil;
-
-	xmlDoc = [[NSXMLDocument alloc] initWithXMLString:[self resultString] options:NSXMLDocumentTidyXML error:&err];
-	
-    if (xmlDoc == nil)  {
-        if (err) {
-			NSLog(@"Error parsing xml");
-        }
+	if (xmlDoc == nil)
         return;
-    }
- 
-    if (err) {
-		NSLog(@"Error parsing xml");
-    }
 
-	NSArray *newSvnFiles = [NSMutableArray arrayWithCapacity: 100];
+	NSMutableArray *newSvnFiles = [NSMutableArray arrayWithCapacity: 100];
+	NSMutableArray* const rootChildren = [NSMutableArray array];
+	WCTreeEntry* outlineDirs = [[WCTreeEntry alloc] initWithChildren: rootChildren
+													name: [workingCopyPath lastPathComponent]
+													path: @""
+													icon: nil];
 
-	NSMutableDictionary *outlineDirs = [NSMutableDictionary dictionaryWithObjectsAndKeys:  [NSMutableArray array], @"children",
-																						   [workingCopyPath lastPathComponent], @"name",
-																						   @"", @"path", nil];
-	
-	
 	// <target> node
 	NSXMLElement *targetElement = [[[xmlDoc rootElement] elementsForName:@"target"] objectAtIndex:0];
-	
-	
+
 	// <against revision=""> node
 	NSArray *againstElements = [targetElement elementsForName:@"against"];
 	if ( [againstElements count] > 0 )
 	{
 		NSXMLElement *against = [againstElements objectAtIndex:0];
-		[self setStatusInfo:[NSString stringWithFormat:@"Status against revision: %@", [[against attributeForName:@"revision"] stringValue]]];
+		[controller setStatusMessage: [NSString stringWithFormat: @"Status against revision: %@",
+																  [[against attributeForName: @"revision"] stringValue]]];
+	}
 
-	} else [self setStatusInfo:@""];
-
-	NSString *targetPath = [[targetElement attributeForName:@"path"] stringValue];
+	NSString* const targetPath = [[targetElement attributeForName: @"path"] stringValue];
+	const int targetPathLength = [targetPath length];
+	NSWorkspace* const workspace = [NSWorkspace sharedWorkspace];
+	NSFileManager* const fileManager = [NSFileManager defaultManager];
+	const BOOL kFlatMode    = [self flatMode],
+			   kShowUpdates = showUpdates;
+	const NSSize kIconSize = { 16, 16 };
+	NSString* const kCurrentDir = @".";
 
 	NSXMLElement *entry;
 	NSEnumerator *e = [[targetElement elementsForName:@"entry"] objectEnumerator];
-	
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
 	// <entry> nodes
 	while ( entry = [e nextObject] )
 	{
-		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
 		NSString *revisionCurrent = @"";
 		NSString *revisionLastChanged = @"";
 		NSString *theUser = @"" ;
 
 		NSXMLElement *wc_status = nil;
-		NSString *itemStatus;
-		NSString *propStatus; 
-		NSString *copiedStatus;
-		NSString *switchedStatus;
+		NSString *itemStatus = @"";
+		NSString *propStatus = nil; 
+		NSString* copiedStatus = nil;
+		NSString* switchedStatus = nil;
 		
-		// wcLockedStatus has nothing to do with lockInWc (http://svnbook.red-bean.com/nightly/en/svn.advanced.locking.html#svn.advanced.locking.meanings)
-		NSString *wcLockedStatus;
-		NSDictionary *wc_lock = nil;
+		// wcLockedStatus has nothing to do with lockInWc
+		// <http://svnbook.red-bean.com/nightly/en/svn.advanced.locking.html#svn.advanced.locking.meanings>
+		NSString* wcLockedStatus = nil;
+		NSString* wc_lock = nil;
 		
 		// <wc-status> node
 		NSArray *wc_status_elements = [entry elementsForName:@"wc-status"];
@@ -249,12 +874,7 @@
 			if ( [lockInWCElements count] > 0 )
 			{
 				NSXMLElement *lockInWC = [lockInWCElements objectAtIndex:0];
-
-				wc_lock = [NSDictionary dictionaryWithObjectsAndKeys:
-								[[[lockInWC elementsForName:@"token"] objectAtIndex:0] stringValue], @"token",
-								[[[lockInWC elementsForName:@"owner"] objectAtIndex:0] stringValue], @"owner",
-								[[[lockInWC elementsForName:@"created"] objectAtIndex:0] stringValue], @"created",
-								nil ];
+				wc_lock = [[[lockInWC elementsForName: @"token"] objectAtIndex: 0] stringValue];
 			}
 			
 			NSArray *commitElements = [wc_status elementsForName:@"commit"];
@@ -274,26 +894,23 @@
 		NSXMLElement *repos_status = nil;
 		NSArray *repos_status_elements = [entry elementsForName:@"repos-status"];
 		
-		NSString *reposItemStatus;
-		NSString *reposPropStatus;
-		
-		NSDictionary *repos_lock = nil;
+		NSString* reposItemStatus = nil;
+		NSString* reposPropStatus = nil;
+		NSString* repos_lock = nil;
 		
 		if ( [repos_status_elements count] > 0 )
 		{
 			repos_status = [repos_status_elements objectAtIndex:0];
 
-			// repository lock?
-			NSArray *lockInReposElements = [repos_status elementsForName:@"lock"];
-			if ( [lockInReposElements count] > 0 )
+			if (kShowUpdates)
 			{
-				NSXMLElement *lockInRepos = [lockInReposElements objectAtIndex:0];
-				
-				repos_lock = [NSDictionary dictionaryWithObjectsAndKeys:
-								[[[lockInRepos elementsForName:@"token"] objectAtIndex:0] stringValue], @"token",
-								[[[lockInRepos elementsForName:@"owner"] objectAtIndex:0] stringValue], @"owner",
-								[[[lockInRepos elementsForName:@"created"] objectAtIndex:0] stringValue], @"created",
-								nil ];
+				// repository lock?
+				NSArray *lockInReposElements = [repos_status elementsForName:@"lock"];
+				if ( [lockInReposElements count] > 0 )
+				{
+					NSXMLElement *lockInRepos = [lockInReposElements objectAtIndex:0];
+					repos_lock = [[[lockInRepos elementsForName: @"token"] objectAtIndex: 0] stringValue];
+				}
 			}
 
 			reposItemStatus = [[repos_status attributeForName:@"item"] stringValue];
@@ -301,8 +918,8 @@
 			
 		}
 
-		// local lock ?
-		
+	#if 0
+		// local lock?
 		NSXMLElement *lockInWc;
 
 		if ( wc_status != nil )
@@ -314,10 +931,13 @@
 				lockInWc = [lockInWcElements objectAtIndex:0];
 			}
 		}
+	#endif
 
-		NSString *itemFullPath  = [[entry attributeForName:@"path"] stringValue];
-		NSString *itemPath = ([targetPath length] < [itemFullPath length]) ?  [itemFullPath substringFromIndex:([targetPath length]+1)] : @".";
+		NSString* const itemFullPath = [[entry attributeForName: @"path"] stringValue];
+		NSString* const itemPath = (targetPathLength < [itemFullPath length])
+									? [itemFullPath substringFromIndex: targetPathLength + 1] : kCurrentDir;
 
+		int col1 = ' ',  col2 = ' ';
 		NSString *column1 = @" ";
 		NSString *column2 = @" ";
 		NSString *column3 = @" ";
@@ -329,65 +949,60 @@
 
 		// see all meanings at http://svnbook.red-bean.com/nightly/en/svn.ref.svn.c.status.html
 		// COLUMN 1
-		if ( [itemStatus isEqualToString:@"unversioned"] )
+		const unichar ch0 = [itemStatus length] ? [itemStatus characterAtIndex: 0] : 0;
+		if (ch0 == 0)
+			;
+		else if (ch0 == 'u' && [itemStatus isEqualToString: @"unversioned"])
 		{
-			column1 = @"?";
+			col1 = '?';		column1 = @"?";
 		}
-		else
-		if ( [itemStatus isEqualToString:@"modified"] )
+		else if (ch0 == 'm' && [itemStatus isEqualToString: @"modified"])
 		{
-			column1 = @"M";
+			col1 = 'M';		column1 = @"M";
 		}
-		else
-		if ( [itemStatus isEqualToString:@"added"] )
+		else if (ch0 == 'a' && [itemStatus isEqualToString: @"added"])
 		{
-			column1 = @"A";
+			col1 = 'A';		column1 = @"A";
 		}
-		else
-		if ( [itemStatus isEqualToString:@"deleted"] )
+		else if (ch0 == 'd' && [itemStatus isEqualToString: @"deleted"])
 		{
-			column1 = @"D";
+			col1 = 'D';		column1 = @"D";
 		}
-		else
-		if ( [itemStatus isEqualToString:@"replaced"] )
+		else if (ch0 == 'r' && [itemStatus isEqualToString: @"replaced"])
 		{
-			column1 = @"R";
+			col1 = 'R';		column1 = @"R";
 		}
-		else
-		if ( [itemStatus isEqualToString:@"conflicted"] )
+		else if (ch0 == 'c' && [itemStatus isEqualToString: @"conflicted"])
 		{
-			column1 = @"C";
+			col1 = 'C';		column1 = @"C";
 		}
-		else
-		if ( [itemStatus isEqualToString:@"ignored"] )
+		else if (ch0 == 'i' && [itemStatus isEqualToString: @"ignored"])
 		{
-			column1 = @"I";
+			col1 = 'I';		column1 = @"I";
 		}
-		else
-		if ( [itemStatus isEqualToString:@"external"] )
+		else if (ch0 == 'e' && [itemStatus isEqualToString: @"external"])
 		{
-			column1 = @"X";
+			col1 = 'X';		column1 = @"X";
 		}
-		else
-		if ( [itemStatus isEqualToString:@"incomplete"] || [itemStatus isEqualToString:@"missing"] )
+		else if ((ch0 == 'i' && [itemStatus isEqualToString: @"incomplete"]) ||
+				 (ch0 == 'm' && [itemStatus isEqualToString: @"missing"]))
 		{
-			column1 = @"!";
+			col1 = '!';		column1 = @"!";
 		}
-		else
-		if ( [itemStatus isEqualToString:@"obstructed"] )
+		else if (ch0 == 'o' && [itemStatus isEqualToString: @"obstructed"])
 		{
-			column1 = @"~";
+			col1 = '~';		column1 = @"~";
 		}
 		
 		// COLUMN 2
-		if ( [propStatus isEqualToString:@"modified"] )
+		const unichar propStatusCh0 = (propStatus && [propStatus length]) ? [propStatus characterAtIndex: 0] : 0;
+		if (propStatusCh0 == 'm' && [propStatus isEqualToString: @"modified"])
 		{
-			column2 = @"M";
+			col2 = 'M';		column2 = @"M";
 		}
-		else
-		if ( [propStatus isEqualToString:@"conflicted"] )
+		else if (propStatusCh0 == 'c' && [propStatus isEqualToString: @"conflicted"])
 		{
-			column2 = @"C";
+			col2 = 'C';		column2 = @"C";
 		}
 		
 		// COLUMN 3
@@ -409,28 +1024,27 @@
 		}
 		
 		// COLUMN 6
-		// see http://svn.collab.net/repos/svn/trunk/subversion/svn/status.c , ~ line 112 for explanation
-		//
-		if ( [self showUpdates] )
+		// see <http://svn.collab.net/repos/svn/trunk/subversion/svn/status.c>, ~ line 112 for explanation
+		if (kShowUpdates)
 		{
 			if ( repos_lock != nil )
 			{
 				if ( wc_lock != nil )
 				{
-					if ( [[wc_lock objectForKey:@"token"] isEqualToString:[repos_lock objectForKey:@"token"]] )
-					{
-						column6 = @"K"; // File is locked in this working copy
-
-					} else
-					{
-						column6 = @"T"; // File was locked in this working copy, but the lock has been “stolen” and is invalid. The file is currently locked in the repository
-					}
-				
-				} else column6 = @"O"; // File is locked either by another user or in another working copy
-			
-			} else if ( wc_lock ) column6 = @"B"; // File was locked in this working copy, but the lock has been “broken” and is invalid. The file is no longer locked
+				//	column6 = [[wc_lock objectForKey: @"token"] isEqualToString: repos_lock]
+					column6 = [wc_lock isEqualToString: repos_lock]
+								? @"K"	// File is locked in this working copy
+								: @"T";	// File was locked in this working copy, but the lock has been 'stolen'
+										// and is invalid. The file is currently locked in the repository
+				}
+				else
+					column6 = @"O";		// File is locked either by another user or in another working copy
+			}
+			else if ( wc_lock )			// File was locked in this working copy, but the lock has
+				 column6 = @"B";		// been 'broken' and is invalid. The file is no longer locked
 		}
-		else if ( wc_lock ) column6 = @"K"; // File is locked in this working copy
+		else if ( wc_lock )
+			column6 = @"K";				// File is locked in this working copy
 		
 		// COLUMN 7
 		if ( repos_status != nil )
@@ -440,24 +1054,23 @@
 		}
 		
 		// COLUMN 8
-		if ( propStatus != nil && [propStatus isEqualToString:@"none"] == NO )
+		if (!(propStatusCh0 == 0 || (propStatusCh0 == 'n' &&
+									 ([propStatus isEqualToString: @"none"] || [propStatus isEqualToString: @"normal"]))))
 		{
 			column8 = @"P";
 		}
 		
-		NSArray *pathArr;
+		BOOL renamable=NO, addable=NO, removable=NO, updatable=NO, revertable=NO, committable=NO,
+			 copiable=NO, movable=NO, resolvable=NO, lockable=YES, unlockable=NO;
 
-		NSMutableString *dirPath;
-
-		BOOL renamable=NO, addable=NO, removable=NO, updatable=NO, revertable=NO, committable=NO, copiable=NO, movable=NO, resolvable=NO, lockable=YES, unlockable=NO;
-
-		
-		pathArr = [itemPath componentsSeparatedByString:@"/"];
-
-		dirPath = [NSMutableString stringWithString:@"/"];
-
-
-		if ( [column1 isEqualToString:@" "] )
+		if (col1 == 'M' || col2 == 'M')
+		{
+			removable = YES;
+			updatable = YES;
+			revertable = YES;
+			committable = YES;
+		}
+		if (col1 == ' ')
 		{
 			removable = YES;
 			renamable = YES;
@@ -465,888 +1078,838 @@
 			copiable = YES;
 			movable = YES;
 		}		
-		if ( [column1 isEqualToString:@"M"] || [column2 isEqualToString:@"M"] )
-		{
-			removable = YES;
-			updatable = YES;
-			revertable = YES;
-			committable = YES;
-		}
-		if ( [column1 isEqualToString:@"?"] )
+		else if (col1 == '?')
 		{
 			addable = YES;
-			removable = YES;
+		//	removable = YES;
 			lockable = NO;
 		}
-		if ( [column1 isEqualToString:@"!"] )
+		else if (col1 == '!')
 		{
 			revertable = YES;
 			updatable = YES;
 			removable = YES;
 			lockable = NO;			
 		}
-		if ( [column1 isEqualToString:@"A"] || [column1 isEqualToString:@"R"] )
+		else if (col1 == 'A' || col1 == 'R')
 		{
 			revertable = YES;
 			committable = YES;
 			lockable = NO;
 			updatable = YES;
 		}
-		if ( [column1 isEqualToString:@"D"] )
+		else if (col1 == 'D')
 		{
-			BOOL isDir;
-			if ( [[NSFileManager defaultManager] fileExistsAtPath:itemFullPath isDirectory:&isDir] ) addable = YES;
+			if ([fileManager fileExistsAtPath: itemFullPath])
+				addable = YES;
 			revertable = YES;
 			committable = YES;
 			updatable = YES;
 		}
-		if ( [column1 isEqualToString:@"C"] || [column2 isEqualToString:@"C"] )
+		if (col1 == 'C'|| col2 == 'C')
 		{
 			revertable = YES;
 			resolvable = YES;
 		}
-		if ( [column6 isEqualToString:@"K"] )
+		if ( [column6 isEqualToString:@"K"])
 		{
 			lockable = NO;
 			unlockable = YES;
 		}
 
-
-
-		dirPath = [itemPath stringByDeletingLastPathComponent];
-		
+		NSString* const dirPath = [itemPath stringByDeletingLastPathComponent];
 		BOOL isDir;
-		
-		if ( [[NSFileManager defaultManager] fileExistsAtPath:itemFullPath isDirectory:&isDir] && isDir )
-		if ( ![itemPath isEqualToString:@""] )
+
+		if (!kFlatMode && itemPath != kCurrentDir &&
+			[fileManager fileExistsAtPath: itemFullPath isDirectory: &isDir] && isDir)
 		{
-			id tmp = [outlineDirs objectForKey:@"children"]; // let's start at root
-			int j;
-			
-			for ( j=0; j<[pathArr count]; j++)
+			NSArray* const pathArr = [itemPath componentsSeparatedByString: @"/"];
+			const unsigned int wcPathLength = [workingCopyPath length] + 1;
+
+			NSString* filePath = workingCopyPath;
+			id tmp = rootChildren;		// let's start at root
+			int j, count = [pathArr count];
+
+			for (j = 0; j < count; ++j)
 			{
-				NSString *dirName = [pathArr objectAtIndex:j];
+				NSString* const dirName = [pathArr objectAtIndex: j];
 				NSEnumerator *enumerator = [tmp objectEnumerator];
-				id obj;
-				id child = nil;
-				
+				id obj, child = nil;
+
+				filePath = [filePath stringByAppendingPathComponent: dirName];
+
 				while ( obj = [enumerator nextObject] )
 				{
-					if ( [[obj objectForKey:@"name"] isEqualToString:dirName] )
+					if ([[obj name] isEqualToString: dirName])
 					{
 						child = obj;
 						break;
 					}
 				}
-				
 
 				if ( child == nil )
-				{						
-					NSString *filePath = [[workingCopyPath stringByAppendingPathComponent:dirPath] stringByAppendingPathComponent:dirName];
-					NSImage *dirIcon = [[NSWorkspace sharedWorkspace] iconForFile:filePath];
-					[dirIcon setSize:NSMakeSize(16,16)];
-					[tmp addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:[NSMutableArray array], @"children",
-																					 dirName, @"name",
-																					 itemPath, @"path",
-																					 dirIcon, @"icon",
-																					   nil]];
-					tmp = [[tmp lastObject] objectForKey:@"children"];
-					
-//					[dirPath appendString:dirName];
-//					[dirPath appendString:@"/"];
-
-				} else
 				{
-					tmp = [child objectForKey:@"children"];
+					NSImage* dirIcon = [workspace iconForFile: filePath];
+					[dirIcon setSize: kIconSize];
+					child = [[WCTreeEntry alloc] initWithChildren: [NSMutableArray array]
+												 name: dirName
+												 path: [filePath substringFromIndex: wcPathLength]
+												 icon: dirIcon];
+					[tmp addObject: child];
 				}
 
-				
+				tmp = [child children];
 			}
 		}
-		
+
+		NSImage* icon = [workspace iconForFile: itemFullPath];
+		[icon setSize: kIconSize];
 		[newSvnFiles addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:
-																				column1, @"col1",
-																				column2, @"col2",
-																				column3, @"col3",
-																				column4, @"col4",
-																				column5, @"col5",
-																				column6, @"col6",
-																				column7, @"col7",
-																				column8, @"col8",
-																				revisionCurrent, @"revisionCurrent",
-																				revisionLastChanged, @"revisionLastChanged",
-																				theUser, @"user",
-																				[[NSWorkspace sharedWorkspace] iconForFile:itemFullPath], @"icon",
-																				(([self flatMode])?(itemPath):([itemPath lastPathComponent])), @"displayPath",
-																				itemPath, @"path",
-																				itemFullPath, @"fullPath",
-																				dirPath, @"dirPath",
-																				[NSNumber numberWithBool:([column1 isEqualToString:@"M"] ? YES : FALSE)], @"modified",
-																				[NSNumber numberWithBool:([column1 isEqualToString:@"?"] ? YES : FALSE)], @"new",
-																				[NSNumber numberWithBool:([column1 isEqualToString:@"!"] ? YES : FALSE)], @"missing",
-																				[NSNumber numberWithBool:([column1 isEqualToString:@"A"] ? YES : FALSE)], @"added",
-																				[NSNumber numberWithBool:([column1 isEqualToString:@"D"] ? YES : FALSE)], @"deleted",
+									column1, @"col1",
+									column2, @"col2",
+									column3, @"col3",
+									column4, @"col4",
+									column5, @"col5",
+									column6, @"col6",
+									column7, @"col7",
+									column8, @"col8",
+									revisionCurrent, @"revisionCurrent",
+									revisionLastChanged, @"revisionLastChanged",
+									theUser, @"user",
+									icon, @"icon",
+									(kFlatMode ? itemPath : [itemPath lastPathComponent]), @"displayPath",
+									itemPath, @"path",
+									itemFullPath, @"fullPath",
+									dirPath, @"dirPath",
 
-																				[NSNumber numberWithBool:renamable], @"renamable",
-																				[NSNumber numberWithBool:addable], @"addable",
-																				[NSNumber numberWithBool:removable], @"removable",
-																				[NSNumber numberWithBool:updatable], @"updatable",
-																				[NSNumber numberWithBool:revertable], @"revertable",
-																				[NSNumber numberWithBool:committable], @"committable",
-																				[NSNumber numberWithBool:resolvable], @"resolvable",
-																				[NSNumber numberWithBool:lockable], @"lockable",
-																				[NSNumber numberWithBool:unlockable], @"unlockable",
+									NSBool(col1 == 'M'), @"modified",
+									NSBool(col1 == '?'), @"new",
+									NSBool(col1 == '!'), @"missing",
+									NSBool(col1 == 'A'), @"added",
+									NSBool(col1 == 'D'), @"deleted",
 
-																				
-																				nil]];
-		[pool release];
-	
+									NSBool(renamable  ), @"renamable",
+									NSBool(addable    ), @"addable",
+									NSBool(removable  ), @"removable",
+									NSBool(updatable  ), @"updatable",
+									NSBool(revertable ), @"revertable",
+									NSBool(committable), @"committable",
+									NSBool(resolvable ), @"resolvable",
+									NSBool(lockable   ), @"lockable",
+									NSBool(unlockable ), @"unlockable",
+
+									nil]];
 	}
-
-	[self setSvnDirectories:outlineDirs];
-	[self setSvnFiles:newSvnFiles];
-}
-
-- (void)computesOldVerboseResultArray
-{
-	NSArray *arr = [[self resultString] componentsSeparatedByString:@"\n"];
-	NSArray *newSvnFiles = [NSMutableArray arrayWithCapacity: 100];
-
-	NSMutableDictionary *outlineDirs = [NSMutableDictionary dictionaryWithObjectsAndKeys:  [NSMutableArray array], @"children",
-																						   [workingCopyPath lastPathComponent], @"name",
-																						   @"", @"path", nil];
-	
-	int i, j;
-
-//	[self setStatusInfo:@""];
-
-	for ( i=0 ; i<[arr count]-1 ; i++ ) // last line is a blank line !
-	{
-		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
-		NSString *itemString = [arr objectAtIndex:i];
-		NSString *itemFullPath = [NSString string];
-		NSString *itemPath;
-
-		NSString *revisionCurrent;
-		NSString *revisionLastChanged;
-		NSString *theUser;
-
-		NSString *column1;
-		NSString *column2;
-		NSString *column3;
-		NSString *column4;
-		NSString *column5;
-		NSString *column6;
-
-		NSArray *pathArr;
-
-		NSMutableString *dirPath;
-
-		BOOL renamable=NO, addable=NO, removable=NO, updatable=NO, revertable=NO, committable=NO, copiable=NO, movable=NO, resolvable=NO, lockable=YES, unlockable=NO;
-
-		if ( [itemString isEqualToString:@""] ) continue;
-		if ( [itemString length] >= 38 )
-		{
-			if ( [[itemString substringToIndex:38] isEqualToString:@"Performing status on external item at "] )
-			{
-				//[self setStatusInfo:itemString];
-				continue;
-			}
-		}
-		
-		if ( [itemString length] >= 24 )
-		{
-			if ( [[itemString substringToIndex:24] isEqualToString:@"Status against revision:"] )
-			{
-				[self setStatusInfo:itemString];
-				continue;
-			}
-		}
-		
-		if ( [self smartMode] )
-		{
-			if ( [self showUpdates] )
-			{
-				itemFullPath = [itemString substringFromIndex:20];
-				
-				itemPath = ([itemFullPath length]>[workingCopyPath length])?([itemFullPath substringFromIndex:([workingCopyPath length]+1)])
-																					:([itemFullPath substringFromIndex:([workingCopyPath length])]);
-				revisionCurrent = [itemString substringWithRange:NSMakeRange(9, 8)];
-				
-				column5 = [itemString substringWithRange:NSMakeRange(7, 1)];
-				
-			} else
-			{
-				itemFullPath = [itemString substringFromIndex:7];
-				
-				if ( [itemFullPath length] > [workingCopyPath length] )
-				{
-					itemPath = [itemFullPath substringFromIndex:([workingCopyPath length]+1)];
-				
-				} else
-				{
-					itemPath = [NSString stringWithString:@""];
-				}
-				column5 = [itemString substringWithRange:NSMakeRange(4, 1)];
-
-				revisionCurrent = @"";
-			}
-
-			revisionLastChanged = @"";
-			theUser = @"";
-		}
-		else
-		{
-			itemFullPath = [itemString substringFromIndex:40];
-			itemPath = ([itemFullPath length]>[workingCopyPath length])?([itemFullPath substringFromIndex:([workingCopyPath length]+1)])
-																				 :([itemFullPath substringFromIndex:([workingCopyPath length])]);
-			
-			revisionCurrent = [[itemString substringWithRange:NSMakeRange(9, 8)] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-			revisionLastChanged = [[itemString substringWithRange:NSMakeRange(18, 8)] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-			theUser = [[itemString substringWithRange:NSMakeRange(27, 12)] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-			
-			if ( [self showUpdates] )
-			{
-				column5 = [itemString substringWithRange:NSMakeRange(7, 1)];
-			
-			} else
-			{
-				column5 = [itemString substringWithRange:NSMakeRange(4, 1)];
-			}
-		}
-		
-		column1 = [itemString substringWithRange:NSMakeRange(0, 1)];
-		column2 = [itemString substringWithRange:NSMakeRange(1, 1)];
-		column3 = [itemString substringWithRange:NSMakeRange(2, 1)];
-		column4 = [itemString substringWithRange:NSMakeRange(3, 1)];
-
-		column6 = [itemString substringWithRange:NSMakeRange(5, 1)]; 
-		
-		pathArr = [itemPath componentsSeparatedByString:@"/"];
-
-		dirPath = [NSMutableString stringWithString:@"/"];
-
-
-		if ( [column1 isEqualToString:@" "] )
-		{
-			removable = YES;
-			renamable = YES;
-			updatable = YES;
-			copiable = YES;
-			movable = YES;
-		}		
-		if ( [column1 isEqualToString:@"M"] || [column2 isEqualToString:@"M"] )
-		{
-			removable = YES;
-			updatable = YES;
-			revertable = YES;
-			committable = YES;
-		}
-		if ( [column1 isEqualToString:@"?"] )
-		{
-			addable = YES;
-			removable = YES;
-			lockable = NO;
-		}
-		if ( [column1 isEqualToString:@"!"] )
-		{
-			revertable = YES;
-			updatable = YES;
-			removable = YES;
-			lockable = NO;			
-		}
-		if ( [column1 isEqualToString:@"A"] )
-		{
-			revertable = YES;
-			committable = YES;
-		}
-		if ( [column1 isEqualToString:@"D"] )
-		{
-			revertable = YES;
-			committable = YES;
-		}
-		if ( [column1 isEqualToString:@"C"] )
-		{
-			revertable = YES;
-			resolvable = YES;
-		}
-		if ( [column6 isEqualToString:@"K"] )
-		{
-			lockable = NO;
-			unlockable = YES;
-		}
-
-
-
-		dirPath = [itemPath stringByDeletingLastPathComponent];
-		
-		BOOL isDir;
-		
-		if ( [[NSFileManager defaultManager] fileExistsAtPath:itemFullPath isDirectory:&isDir] && isDir )
-		if ( ![itemPath isEqualToString:@""] )
-		{
-			id tmp = [outlineDirs objectForKey:@"children"]; // let's start at root
-			
-			for ( j=0; j<[pathArr count]; j++)
-			{
-				NSString *dirName = [pathArr objectAtIndex:j];
-				NSEnumerator *enumerator = [tmp objectEnumerator];
-				id obj;
-				id child = nil;
-				
-				while ( obj = [enumerator nextObject] )
-				{
-					if ( [[obj objectForKey:@"name"] isEqualToString:dirName] )
-					{
-						child = obj;
-						break;
-					}
-				}
-				
-
-				if ( child == nil )
-				{						
-					NSString *filePath = [[workingCopyPath stringByAppendingPathComponent:dirPath] stringByAppendingPathComponent:dirName];
-					NSImage *dirIcon = [[NSWorkspace sharedWorkspace] iconForFile:filePath];
-					[dirIcon setSize:NSMakeSize(16,16)];
-					[tmp addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:[NSMutableArray array], @"children",
-																					 dirName, @"name",
-																					 itemPath, @"path",
-																					 dirIcon, @"icon",
-																					   nil]];
-					tmp = [[tmp lastObject] objectForKey:@"children"];
-					
-//					[dirPath appendString:dirName];
-//					[dirPath appendString:@"/"];
-
-				} else
-				{
-					tmp = [child objectForKey:@"children"];
-				}
-
-				
-			}
-		}
-		
-		[newSvnFiles addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:
-																				column1, @"col1",
-																				column2, @"col2",
-																				column3, @"col3",
-																				column4, @"col4",
-																				column5, @"col5",
-																				column6, @"col6",
-																				revisionCurrent, @"revisionCurrent",
-																				revisionLastChanged, @"revisionLastChanged",
-																				theUser, @"user",
-																				[[NSWorkspace sharedWorkspace] iconForFile:itemFullPath], @"icon",
-																				(([self flatMode])?(itemPath):([itemPath lastPathComponent])), @"displayPath",
-																				itemPath, @"path",
-																				itemFullPath, @"fullPath",
-																				dirPath, @"dirPath",
-																				[NSNumber numberWithBool:([column1 isEqualToString:@"M"] ? YES : FALSE)], @"modified",
-																				[NSNumber numberWithBool:([column1 isEqualToString:@"?"] ? YES : FALSE)], @"new",
-																				[NSNumber numberWithBool:([column1 isEqualToString:@"!"] ? YES : FALSE)], @"missing",
-																				[NSNumber numberWithBool:([column1 isEqualToString:@"A"] ? YES : FALSE)], @"added",
-																				[NSNumber numberWithBool:([column1 isEqualToString:@"D"] ? YES : FALSE)], @"deleted",
-
-																				[NSNumber numberWithBool:renamable], @"renamable",
-																				[NSNumber numberWithBool:addable], @"addable",
-																				[NSNumber numberWithBool:removable], @"removable",
-																				[NSNumber numberWithBool:updatable], @"updatable",
-																				[NSNumber numberWithBool:revertable], @"revertable",
-																				[NSNumber numberWithBool:committable], @"committable",
-																				[NSNumber numberWithBool:resolvable], @"resolvable",
-																				[NSNumber numberWithBool:lockable], @"lockable",
-																				[NSNumber numberWithBool:unlockable], @"unlockable",
-
-																				
-																				nil]];
-		[pool release];
-	}
+	[pool release];
 
 	[self setSvnDirectories:outlineDirs];
 	[self setSvnFiles:newSvnFiles];
 }
 
 
-#pragma mark svn info
+//----------------------------------------------------------------------------------------
 
-- (void)fetchSvnInfo
+- (void) computesVerboseResultArray: (NSString*) svnStatusText
 {
+	[controller saveSelection];
+	[self computesNewVerboseResultArray: svnStatusText];
+	[controller setStatusMessage: nil];
+	[controller restoreSelection];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	svn info
+//----------------------------------------------------------------------------------------
+
+- (void) fetchSvnInfo
+{
+	if (!useOldParsingMethod())
+		return;
+
 	[MySvn    genericCommand: @"info"
 				   arguments: [NSArray arrayWithObject:[self workingCopyPath]]
               generalOptions: [self svnOptionsInvocation]
 					 options: nil
-					callback: [self makeCallbackInvocationOfKind:SVNXCallbackSvnInfo]
+					callback: [self makeCallbackInvocation: @selector(svnInfoCompletedCallback:)]
 				callbackInfo: nil
-					taskInfo: [NSDictionary dictionaryWithObjectsAndKeys:[self windowTitle], @"documentName", nil]];
+					taskInfo: [self documentNameDict]];
 }
 
-- (void)svnInfoCompletedCallback:(id)taskObj
+
+//----------------------------------------------------------------------------------------
+// WC 'svn info' callback.  Sets <revision> and <repositoryUrl>.
+
+- (void) svnInfo: (SvnInfo)     info
+		 forPath: (const char*) path
+{
+	#pragma unused(path)
+	[self setRevision: SvnRevNumToString(info->rev)];
+
+	NSString* urlString = UTF8(info->URL);
+	if ([urlString characterAtIndex: [urlString length] - 1] != '/')
+		urlString = [urlString stringByAppendingString: @"/"];
+
+	[self setRepositoryUrl: [NSURL URLWithString: urlString]];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnInfoCompletedCallback: (id) taskObj
 {
 	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
 	{
 		[self fetchSvnInfoReceiveDataFinished:[taskObj valueForKey:@"stdout"]];
-		
 	}
-	
-	if ( [[taskObj valueForKey:@"stderr"] length] > 0 ) [controller svnError:[taskObj valueForKey:@"stderr"]];
+
+	[self svnError: taskObj];
 }
 
-- (void)fetchSvnInfoReceiveDataFinished:(NSString*)result
+
+- (void) fetchSvnInfoReceiveDataFinished: (NSString*) result
 {
 	NSArray *lines = [result componentsSeparatedByString:@"\n"];
 
-	if ( [lines count] < 5 )
+	const int count = [lines count];
+	if (count < 5)
 	{
 		[controller svnError:result];
-	
-	} else
+	}
+	else
 	{
+		bool gotRev = false, gotURL = false;
 		int i;
-
-		for ( i=0; i<[lines count]; i++)
+		for (i = 0; i < count && (!gotRev || !gotURL); ++i)
 		{
-			NSString *line = [lines objectAtIndex:i];
+			NSString* const line = [lines objectAtIndex: i];
+			const int lineLength = [line length];
 			
-			if ( [line length] > 9 && [[line substringWithRange:NSMakeRange(0, 10)] isEqual:@"Revision: "] )
+			if (!gotRev && lineLength > 9 && [[line substringWithRange:NSMakeRange(0, 10)] isEqualToString:@"Revision: "] )
 			{
-				[self setRevision:[line substringFromIndex:10]];			
-				//[self setStatusInfo:line];
+				[self setRevision: [line substringFromIndex:10]];
+				gotRev = true;			
 			}
-			else
-			if ( [line length] > 4 && [[line substringWithRange:NSMakeRange(0, 5)] isEqual:@"URL: "] )
+			else if (!gotURL && lineLength > 4 && [[line substringWithRange:NSMakeRange(0, 5)] isEqualToString:@"URL: "] )
 			{
 				NSString *urlString = [line substringFromIndex:5];
-				NSString *repositoryUrlString;
-				
-				if ( ![[urlString substringFromIndex:([urlString length]-1)] isEqualToString:@"/"] )
-				{
-					repositoryUrlString = [urlString stringByAppendingString:@"/"];
 
-				} else repositoryUrlString = urlString;
-				
-				[self setRepositoryUrl:[NSURL URLWithString:repositoryUrlString]];
+				if ([urlString characterAtIndex: [urlString length] - 1] != '/')
+					urlString = [urlString stringByAppendingString:@"/"];
+
+				[self setRepositoryUrl: [NSURL URLWithString: urlString]];
+				gotURL = true;			
 			}
-//			else
-//			if ( [line length] > 16 && [[line substringWithRange:NSMakeRange(0, 17)] isEqual:@"Repository Root: "] )
-//			{
-//				NSString *repositoryUrlString = [line substringFromIndex:17];
-//				
-//				[self setRepositoryUrl:[NSURL URLWithString:repositoryUrlString]];
-//			}
-					
-		
 		}
 	}
 }
 
-#pragma mark svn generic command
 
-- (void)svnCommand:(NSString *)command options:(NSArray *)options info:(NSDictionary *)info
+//----------------------------------------------------------------------------------------
+#pragma mark	svn commit
+
+- (void) svnCommit:    (NSArray*)      items
+		 message:      (NSString*)     message
+		 callback:     (NSInvocation*) callback
+		 callbackInfo: (id)            callbackInfo
 {
-	NSMutableArray *itemsPaths = [NSMutableArray arrayWithArray:[[svnFilesAC selectedObjects] mutableArrayValueForKey:@"fullPath"]];
-	if ( options == nil ) options = [NSArray array];
+	AssertClass([items objectAtIndex: 0], NSDictionary);
+
+	// Cannot non-recursively commit a directory deletion, i.e. must not use --non-recursive
+	// when committing a directory deletion, but we want to use it if possible to prevent
+	// commiting files in a dir if only a prop-change commit was requested on the dir.
+	BOOL nonRecusive = TRUE, isDir;
+	NSFileManager* const fileManager = [NSFileManager defaultManager];
+	for_each(enumerator, item, items)
+	{
+		if ([[item objectForKey: @"deleted"] boolValue] &&
+			[fileManager fileExistsAtPath: [item objectForKey: @"fullPath"] isDirectory: &isDir] &&
+			isDir)
+		{
+			nonRecusive = FALSE;
+			break;
+		}
+	}
+
+	NSArray* itemPaths = [items valueForKey: @"fullPath"];
+
+	NSArray* options = [NSArray arrayWithObjects: @"-m", MessageString(message),
+												  (nonRecusive ? @"--non-recursive" : nil),
+												  nil];
+	id taskObj = [MySvn genericCommand: @"commit"
+							 arguments: itemPaths
+						generalOptions: [self svnOptionsInvocation]
+							   options: options
+							  callback: callback
+						  callbackInfo: callbackInfo
+							  taskInfo: [self documentNameDict]];
+	[self setDisplayedTaskObj: taskObj];
+}
+
+
+- (void) svnCommit: (NSString*) message
+{
+	[self svnCommit:    [svnFilesAC selectedObjects] 
+		  message:      message
+		  callback:     [self genericCompletedCallback]
+		  callbackInfo: nil];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	svn switch
+
+- (void) svnSwitch: (NSArray*) options
+{
+	// it would be much more clean to use a specific [MySvn switch:...] command.
+	id taskObj = [MySvn genericCommand: @"switch"
+							 arguments: [NSArray array]
+						generalOptions: [self svnOptionsInvocation]
+							   options: options
+							  callback: [self genericCompletedCallback]
+						  callbackInfo: nil
+							  taskInfo: [self documentNameDict]];
+	[self setDisplayedTaskObj: taskObj];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	svn generic command
+
+- (void) svnCommand: (NSString*)     command
+		 options:    (NSArray*)      options
+		 info:       (NSDictionary*) info
+		 itemPaths:  (NSArray*)      itemPaths
+{
+	if (itemPaths == nil)
+		itemPaths = [[svnFilesAC selectedObjects] valueForKey: @"fullPath"];
+	if (options == nil)
+		options = [NSArray array];
 
 	[controller startProgressIndicator];
-	
+	NSInvocation* const callback = [self genericCompletedCallback];
+	NSDictionary* const taskInfo = [self documentNameDict];
+
 	if ( [command isEqualToString:@"rename"] )
 	{
-		[itemsPaths addObject:[info objectForKey:@"destination"]];
+		NSMutableArray* srcAndDst = [NSMutableArray arrayWithArray: itemPaths];
+		[srcAndDst addObject: [info objectForKey: @"destination"]];
 
 		[MySvn   genericCommand: @"move"
-					  arguments: itemsPaths
+					  arguments: srcAndDst
                  generalOptions: [self svnOptionsInvocation]
 						options: options
-					   callback: [self makeCallbackInvocationOfKind:SVNXCallbackGeneric]
+					   callback: callback
 				   callbackInfo: nil
-					   taskInfo: [NSDictionary dictionaryWithObjectsAndKeys:[self windowTitle], @"documentName", nil]];
-		
-	} else
-	if ( [command isEqualToString:@"move"] )
+					   taskInfo: taskInfo];
+	}
+	else if ( [command isEqualToString:@"move"] )
 	{
-		[MySvn     moveMultiple: itemsPaths
+		[MySvn     moveMultiple: itemPaths
 					destination: [info objectForKey:@"destination"]
                  generalOptions: [self svnOptionsInvocation]
 						options: options
-					   callback: [self makeCallbackInvocationOfKind:SVNXCallbackGeneric]
+					   callback: callback
 				   callbackInfo: nil
-					   taskInfo: [NSDictionary dictionaryWithObjectsAndKeys:[self windowTitle], @"documentName", nil]];
-	
-	} else
-	if ( [command isEqualToString:@"copy"] )
+					   taskInfo: taskInfo];
+	}
+	else if ( [command isEqualToString:@"copy"] )
 	{
-		[MySvn     copyMultiple: itemsPaths
+		[MySvn     copyMultiple: itemPaths
 					destination: [info objectForKey:@"destination"]
                  generalOptions: [self svnOptionsInvocation]
 						options: options
-					   callback: [self makeCallbackInvocationOfKind:SVNXCallbackGeneric]
+					   callback: callback
 				   callbackInfo: nil
-					   taskInfo: [NSDictionary dictionaryWithObjectsAndKeys:[self windowTitle], @"documentName", nil]];
-		
-	} else
-	if ( [command isEqualToString:@"switch"] )
+					   taskInfo: taskInfo];
+	}
+	else // ...
 	{
-		// it would be much more clean to use a specific [MySvn switch:... command.
-		[self setDisplayedTaskObj:
-			[MySvn   genericCommand: command
-						  arguments: [NSArray array]
-					 generalOptions: [self svnOptionsInvocation]
-							options: options
-						   callback: [self makeCallbackInvocationOfKind:SVNXCallbackGeneric]
-					   callbackInfo: nil
-						   taskInfo: [NSDictionary dictionaryWithObjectsAndKeys:[self windowTitle], @"documentName", nil]]
-		];
-		
-	} else
-	{
-		id taskObj =
+		Assert(![command isEqualToString: @"switch"]);
+		Assert(![command isEqualToString: @"commit"]);
 		[MySvn   genericCommand: command
-					  arguments: itemsPaths
-                 generalOptions: [self svnOptionsInvocation]
+					  arguments: itemPaths
+				 generalOptions: [self svnOptionsInvocation]
 						options: options
-					   callback: [self makeCallbackInvocationOfKind:SVNXCallbackGeneric]
+					   callback: callback
 				   callbackInfo: nil
-					   taskInfo: [NSDictionary dictionaryWithObjectsAndKeys:[self windowTitle], @"documentName", nil]];
-
-		if ( [command isEqualToString:@"commit"] ) [self setDisplayedTaskObj:taskObj];
-					   
+					   taskInfo: taskInfo];
 	}
 }
 
-- (void)svnGenericCompletedCallback:(id)taskObj
+
+- (void) svnGenericCompletedCallback: (id) taskObj
 {
 	[controller stopProgressIndicator];
 
 	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
 	{
-		[controller fetchSvnInfo];		
-		[controller fetchSvnStatus];		
+		[self svnRefresh];		
 	}
-	
-	if ( [[taskObj valueForKey:@"stderr"] length] > 0 ) [controller svnError:[taskObj valueForKey:@"stderr"]];
+
+	[self svnError: taskObj];
 }
 
-#pragma mark svn update
 
--(void) svnUpdate
-{	
+//----------------------------------------------------------------------------------------
+#pragma mark	svn update
+
+- (void) svnUpdateSelectedItems: (NSArray*) options
+{
+	[self svnCommand: @"update" options: options info: nil itemPaths: nil];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnUpdate: (NSArray*) options
+{
 	[controller startProgressIndicator];
 	
-	[self setDisplayedTaskObj:[MySvn    updateAtWorkingCopyPath: [self workingCopyPath]
-					   generalOptions: [self svnOptionsInvocation]
-							  options: nil
-							 callback: [self makeCallbackInvocationOfKind:SVNXCallbackSvnUpdate]
-						 callbackInfo: nil
-							 taskInfo: [NSDictionary dictionaryWithObjectsAndKeys:[self windowTitle], @"documentName", nil]]];
+	[self setDisplayedTaskObj:
+		[MySvn updateAtWorkingCopyPath: [self workingCopyPath]
+					    generalOptions: [self svnOptionsInvocation]
+							   options: options
+							  callback: MakeCallbackInvocation(self, @selector(svnUpdateCompletedCallback:))
+						  callbackInfo: nil
+							  taskInfo: [self documentNameDict]]];
 }
 
--(void)svnUpdateCompletedCallback:(id)taskObj
+
+//----------------------------------------------------------------------------------------
+// Update entire working copy
+
+- (void) svnUpdate
+{
+	[self svnUpdate: nil];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnUpdateCompletedCallback: (id) taskObj
 {
 	[controller stopProgressIndicator];
 
 	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
 	{
-		[controller refresh:self];		
+		[self svnRefresh];		
 	}
-	
-	if ( [[taskObj valueForKey:@"stderr"] length] > 0 ) [controller svnError:[taskObj valueForKey:@"stderr"]];
+
+	[self svnError: taskObj];
 }
 
-#pragma mark FileMerge
 
--(void) fileMergeItems:(NSArray *)items
-{	
-	[MySvn	   fileMergeItems: items
-			   generalOptions: [self svnOptionsInvocation]
-					  options: nil
-					 callback: [self makeCallbackInvocationOfKind:SVNXCallbackFileMerge]
-				 callbackInfo: nil
-					 taskInfo: [NSDictionary dictionaryWithObjectsAndKeys:[self windowTitle], @"documentName", nil]];
+//----------------------------------------------------------------------------------------
+#pragma mark	svn diff
+
+- (void) diffItems:    (NSArray*)      items
+		 callback:     (NSInvocation*) callback
+		 callbackInfo: (id)            callbackInfo
+{
+	[MySvn	diffItems: items
+	   generalOptions: [self svnOptionsInvocation]
+			  options: nil
+			 callback: callback
+		 callbackInfo: callbackInfo
+			 taskInfo: [self documentNameDict]];
 }
 
--(void)fileMergeCallback:(id)taskObj
+
+- (void) diffItems: (NSArray*) items
+{
+	[self diffItems: items callback: MakeCallbackInvocation(self, @selector(fileMergeCallback:)) callbackInfo: nil];
+}
+
+
+- (void) fileMergeCallback: (id) taskObj
 {
 	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
-	{
-		
-	}
-	
-	if ( [[taskObj valueForKey:@"stderr"] length] > 0 ) [controller svnError:[taskObj valueForKey:@"stderr"]];
+		;
 
+	[self svnError: taskObj];
 }
 
-#pragma -
-#pragma mark Helpers
 
-- (NSMutableDictionary *)getSvnOptions
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	Helpers
+
+- (NSMutableDictionary*) getSvnOptions
 {
 	return [NSMutableDictionary dictionaryWithObjectsAndKeys:[self user], @"user", [self pass], @"pass", nil ];
 }
 
-- (NSInvocation *) makeSvnOptionInvocation
+
+- (NSInvocation*) makeSvnOptionInvocation
 {
-	SEL getSvnOptions = @selector(getSvnOptions);
-	
-	NSInvocation *svnOptionsInvocation = [NSInvocation invocationWithMethodSignature:[MyWorkingCopy instanceMethodSignatureForSelector:getSvnOptions]];
-	[svnOptionsInvocation setSelector:getSvnOptions];
-	[svnOptionsInvocation setTarget:self];
-	
-	return svnOptionsInvocation;
+	return MakeCallbackInvocation(self, @selector(getSvnOptions));
 }
 
-- (NSInvocation *)makeCallbackInvocationOfKind:(int)callbackKind;
+
+- (NSInvocation*) makeCallbackInvocation: (SEL) selector
 {
-	
-	SEL callbackSelector;
-	NSInvocation *callback;
+	return MakeCallbackInvocation(self, selector);
+}
+
+
+- (NSInvocation*) makeCallbackInvocationOfKind: (int) callbackKind
+{
+	SEL callbackSelector = nil;
 
 	switch ( callbackKind )
 	{
 		case SVNXCallbackSvnUpdate:
-		
 			callbackSelector = @selector(svnUpdateCompletedCallback:);
+			break;
 
-		break;
-		
 		case SVNXCallbackSvnStatus:
-		
 			callbackSelector = @selector(svnStatusCompletedCallback:);
+			break;
 
-		break;
-		
 		case SVNXCallbackSvnInfo:
-		
 			callbackSelector = @selector(svnInfoCompletedCallback:);
+			break;
 
-		break;
-		
 		case SVNXCallbackGeneric:
-		
 			callbackSelector = @selector(svnGenericCompletedCallback:);
-			
-		break;
-		
-		case SVNXCallbackFileMerge:
-			
-			callbackSelector = @selector(fileMergeCallback:);
-		
-		break;
-	}
-	
-	callback = [NSInvocation invocationWithMethodSignature:[MyWorkingCopy instanceMethodSignatureForSelector:callbackSelector]];
-	[callback setSelector:callbackSelector];
-	[callback setTarget:self];	
+			break;
 
-	return callback;
+		case SVNXCallbackFileMerge:
+			callbackSelector = @selector(fileMergeCallback:);
+			break;
+	}
+
+	return MakeCallbackInvocation(self, callbackSelector);
 }
 
-#pragma mark -
-#pragma mark Key-Value interface observing
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+//----------------------------------------------------------------------------------------
+
+- (void) observeValueForKeyPath: (NSString*)     keyPath
+		 ofObject:               (id)            object
+		 change:                 (NSDictionary*) change
+		 context:                (void*)         context
 {
-//	NSLog(@"Observed value changed : %@", keyPath);
+	#pragma unused(object, change, context)
+//	NSLog(@"WC:observe: '%@'", keyPath);
+	BOOL doRefresh = false,
+		 doRearrange = false;
+
 	if ( [keyPath isEqualToString:@"smartMode"] )
 	{
-		if ( [self smartMode] )	[self setFlatMode:YES];
-		{
-			[controller fetchSvnInfo];
-			[controller fetchSvnStatus];
-		}
+		doRefresh = YES;
+		if (smartMode)
+			flatMode = YES;
+		[controller adjustOutlineView];
 	}
-	if ( [keyPath isEqualToString:@"flatMode"] )
+	else if ( [keyPath isEqualToString:@"flatMode"] )
 	{
-		if ( [self flatMode] == FALSE && [self smartMode] == TRUE )
-		{
-			[self setSmartMode:NO];
-		}
-		else
-		{
-			[controller fetchSvnInfo];
-			[controller fetchSvnStatus];
-		}
-//		[svnFilesAC rearrangeObjects];
+		doRefresh = YES;
+		if (!flatMode)
+			smartMode = NO;
+	//	[controller adjustOutlineView];
 	}
-	
-	if ( [keyPath isEqualToString:@"workingCopyPath"] )
+	else if ( [keyPath isEqualToString:@"filterMode"] )
 	{
-		[controller fetchSvnInfo];
-		[controller fetchSvnStatus];
+		doRearrange = YES;
 	}
-	if ( [keyPath isEqualToString:@"outlineSelectedPath"] )
-	{
+
+	if (doRefresh)
+		[self svnRefresh];
+	else if (doRearrange)
 		[svnFilesAC rearrangeObjects];
-	}
-	if ( [keyPath isEqualToString:@"filterMode"] )
-	{
-		[svnFilesAC rearrangeObjects];
-	}
+//	NSLog(@"WC:observe ---", (doRefresh ? @"doRefresh" : @""), (doRearrange ? @"doRearrange" : @""));
 }
 
-#pragma mark -
-#pragma mark Accessors
 
-// ACCESSORS
-//
-- (NSInvocation *)svnOptionsInvocation
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	Accessors
+
+- (NSInvocation*) svnOptionsInvocation
 {
 	return [self makeSvnOptionInvocation];
 }
 
-//  displayedTaskObj 
-- (NSMutableDictionary *) displayedTaskObj {
-    return displayedTaskObj; 
-}
-- (void) setDisplayedTaskObj: (NSMutableDictionary *) aDisplayedTaskObj {
-    id old = [self displayedTaskObj];
-    displayedTaskObj = [aDisplayedTaskObj retain];
-    [old release];
-}
 
-// - user name:
-- (NSString *) user { return user; }
-- (void) setUser: (NSString *) aUser {
-    id old = [self user];
-    user = [aUser retain];
-    [old release];
-}
+// get/set displayedTaskObj 
+- (NSMutableDictionary*) displayedTaskObj { return displayedTaskObj; }
 
-// - user password:
-- (NSString *) pass { return pass; }
-- (void) setPass: (NSString *) aPass {
-    id old = [self pass];
-    pass = [aPass retain];
-    [old release];
-}
-
-- (NSArray *)svnFiles
+- (void) setDisplayedTaskObj: (NSMutableDictionary*) aDisplayedTaskObj
 {
-	return svnFiles;
-}
-- (void)setSvnFiles:(NSMutableArray *)aSvnFiles
-{
-    if (svnFiles != aSvnFiles)
-	{
-        [svnFiles release];
-        svnFiles = [aSvnFiles mutableCopy];
-    }
-}
-
-- (NSString *)resultString
-{
-	return resultString;
-}
-- (void)setResultString: (NSString *)str
-{
-	id old = resultString;
-	resultString = [str retain];
+	id old = displayedTaskObj;
+	displayedTaskObj = [aDisplayedTaskObj retain];
 	[old release];
 }
 
-- (NSString *)revision { return revision; }
-- (void)setRevision:(NSString *)aRevision {
-    id old = [self revision];
-    revision = [aRevision retain];
-    [old release];
+
+// get/set user name
+- (NSString*) user { return user; }
+
+- (void) setUser: (NSString*) aUser
+{
+	id old = user;
+	user = [aUser retain];
+	[old release];
 }
 
-- (NSString *)workingCopyPath
+
+// get/set user password
+- (NSString*) pass { return pass; }
+
+- (void) setPass: (NSString*) aPass
 {
-	return workingCopyPath;
+	id old = pass;
+	pass = [aPass retain];
+	[old release];
 }
-- (void)setWorkingCopyPath: (NSString *)str
+
+
+// get/set svnFiles
+- (NSArray*) svnFiles { return svnFiles; }
+
+- (void) setSvnFiles: (NSArray*) aSvnFiles
+{
+	if (svnFiles != aSvnFiles)
+	{
+		[svnFiles release];
+		svnFiles = [aSvnFiles retain];
+	}
+}
+
+
+// get/set revision
+- (NSString*) revision { return revision; }
+
+- (void) setRevision: (NSString*) aRevision
+{
+	id old = [self revision];
+	revision = [aRevision retain];
+	[old release];
+}
+
+
+// get/set workingCopyPath
+- (NSString*) workingCopyPath { return workingCopyPath; }
+
+- (void) setWorkingCopyPath: (NSString*) str
 {
 	id old = workingCopyPath;
 	workingCopyPath = [str retain];
 	[old release];
 }
 
-// - svnDirectories:
-- (NSMutableDictionary *) svnDirectories { return svnDirectories; }
 
-// - setSvnDirectories:
-- (void) setSvnDirectories: (NSMutableDictionary *) aSvnDirectories {
-    id old = [self svnDirectories];
-    svnDirectories = [aSvnDirectories retain];
-    [old release];
+// get/set svnDirectories
+- (WCTreeEntry*) svnDirectories { return svnDirectories; }
+
+- (void) setSvnDirectories: (WCTreeEntry*) aSvnDirectories
+{
+	id old = [self svnDirectories];
+	svnDirectories = [aSvnDirectories retain];
+	[old release];
 }
 
 
-
-// filterMode : set by the toolbar dropdown menu
-//
+// filterMode: set by the toolbar pop-up menu
 - (int) filterMode { return filterMode; }
-- (void) setFilterMode: (int) aFilterMode {
-    filterMode = aFilterMode;
+
+- (void) setFilterMode: (int) aFilterMode
+{
+//	NSLog(@"setFilterMode: %d", aFilterMode);
+	filterMode = aFilterMode;
 }
 
-// - windowTitle:
-- (NSString *) windowTitle { return windowTitle; }
 
-// - setWindowTitle:
-- (void) setWindowTitle: (NSString *) aWindowTitle {
-    id old = [self windowTitle];
-    windowTitle = [aWindowTitle retain];
-    [old release];
+// get/set windowTitle
+- (NSString*) windowTitle { return windowTitle; }
+
+- (void) setWindowTitle: (NSString*) aWindowTitle
+{
+	id old = windowTitle;
+	windowTitle = [aWindowTitle retain];
+	[old release];
 }
 
-// - flatMode:
+
+// get/set flatMode
 - (BOOL) flatMode { return flatMode; }
-// - setFlatMode:
-- (void) setFlatMode: (BOOL) flag {
-    flatMode = flag;
+
+- (void) setFlatMode: (BOOL) flag
+{
+	flatMode = flag;
 }
 
-// - smartMode:
+
+// get/set smartMode
 - (BOOL) smartMode { return smartMode; }
-// - setSmartMode:
-- (void) setSmartMode: (BOOL) flag {
-    smartMode = flag;
+
+- (void) setSmartMode: (BOOL) flag
+{
+	smartMode = flag;
 }
 
-// - showUpdates:
-- (BOOL)showUpdates { return showUpdates; }
-// - setShowUpdates:
-- (void)setShowUpdates:(BOOL)flag {
-    showUpdates = flag;
+
+//----------------------------------------------------------------------------------------
+
+- (NSImage*) iconForFile: (NSString*) relPath
+{
+	Boolean isDirectory = TRUE;
+	char path[2048];
+	if (!ToUTF8([workingCopyPath stringByAppendingPathComponent: relPath], path, sizeof(path)))
+		path[0] = 0;
+
+	return getIcon(path, &isDirectory);
 }
 
-// - outlineSelectedPath:
-- (NSString *) outlineSelectedPath { return outlineSelectedPath; }
 
-// - setOutlineSelectedPath:
-- (void) setOutlineSelectedPath: (NSString *) anOutlineSelectedPath {
-    id old = [self outlineSelectedPath];
-    outlineSelectedPath = [anOutlineSelectedPath retain];
-    [old release];
+- (NSString*) treeSelectedFullPath
+{
+	return [workingCopyPath stringByAppendingPathComponent: outlineSelectedPath];
 }
 
--(id)controller
+
+// get/set outlineSelectedPath
+- (NSString*) outlineSelectedPath { return outlineSelectedPath; }
+
+- (void) setOutlineSelectedPath: (NSString*) anOutlineSelectedPath
+{
+//	NSLog(@"setOutlineSelectedPath('%@')", anOutlineSelectedPath);
+	id old = outlineSelectedPath;
+	outlineSelectedPath = [anOutlineSelectedPath retain];
+	[old release];
+	if (svnFiles != nil)
+		[svnFilesAC rearrangeObjects];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (id) controller
 {
 	return controller;
 }
 
-// - repositoryUrl:
-- (NSURL *)repositoryUrl { return repositoryUrl; }
 
-	// - setRepositoryUrl:
-- (void)setRepositoryUrl:(NSURL *)aRepositoryUrl {
+// get/set repositoryUrl
+- (NSURL*) repositoryUrl { return repositoryUrl; }
+
+- (void) setRepositoryUrl: (NSURL*) aRepositoryUrl
+{
     id old = [self repositoryUrl];
     repositoryUrl = [aRepositoryUrl retain];
     [old release];
 }
 
-// - statusInfo:
-- (NSString *)statusInfo { return statusInfo; }
 
-// - setStatusInfo:
-- (void)setStatusInfo:(NSString *)aStatusInfo {
-    id old = [self statusInfo];
-    statusInfo = [aStatusInfo retain];
-    [old release];
+@end	// MyWorkingCopy
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark -
+//----------------------------------------------------------------------------------------
+// Compare names alphabetically & case insensitively.
+
+static int
+compareNames (id obj1, id obj2, void* context)
+{
+	#pragma unused(context)
+	return [[obj1 name] caseInsensitiveCompare: [obj2 name]];
 }
 
-@end
+
+//----------------------------------------------------------------------------------------
+
+@implementation WCTreeEntry
+
+
+- (void) dealloc
+{
+	[children release];
+	[name     release];
+	[path     release];
+	[icon     release];
+	[super dealloc];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (id) initWithChildren: (NSMutableArray*) itsChildren
+	   name:             (NSString*)       itsName
+	   path:             (NSString*)       itsPath
+	   icon:             (NSImage*)        itsIcon
+{
+	self = [super init];
+	if (self)
+	{
+		children = [itsChildren retain];
+		name     = [itsName     retain];
+		path     = [itsPath     retain];
+		icon     = [itsIcon     retain];
+	}
+
+	return self;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (int) childCount
+{
+	return [children count];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (id) childAtIndex: (int) index
+{
+	if (!sorted)
+	{
+		[children sortUsingFunction: compareNames context: NULL];
+		sorted = TRUE;
+	}
+
+	return [children objectAtIndex: index];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (NSMutableArray*) children
+{
+	return children;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (NSString*) name
+{
+	return name;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (NSString*) path
+{
+	return path;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (NSImage*) icon: (MyWorkingCopy*) workingCopy
+{
+	if (icon == nil)
+		icon = [[workingCopy iconForFile: path] retain];
+
+	return icon;
+}
+
+
+@end	// WCTreeEntry
 

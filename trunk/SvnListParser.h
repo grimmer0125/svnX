@@ -6,14 +6,21 @@
 //  Copyright 2006 __MyCompanyName__. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 
-@interface SvnListParser : NSObject {
-	NSMutableArray *listArray;
-	NSMutableDictionary *tmpDict;
-	NSMutableDictionary *tmpDict2;
-	NSMutableString *tmpString;
+@interface SvnListParser : NSObject
+{
+	NSMutableArray*			entries;
+	NSMutableDictionary*	curEntry;
+	NSMutableString*		bufString;
 }
 
++ (NSArray*) parseData:   (NSData*)   data;
++ (NSArray*) parseString: (NSString*) string;
+
+- (NSArray*) parseXML:       (NSData*)   data;
+- (NSArray*) parseXMLString: (NSString*) string;
+
 @end
+

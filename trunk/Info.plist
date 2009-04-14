@@ -32,6 +32,20 @@
 			<key>NSDocumentClass</key>
 			<string>MyRepository</string>
 		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Document</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>LSTypeIsPackage</key>
+			<false/>
+			<key>NSPersistentStoreTypeKey</key>
+			<string>Binary</string>
+		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
 	<string>svnX</string>
@@ -44,16 +58,16 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
-	<string>????</string>
+	<string>svnX</string>
 	<key>CFBundleVersion</key>
-	<string>0.9.13</string>
+	<string>1.0</string>
 	<key>NSAppleScriptEnabled</key>
 	<string>YES</string>
 	<key>NSMainNibFile</key>
 	<string>svnX</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>SUFeedURL</key> 
+	<key>SUFeedURL</key>
 	<string>http://www.lachoseinteractive.net/en/community/subversion/svnx/history/rss/</string>
 </dict>
 </plist>

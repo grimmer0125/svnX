@@ -1,24 +1,26 @@
 /* MyFileMergeController */
 
 #import <Cocoa/Cocoa.h>
+#import "MySvnOperationController.h"
 
-@class MySvnLogView, MySvnLogView2;
+@class MySvnLogView, MyWorkingCopy;
 
-@interface MyFileMergeController : NSObject
+@interface MyFileMergeController : MySvnOperationController
 {
-    IBOutlet NSWindow *svnSheet;
-
-    IBOutlet MySvnLogView *svnLogView;
-    IBOutlet MySvnLogView *svnLogView1; 
-    IBOutlet MySvnLogView2 *svnLogView2;
-
-    IBOutlet NSObjectController *objectController;
-
-	NSInvocation *svnOptionsInvocation;
+	IBOutlet MySvnLogView*			svnLogView;
 }
 
-- (IBAction)compare:(id)sender;
-- (IBAction)compareUrl:(id)sender;
-- (IBAction)validate:(id)sender;
++ (void) runDiffSheet: (MyWorkingCopy*) workingCopy
+		 path:         (NSString*)      path
+		 sourceItem:   (NSDictionary*)  sourceItem;
+
+- (IBAction) compare:    (id) sender;
+- (IBAction) compareUrl: (id) sender;
+- (IBAction) validate:   (id) sender;
+
+- (void) setupUrl:   (NSURL*)        url
+		 options:    (NSInvocation*) options
+		 sourceItem: (NSDictionary*) sourceItem;
 
 @end
+

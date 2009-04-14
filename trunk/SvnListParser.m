@@ -7,147 +7,153 @@
 //
 
 #import "SvnListParser.h"
+#include "CommonUtils.h"
 
 
 @implementation SvnListParser
 
-- (void)dealloc
+- (id) init
 {
-    [self setListArray: nil];
-    [self setTmpDict: nil];
-    [self setTmpDict2: nil];
-    [self setTmpString: nil];
+	self = [super init];
+	if (self)
+	{
+		bufString = [[NSMutableString string] retain];
+	}
 
-    [super dealloc];
+	return self;
 }
 
 
--(NSArray *)parseXmlString:(NSString *)string
+- (void) dealloc
 {
-	NSXMLParser *parser = [[NSXMLParser alloc] initWithData:[string dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES]];
-	[parser setDelegate:self];
+	[bufString release];
 
-	[self setListArray:[NSMutableArray array]];
-	[parser parse];
-	if ( [parser parserError] != nil )
-	{
-		NSLog(@"Error while parsing list xml : %@", [[parser parserError] localizedDescription]);
-	}
+	[super dealloc];
+}
 
+
++ (NSArray*) parseData: (NSData*) data
+{
+	SvnListParser* parser = [[self alloc] init];
+	NSArray* result = [parser parseXML: data];
 	[parser release];
-	return [self listArray];
+
+	return result;
 }
 
-- (void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qualifiedName attributes:(NSDictionary *)attributeDict
+
++ (NSArray*) parseString: (NSString*) string
 {
-	if ( [elementName isEqualToString:@"entry"] )
+	return [self parseData: [string dataUsingEncoding: NSUTF8StringEncoding allowLossyConversion: YES]];
+}
+
+
+- (NSArray*) parseXML: (NSData*) data
+{
+	curEntry = nil;
+	entries = [NSMutableArray array];
+
+	NSXMLParser* parser = [[NSXMLParser alloc] initWithData: data];
+	[parser setDelegate: self];
+
+	[parser parse];
+	if ([parser parserError] != nil)
 	{
-		[self setTmpDict:attributeDict];
-		[[self tmpDict] setObject:[NSNumber numberWithBool:([[attributeDict objectForKey:@"kind"] isEqual:@"dir"])] forKey:@"isDir"];
-		[[self listArray] addObject:[self tmpDict]];		
+		NSLog(@"Error while parsing list xml: %@", [[parser parserError] localizedDescription]);
 	}
-	else
-	if ( [elementName isEqualToString:@"date"] )
-	{  
-		[self setTmpString:[NSMutableString string]];
-		[[self tmpDict] setObject:[self tmpString] forKey:@"date"];
-	}
-	else
-	if ( [elementName isEqualToString:@"size"] )
-	{  
-		[self setTmpString:[NSMutableString string]];
-		[[self tmpDict] setObject:[self tmpString] forKey:@"size"];
-	}
-	else
-	if ( [elementName isEqualToString:@"name"] )
-	{  
-		[self setTmpString:[NSMutableString string]];
-		[[self tmpDict] setObject:[self tmpString] forKey:@"name"];
-		[[self tmpDict] setObject:[self tmpString] forKey:@"displayName"];
-	}
-	else
-	if ( [elementName isEqualToString:@"author"] )
-	{  
-		[self setTmpString:[NSMutableString string]];
-		[[self tmpDict] setObject:[self tmpString] forKey:@"author"];
-	}
-	else
-	if ( [elementName isEqualToString:@"commit"] )
-	{  
-		[[self tmpDict] setObject:[attributeDict objectForKey:@"revision"] forKey:@"revision"];
-	}
-	else
+	[parser release];
+
+	return entries;
+}
+
+
+- (NSArray*) parseXMLString: (NSString*) string
+{
+	return [self parseXML: [string dataUsingEncoding: NSUTF8StringEncoding allowLossyConversion: YES]];
+}
+
+
+- (void) parser:          (NSXMLParser*)  parser
+		 didStartElement: (NSString*)     elementName
+		 namespaceURI:    (NSString*)     namespaceURI
+		 qualifiedName:   (NSString*)     qualifiedName
+		 attributes:      (NSDictionary*) attributeDict
+{
+	[bufString setString: @""];
+
+	switch ([elementName characterAtIndex: 0])
 	{
-		[self setTmpString:nil];
+		case 'e':
+			if ([elementName isEqualToString: @"entry"])
+			{
+				NSMutableDictionary* dict = [NSMutableDictionary dictionary];
+				curEntry = dict;
+				[entries addObject: dict];
+				BOOL isDir = [[attributeDict objectForKey: @"kind"] isEqual: @"dir"];
+				[dict setObject: NSBool(isDir) forKey: @"isDir"];
+				[dict setObject: @"" forKey: @"author"];	// Somtimes it's missing from the XML
+			}
+			break;
+
+		case 'c':
+			if ([elementName isEqualToString: @"commit"])
+			{
+				[curEntry setObject: [attributeDict objectForKey: @"revision"] forKey: @"revision"];
+			}
+			break;
 	}
 }
 
-- (void)parser:(NSXMLParser *)parser didEndElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName;
+
+- (void) parser:        (NSXMLParser*) parser
+		 didEndElement: (NSString*)    elementName
+		 namespaceURI:  (NSString*)    namespaceURI
+		 qualifiedName: (NSString*)    qName
 {
-	if ( [elementName isEqualToString:@"paths"] )
-	{  
-		[[self tmpDict] setObject:[self pathsArray] forKey:@"paths"];
-	}
-	else
-	if ( [elementName isEqualToString:@"date"] )
-	{  
-		[[self tmpDict] setObject:[[[self tmpDict] objectForKey:@"date"] substringWithRange:NSMakeRange(11, 8)] forKey:@"time"];
-		[[self tmpDict] setObject:[[[self tmpDict] objectForKey:@"date"] substringWithRange:NSMakeRange(0, 10)] forKey:@"date"];
-	}
+	NSMutableDictionary* dict = curEntry;
 
+	switch ([elementName characterAtIndex: 0])
+	{
+		case 'a':
+			if ([elementName isEqualToString: @"author"])
+			{
+				[dict setObject: [NSString stringWithString: bufString] forKey: @"author"];
+			}
+			break;
+
+		case 'd':
+			if ([elementName isEqualToString: @"date"])
+			{
+				NSString* date = bufString;		// YYYY-MM-DDTHH:MM:SS.sss
+				[dict setObject: [date substringWithRange: NSMakeRange(11, 8)] forKey: @"time"];
+				[dict setObject: [date substringWithRange: NSMakeRange(0, 10)] forKey: @"date"];
+			}
+			break;
+
+		case 'n':
+			if ([elementName isEqualToString: @"name"])
+			{
+				NSString* name = [NSString stringWithString: bufString];
+				[dict setObject: name forKey: @"name"];
+			}
+			break;
+
+		case 's':
+			if ([elementName isEqualToString: @"size"])
+			{
+				[dict setObject: [NSString stringWithString: bufString] forKey: @"size"];
+			}
+			break;
+	}
 }
 
-- (void)parser:(NSXMLParser *)parser foundCharacters:(NSString *)string
+
+- (void) parser:          (NSXMLParser*) parser
+		 foundCharacters: (NSString*)    string
 {
-    [[self tmpString] appendString:[string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
-}
-
-
-// - listArray:
-- (NSMutableArray *)listArray {
-    return listArray; 
-}
-
-// - setListArray:
-- (void)setListArray:(NSMutableArray *)aListArray {
-    id old = [self listArray];
-    listArray = [aListArray retain];
-    [old release];
-}
-
-// - tmpDict:
-- (NSMutableDictionary *)tmpDict {
-    return tmpDict; 
-}
-
-// - setTmpDict:
-- (void)setTmpDict:(NSMutableDictionary *)atmpDict {
-    id old = [self tmpDict];
-    tmpDict = [atmpDict retain];
-    [old release];
-}
-
-// - tmpDict2:
-- (NSMutableDictionary *)tmpDict2 { return tmpDict2; }
-
-	// - setTmpDict2:
-- (void)setTmpDict2:(NSMutableDictionary *)aTmpDict2 {
-    id old = [self tmpDict2];
-    tmpDict2 = [aTmpDict2 retain];
-    [old release];
-}
-
-// - tmpString:
-- (NSMutableString *)tmpString {
-    return tmpString; 
-}
-
-// - setTmpString:
-- (void)setTmpString:(NSMutableString *)aTmpString {
-    id old = [self tmpString];
-    tmpString = [aTmpString retain];
-    [old release];
+	[bufString appendString: string];
 }
 
 
 @end
+

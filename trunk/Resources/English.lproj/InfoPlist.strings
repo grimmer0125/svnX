@@ -1,0 +1,6 @@
+/* Localized versions of Info.plist keys */
+
+CFBundleName = "svnX";
+CFBundleShortVersionString = "1.0";
+CFBundleGetInfoString = "1.0, Copyright 2004-2008 La Chose";
+NSHumanReadableCopyright = "Copyright 2004-2008 La Chose";

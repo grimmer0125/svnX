@@ -1,9 +1,15 @@
 #import <Cocoa/Cocoa.h>
 
-@class MyWorkingCopyController;
-@class MySvnFilesArrayController;
+enum {
+	kFilterAll		=	0,
+	kFilterModified	=	1,
+	kFilterNew		=	2,
+	kFilterMissing	=	3,
+	kFilterConflict	=	4,
+	kFilterChanged	=	5
+};
 
-@class Tasks;
+@class WCTreeEntry, MyWorkingCopyController, MySvnFilesArrayController;
 
 /*" Model of the working copy browser "*/
 @interface MyWorkingCopy : NSDocument
@@ -18,71 +24,124 @@
 	NSString *windowTitle;
 
 	NSString *outlineSelectedPath; // the currently selected path in the left outline view
-	
-	NSString *resultString;
 
-	IBOutlet MyWorkingCopyController *controller;
-	IBOutlet MySvnFilesArrayController *svnFilesAC;	
+	IBOutlet MyWorkingCopyController*	controller;
+	IBOutlet MySvnFilesArrayController*	svnFilesAC;	
 	
-    NSMutableArray *svnFiles;
-	NSMutableDictionary *svnDirectories;
-	
-	
-	BOOL flatMode, smartMode;
-	BOOL showUpdates; // svn status -u
-	NSString *statusInfo;
-	
-	NSMutableDictionary *displayedTaskObj;
+    NSArray*		svnFiles;
+	WCTreeEntry*	svnDirectories;
+
+	BOOL			flatMode, smartMode;
+	BOOL			showUpdates;	// svn status -u
+	int				filterMode;
+	int				reviewCount;	// number of active ReviewContollers
+
+	NSMutableDictionary*	displayedTaskObj;
+	struct SvnEnv*			fSvnEnv;		// The svn client environment
 }
 
-int filterMode;
 
++ (void) presetDocumentName: name;
+- (void) setup: (NSString*) title
+		 user:  (NSString*) username
+		 pass:  (NSString*) password
+		 path:  (NSString*) fullPath;
+- (void) svnRefresh;
 
-//- (void)fetchSvnStatus;
-//- (void)fetchSvnStatusReceiveData:(NSArray*)shellOutput;
-//- (void)fetchSvnStatusReceiveDataFinished: (NSString *)result;
+- (void) fetchSvnInfo;
+- (void) svnUpdateSelectedItems: (NSArray*) options;
+- (void) svnUpdate: (NSArray*) options;
+- (void) svnUpdate;
+- (void) diffItems:    (NSArray*)      items
+		 callback:     (NSInvocation*) callback
+		 callbackInfo: (id)            callbackInfo;
+- (void) diffItems: (NSArray*) items;
+- (void) fetchSvnStatus: (BOOL) showUpdates;
+- (void) fetchSvnInfoReceiveDataFinished: (NSString*) result;
+- (void) computesVerboseResultArray: (NSString*) svnStatusText;
 
-- (void)svnCommand:(NSString *)command options:(NSDictionary *)options;
+- (void) svnInfo: (const struct svn_info_t*) info
+		 forPath: (const char*)              path;
 
+- (void) svnCommit:    (NSArray*)      items
+		 message:      (NSString*)     message
+		 callback:     (NSInvocation*) callback
+		 callbackInfo: (id)            callbackInfo;
 
-- (void)computesResultArray;
+- (void) svnCommit: (NSString*) message;
 
-- (int) filterMode;
-- (void) setFilterMode: (int) aFilterMode;
+- (void) svnSwitch: (NSArray*) options;
 
-- (void)setResultString: (NSString *)str;
-- (NSString *)resultString;
+- (void) svnCommand: (NSString*)     command
+		 options:    (NSArray*)      options
+		 info:       (NSDictionary*) info
+		 itemPaths:  (NSArray*)      itemPaths;
 
-- (void)setWorkingCopyPath: (NSString *)str;
-- (NSString *)workingCopyPath;
+- (NSInvocation*) svnOptionsInvocation;
+- (void) setDisplayedTaskObj: (NSMutableDictionary*) aDisplayedTaskObj;
+- (NSInvocation*) makeCallbackInvocation: (SEL) selector;
+- (NSInvocation*) makeCallbackInvocationOfKind: (int) callbackKind;
 
+- (NSString*) workingCopyPath;
+- (void) setWorkingCopyPath: (NSString*) str;
+- (NSString*) user;
+- (void) setUser: (NSString*) aUser;
+- (NSString*) pass;
+- (void) setPass: (NSString*) aPass;
+- (NSString*) revision;
+- (void) setRevision: (NSString*) aRevision;
 
-- (NSString *) user;
-- (void) setUser: (NSString *) aUser;
-- (NSString *) pass;
-- (void) setPass: (NSString *) aPass;
+- (NSArray*) svnFiles;
+- (void) setSvnFiles: (NSArray*) aSvnFiles;
 
-- (NSArray *)svnFiles;
-- (void)setSvnFiles:(NSMutableArray *)aSvnFiles;
+- (WCTreeEntry*) svnDirectories;
+- (void) setSvnDirectories: (WCTreeEntry*) aSvnDirectories;
 
-- (NSMutableDictionary *) svnDirectories;
-- (void) setSvnDirectories: (NSMutableDictionary *) aSvnDirectories;
-
-- (NSString *) windowTitle;
-- (void) setWindowTitle: (NSString *) aWindowTitle;
+- (NSString*) windowTitle;
+- (void) setWindowTitle: (NSString*) aWindowTitle;
 
 - (BOOL) flatMode;
 - (void) setFlatMode: (BOOL) flag;
 - (BOOL) smartMode;
 - (void) setSmartMode: (BOOL) flag;
-- (BOOL)showUpdates;
-- (void)setShowUpdates:(BOOL)flag;
+- (int)  filterMode;
+- (void) setFilterMode: (int) aFilterMode;
+- (int*) reviewCount;
 
-- (NSString *) outlineSelectedPath;
-- (void) setOutlineSelectedPath: (NSString *) anOutlineSelectedPath;
+- (id) controller;
+- (NSURL*) repositoryUrl;
+- (void) setRepositoryUrl: (NSURL*) aRepositoryUrl;
 
-- (NSString *)statusInfo;
-- (void)setStatusInfo:(NSString *)aStatusInfo;
+- (NSImage*) iconForFile: (NSString*) relPath;
+- (NSString*) treeSelectedFullPath;
+- (NSString*) outlineSelectedPath;
+- (void) setOutlineSelectedPath: (NSString*) anOutlineSelectedPath;
+
+@end	// MyWorkingCopy
 
 
-@end
+//----------------------------------------------------------------------------------------
+
+@interface WCTreeEntry : NSObject
+{
+	NSMutableArray*	children;
+	NSString*		name;
+	NSString*		path;
+	NSImage*		icon;
+	BOOL			sorted;
+}
+
+- (void) dealloc;
+- (id) initWithChildren: (NSMutableArray*) itsChildren
+	   name:             (NSString*)       itsName
+	   path:             (NSString*)       itsPath
+	   icon:             (NSImage*)        itsIcon;
+- (int) childCount;
+- (id) childAtIndex: (int) index;
+- (NSMutableArray*) children;
+- (NSString*) name;
+- (NSString*) path;
+- (NSImage*) icon: (MyWorkingCopy*) workingCopy;
+
+@end	// WCTreeEntry
+

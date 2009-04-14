@@ -3,21 +3,24 @@
 
 @implementation MyOutlineView
 
-- (void)awakeFromNib
+- (void) awakeFromNib
 {
-    NSTableColumn *tableColumn = nil;
-    ImageAndTextCell *imageAndTextCell = nil;
+	ImageAndTextCell* cell = [[ImageAndTextCell alloc] init];
+	[cell setFont: [NSFont labelFontOfSize: 0]];
+	[cell setWraps: NO];
+	[cell setEditable: NO];
+	[[self tableColumnWithIdentifier: @"folders"] setDataCell: cell];
+	[cell release];
 
-    tableColumn = [self tableColumnWithIdentifier:@"folders"];
-    imageAndTextCell = [[ImageAndTextCell alloc] init];
-    [imageAndTextCell setEditable: NO];
-    [tableColumn setDataCell:imageAndTextCell];
-	[imageAndTextCell release];
+	[self setIndentationPerLevel: 10];
 	// register outliner for dragging
-	[self registerForDraggedTypes:[NSArray arrayWithObjects:@"svnX", nil]];
+	[self registerForDraggedTypes: [NSArray arrayWithObject: @"svnX"]];
 }
 
-- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
+
+//----------------------------------------------------------------------------------------
+
+- (NSDragOperation) draggingEntered: (id <NSDraggingInfo>) sender
 {
     NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
 	

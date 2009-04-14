@@ -1,0 +1,46 @@
+{
+    IBClasses = (
+        {CLASS = CTableView; LANGUAGE = ObjC; SUPERCLASS = NSTableView; }, 
+        {
+            ACTIONS = {"" = id; }; 
+            CLASS = FirstResponder; 
+            LANGUAGE = ObjC; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {
+            CLASS = MyRadioButtonTableColumn; 
+            LANGUAGE = ObjC; 
+            SUPERCLASS = NSTableColumn; 
+        }, 
+        {
+            CLASS = MySvnLog; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {owner = id; }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {
+            ACTIONS = {rearrange = id; search = id; }; 
+            CLASS = MySvnLogAC; 
+            LANGUAGE = ObjC; 
+            SUPERCLASS = NSArrayController; 
+        }, 
+        {
+            ACTIONS = {refetch = id; }; 
+            CLASS = MySvnLogView; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                "_view" = id; 
+                logTable = NSTableView; 
+                logsAC = NSArrayController; 
+                logsACSelection = NSArrayController; 
+                pathsTable = NSTableView; 
+                progress = NSProgressIndicator; 
+                refetch = id; 
+                searchPaths = NSSearchField; 
+                splitView = id; 
+            }; 
+            SUPERCLASS = NSView; 
+        }
+    ); 
+    IBVersion = 1; 
+}

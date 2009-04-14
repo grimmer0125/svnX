@@ -1,11 +1,37 @@
 #import "MyApp.h"
 #import "GetEthernetAddrSample.h"
+#import "RepositoriesController.h"
+#import "SvnFileStatusToColourTransformer.h"
+#import "SvnDateTransformer.h"
+#import "ArrayCountTransformer.h"
+#import "SvnFilePathTransformer.h"
+#import "FilePathCleanUpTransformer.h"
+#import "TrimNewLinesTransformer.h"
+#include "CommonUtils.h"
+
+
+// TO_DO: Add file "TaskStatusToColorTransformer.h"
+@interface TaskStatusToColorTransformer : NSObject
+{
+}
+@end
+
+
+//----------------------------------------------------------------------------------------
+
+static void
+addTransform (Class itsClass, NSString* itsName)
+{
+	[NSValueTransformer setValueTransformer: [[[itsClass alloc] init] autorelease] forName: itsName];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
 
 @implementation MyApp
 
-@class SvnFileStatusToColourTransformer, SvnDateTransformer, ArrayCountTransformer, SvnFilePathTransformer, FilePathCleanUpTransformer, TrimNewLinesTransformer, TaskStatusToColorTransformer;
-
-+ (MyApp *)myApp
++ (MyApp*) myApp
 {
     static id controller = nil;
     
@@ -15,53 +41,75 @@
 
     return controller;
 }
-+ (void)initialize
+
+
++ (void) initialize
 {
 	NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
 	NSData *svnFileStatusModifiedColor = [NSArchiver archivedDataWithRootObject:[NSColor blackColor]];
-	NSData *svnFileStatusNewColor = [NSArchiver archivedDataWithRootObject:[NSColor blueColor]];
-	NSData *svnFileStatusMissingColor = [NSArchiver archivedDataWithRootObject:[NSColor redColor]];
+	NSData *svnFileStatusNewColor      = [NSArchiver archivedDataWithRootObject:[NSColor blueColor]];
+	NSData *svnFileStatusMissingColor  = [NSArchiver archivedDataWithRootObject:[NSColor redColor]];
 
 	[dictionary setObject:svnFileStatusModifiedColor forKey:@"svnFileStatusModifiedColor"];
 	[dictionary setObject:svnFileStatusNewColor forKey:@"svnFileStatusNewColor"];
 	[dictionary setObject:svnFileStatusMissingColor forKey:@"svnFileStatusMissingColor"];
 	
 	[dictionary setObject:@"/usr/local/bin" forKey:@"svnBinariesFolder"];
-	[dictionary setObject:[NSNumber numberWithBool:YES] forKey:@"cacheSvnQueries"];
+	[dictionary setObject: kNSTrue forKey: @"cacheSvnQueries"];
 	[dictionary setObject:[NSNumber numberWithInt:0] forKey:@"defaultDiffApplication"];
 	[dictionary setObject:@"%m/%d/%y %H:%M:%S" forKey:@"dateformat"];
 
-	[dictionary setObject:[NSNumber numberWithBool:YES] forKey:@"addWorkingCopyOnCheckout"];
-	[dictionary setObject:[NSNumber numberWithBool:NO] forKey:@"useOldParsingMethod"];
-	
+	// Working Copy
+	[dictionary setObject: kNSTrue  forKey: @"addWorkingCopyOnCheckout"];
+	[dictionary setObject: kNSFalse forKey: @"useOldParsingMethod"];
+
+	[dictionary setObject: kNSTrue forKey: @"abbrevWCFilePaths"];
+	[dictionary setObject: kNSTrue forKey: @"expandWCTree"];
+	[dictionary setObject: kNSFalse forKey: @"autoRefreshWC"];
+
+	// Review & Commit
+	id obj = [NSDictionary dictionaryWithObjectsAndKeys: @"Simple File List", @"name",
+														 @"Files:\n\t(<FILES>)\n\t"
+														  "(</FILES>)\n", @"body", nil];
+	[dictionary setObject: [NSArray arrayWithObject: obj] forKey: @"msgTemplates"];
+	[dictionary setObject: @"5"    forKey: @"diffContextLines"];
+	[dictionary setObject: kNSTrue forKey: @"diffShowFunction"];
+	[dictionary setObject: kNSTrue forKey: @"diffShowCharacters"];
+
+	[dictionary setObject: [NSNumber numberWithInt: 99] forKey: @"loggingLevel"];
+
+
 	[[NSUserDefaultsController sharedUserDefaultsController] setInitialValues:dictionary];
 
 	// Transformers
-
-	[NSValueTransformer setValueTransformer:[[[SvnFileStatusToColourTransformer alloc] init] autorelease] forName:@"SvnFileStatusToColourTransformer"]; // used by MyWorkingCopy
-	[NSValueTransformer setValueTransformer:[[[SvnDateTransformer alloc] init] autorelease] forName:@"SvnDateTransformer"];		// used by MySvnLogView
-	[NSValueTransformer setValueTransformer:[[[ArrayCountTransformer alloc] init] autorelease] forName:@"ArrayCountTransformer"]; // used by MySvnLogView
-	[NSValueTransformer setValueTransformer:[[[FilePathCleanUpTransformer alloc] init] autorelease] forName:@"FilePathCleanUpTransformer"]; // used by FavoriteWorkingCopies
-	[NSValueTransformer setValueTransformer:[[[SvnFilePathTransformer alloc] init] autorelease] forName:@"lastPathComponent"]; // used by SingleFileInspector
-	[NSValueTransformer setValueTransformer:[[[TrimNewLinesTransformer alloc] init] autorelease] forName:@"TrimNewLines"]; // used by MySvnLogView and MySvnLogView2 (to filter author name)
-	[NSValueTransformer setValueTransformer:[[[TaskStatusToColorTransformer alloc] init] autorelease] forName:@"TaskStatusToColor"]; // used by Activity Window in svnX.nib
+	addTransform([SvnFileStatusToColourTransformer class], @"SvnFileStatusToColourTransformer");	// used by MyWorkingCopy
+	addTransform([SvnDateTransformer class], @"SvnDateTransformer");								// used by MySvnLogView
+	addTransform([ArrayCountTransformer class], @"ArrayCountTransformer");							// used by MySvnLogView
+	addTransform([FilePathCleanUpTransformer class], @"FilePathCleanUpTransformer");				// used by FavoriteWorkingCopies
+	addTransform([FilePathWorkingCopy class], @"FilePathWorkingCopy");								// used by FavoriteWorkingCopies
+	addTransform([SvnFilePathTransformer class], @"lastPathComponent");								// used by SingleFileInspector
+	addTransform([TrimNewLinesTransformer class], @"TrimNewLines");									// used by MySvnLogView and MySvnLogView2 (to filter author name)
+	addTransform([TaskStatusToColorTransformer class], @"TaskStatusToColor");						// used by Activity Window in svnX.nib
 }
 
-- (bool)checkSVNExistence:(bool)warn
+
+- (bool) checkSVNExistence: (bool) warn
 {
-	NSString *svnPath = [[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"svnBinariesFolder"];
+	NSString* svnPath = GetPreference(@"svnBinariesFolder");
 	NSFileManager* fm = [NSFileManager defaultManager];
 	NSString* svnFilePath = [svnPath stringByAppendingPathComponent:@"svn"];
 	bool exists = [fm fileExistsAtPath:svnFilePath];
 
-	if(!exists && warn) {
-		NSString* err = [NSString stringWithFormat:@"Make sure svn binary is present at path :\n%@.\nIs Subversion client installed ? If so, make sure the path is properly set in the preferences.", svnPath];
-		
+	if (!exists && warn)
+	{
 		NSAlert *alert = [NSAlert alertWithMessageText:@"Error: Unable to locate svn binary."
 										 defaultButton:@"Open Preferences"
 									   alternateButton:nil
 										   otherButton:nil
-							 informativeTextWithFormat:err];
+							 informativeTextWithFormat:@"Make sure the svn binary is present at path:\n%C%@%C.\n\n"
+														"Is a Subversion client installed?"
+														" If so, make sure the path is correctly set in the preferences.",
+														0x201C, svnPath, 0x201D];
 		
 		[alert setAlertStyle:NSCriticalAlertStyle];
 		[alert runModal];							 
@@ -70,19 +118,29 @@
 	return exists;
 }
 
-- (void)awakeFromNib
+
+- (void) initUI: (NSNotification*) note
+{
+	#pragma unused(note)
+	[repositoriesController showWindow];
+	[favoriteWorkingCopies showWindow];
+}
+
+
+- (void) awakeFromNib
 {
 	[self checkSVNExistence:true];
-	[favoriteWorkingCopiesWindow makeKeyAndOrderFront:self];	
+
+	// Show the Repositories & Working Copies windows after ALL awakeFromNib calls
+	[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(initUI:) name: @"initUI" object: self];
+	[[NSNotificationQueue defaultQueue] enqueueNotification: [NSNotification notificationWithName: @"initUI" object: self]
+										postingStyle:        NSPostWhenIdle]; 
 }
 
-- (IBAction)openFavorite:(id)sender
-{
-	[favoriteWorkingCopiesWindow makeKeyAndOrderFront:self];
-}
 
-- (IBAction)test:(id)sender
+- (IBAction) test: (id) sender
 {
+	#pragma unused(sender)
 //	[self fileHistoryOpenSheetForItem:@"/Users/dom/Sites/alahup/flash/_classes/com/lachoseinteractive/SmartEdit/Inspector_text.as"];
 }
 
@@ -93,29 +151,59 @@
 }
 
 
-- (IBAction)openPreferences:(id)sender
+- (IBAction) openPreferences: (id) sender
 {
+	#pragma unused(sender)
 	[preferencesWindow makeKeyAndOrderFront:self];
 }
 
-- (IBAction)closePreferences:(id)sender
+
+- (IBAction) closePreferences: (id) sender
 {
-    [preferencesWindow close];
+	#pragma unused(sender)
+	[preferencesWindow close];
 }
 
-- (BOOL)applicationShouldOpenUntitledFile:(NSApplication *)sender 
+
+- (BOOL) applicationShouldHandleReopen: (NSApplication*) theApplication
+		 hasVisibleWindows:             (BOOL)           visibleWindows
 {
+	#pragma unused(theApplication)
+	if (!visibleWindows)
+	{
+		[favoriteWorkingCopies showWindow];
+	}
+
+	return YES;
+}
+
+
+- (BOOL) applicationShouldOpenUntitledFile: (NSApplication*) sender 
+{
+	#pragma unused(sender)
 	return NO;
 }
 
-- (void)openRepository:(NSURL *)url user:(NSString *)user pass:(NSString *)pass
+
+- (BOOL) application: (NSApplication*) theApplication
+		 openFile:    (NSString*)      filename
+{
+	#pragma unused(theApplication)
+	[self fileHistoryOpenSheetForItem: filename];
+
+	return YES;
+}
+
+
+- (void) openRepository: (NSURL*) url user: (NSString*) user pass: (NSString*) pass
 {
 	[repositoriesController openRepositoryBrowser:[url absoluteString] title:[url absoluteString] user:user pass:pass];
 }
 
 
-#pragma mark -
-#pragma mark Tasks management
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	Tasks management
 
 -(void)newTaskWithDictionary:(NSMutableDictionary *)taskObj
 // called from MySvn class
@@ -123,15 +211,18 @@
 	[tasksManager newTaskWithDictionary:taskObj];
 }
 
-#pragma mark -
-#pragma mark Sparkle Plus delegate methods
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	Sparkle Plus delegate methods
 
 - (NSMutableArray *)updaterCustomizeProfileInfo:(NSMutableArray *)profileInfo
 {
 	NSString *MACAddress = [self getMACAddress];
+	NSArray *profileDictObjs = [NSArray arrayWithObjects:@"MACAddr",@"MAC Address", MACAddress, MACAddress, nil];
 	NSArray *profileDictKeys = [NSArray arrayWithObjects:@"key", @"visibleKey", @"value", @"visibleValue", nil];
 
-	[profileInfo addObject:[NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:@"MACAddr",@"MAC Address", MACAddress, MACAddress, nil] forKeys:profileDictKeys]];
+	[profileInfo addObject: [NSDictionary dictionaryWithObjects: profileDictObjs forKeys: profileDictKeys]];
 
 	//NSLog(@"%@", profileInfo);
 	
@@ -165,4 +256,6 @@
 	
 	return @"";
 }
+
 @end
+

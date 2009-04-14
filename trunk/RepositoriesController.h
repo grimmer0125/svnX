@@ -1,15 +1,14 @@
 /* RepositoriesController */
 
 #import <Cocoa/Cocoa.h>
+#import "EditListResponder.h"
 
-@class MyRepository;
+@class MyRepository, MyDragSupportArrayController;
 
-@interface RepositoriesController : NSObject
+@interface RepositoriesController : EditListResponder
 {
-	IBOutlet NSArrayController *repositoriesAC;
+	IBOutlet MyDragSupportArrayController *repositoriesAC;
     IBOutlet id nameTextField;
-    IBOutlet id window;
-    IBOutlet NSTableView* tableView;
 
 	NSMutableArray *repositories;
 }
@@ -19,5 +18,8 @@
 
 - (NSMutableArray *)repositories;
 - (void)setRepositories:(NSMutableArray *)aRepositories;
+- (void)saveRepositoriesPrefs;
+- (void)openRepositoryBrowser:(NSString *)url title:(NSString *)title
+		user:(NSString *)user pass:(NSString *)pass;
 
 @end

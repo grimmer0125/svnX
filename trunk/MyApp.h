@@ -8,20 +8,28 @@
 @interface MyApp : NSObject
 {
     IBOutlet id preferencesWindow;
-	IBOutlet id favoriteWorkingCopiesWindow;
+	IBOutlet id favoriteWorkingCopiesWindow;	// Unused
 	IBOutlet id tasksManager;
 	IBOutlet RepositoriesController *repositoriesController;
 	IBOutlet FavoriteWorkingCopies *favoriteWorkingCopies;
 }
 
-+ (MyApp *)myApp;
 
-- (void)fileHistoryOpenSheetForItem:(NSString *)path; // Compare a single file in a svnX window. Invoked from Applescript.
++ (MyApp*) myApp;
 
-- (IBAction)openPreferences:(id)sender;
-- (IBAction)closePreferences:(id)sender;
+- (void) fileHistoryOpenSheetForItem: (NSString*) path;
+	// Compare a single file in a svnX window. Invoked from Applescript.
 
-- (IBAction)openFavorite:(id)sender;
+- (IBAction) openPreferences:  (id) sender;
+- (IBAction) closePreferences: (id) sender;
 
-- (bool)checkSVNExistence:(bool)warn;
+- (void) openRepository: (NSURL*)    url
+		 user:           (NSString*) user
+		 pass:           (NSString*) pass;
+
+- (bool) checkSVNExistence: (bool) warn;
+- (void) newTaskWithDictionary: (NSMutableDictionary*) taskObj;
+- (NSString*) getMACAddress;
+
 @end
+

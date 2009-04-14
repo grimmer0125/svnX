@@ -1,22 +1,55 @@
+#import "MySVN.h"
 #import "Tasks.h"
+#import "NSString+MyAdditions.h"
+#include "CommonUtils.h"
+#include "DbgUtils.h"
+
 
 // This file was patched by Yuichi Fujishige to provide better support for  UTF-16 filenames. (0.9.6)
 
-@implementation Tasks
-static id sharedInstance;
+enum {
+	kLogLevelNone	=	0,
+	kLogLevelError	=	1,
+	kLogLevelGlobal	=	2,
+	kLogLevelLocal	=	3,
+	kLogLevelAll	=	99
+};
 
-+(id)sharedInstance
+@implementation Tasks
+
+static id sharedInstance;
+static NSDictionary* gTextStyleStd = nil, *gTextStyleErr = nil;
+static int gLogLevel = kLogLevelAll;
+
+
++ (id) sharedInstance
 {
 	return sharedInstance;
 }
 
--(id)init
+- (id) init
 {
 	if ( self = [super init] )
 	{
 		sharedInstance = self;
 	}
-	
+
+	if (gTextStyleStd == nil)
+	{
+		NSFont* txtFont = [NSFont fontWithName: @"Courier" size: 11];
+		gTextStyleStd = [[NSDictionary dictionaryWithObjectsAndKeys:
+											txtFont, NSFontAttributeName,
+											[NSColor blackColor], NSForegroundColorAttributeName,
+											nil] retain];
+		gTextStyleErr = [[NSDictionary dictionaryWithObjectsAndKeys:
+											txtFont, NSFontAttributeName,
+											[NSColor redColor], NSForegroundColorAttributeName,
+											nil] retain];
+	}
+
+	id loggingLevel = GetPreference(@"loggingLevel");
+	gLogLevel = loggingLevel ? [loggingLevel intValue] : kLogLevelAll;
+
 	return self;
 }
 
@@ -26,9 +59,14 @@ static id sharedInstance;
 	[tasksAC addObserver:self forKeyPath:@"selection.newStderr" options:(NSKeyValueObservingOptionNew) context:nil];
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+
+- (void) observeValueForKeyPath: (NSString*)     keyPath
+		 ofObject:               (id)            object
+		 change:                 (NSDictionary*) change
+		 context:                (void*)         context
 {
-	// This is an optimized way to display the log output. The incoming data is directly appended to NSTextView's textstorage ( see NSTextView+MyAdditions.m ).
+	// This is an optimized way to display the log output. The incoming data is directly appended to
+	// NSTextView's textstorage (see NSTextView+MyAdditions.m).
 	// With a classical binding, NSTextView would have to redisplay its content each time...
 	
 	NSArray *selectedTasks = [tasksAC selectedObjects];
@@ -42,17 +80,18 @@ static id sharedInstance;
 			[[logTextView textStorage] setAttributedString:[taskObj valueForKey:@"combinedLog"]];
 			currentTaskObj = taskObj;
 		}
-		else
-		if ( [keyPath isEqualToString:@"selection.newStdout"] )
+		else if ( [keyPath isEqualToString:@"selection.newStdout"] )
 		{
-			[logTextView appendString:[taskObj objectForKey:@"newStdout"] isErrorStyle:NO];
-		
-		} else
-		{
-			[logTextView appendString:[taskObj objectForKey:@"newStderr"] isErrorStyle:YES];
+			if (gLogLevel >= kLogLevelGlobal)
+				[logTextView appendString:[taskObj objectForKey:@"newStdout"] isErrorStyle:NO];
 		}
-	
-	} else
+		else
+		{
+			if (gLogLevel >= kLogLevelError)
+				[logTextView appendString:[taskObj objectForKey:@"newStderr"] isErrorStyle:YES];
+		}
+	}
+	else
 	{
 		[logTextView setString:@""];
 		currentTaskObj = nil;
@@ -60,6 +99,7 @@ static id sharedInstance;
 }
 
 
+//----------------------------------------------------------------------------------------
 #pragma mark -
 #pragma mark IB actions
 
@@ -73,9 +113,9 @@ static id sharedInstance;
 	{
 		if ( [[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask ) // if Alt is pressed, use kill -9 to kill.
 		{
-			[MySvn killProcess:[taskObj valueForKey:@"pid"]];
-		
-		} else
+			[MySvn killProcess: [[taskObj valueForKey: @"pid"] intValue]];
+		}
+		else
 		{
 			[[taskObj valueForKey:@"task"] terminate];
 		}	
@@ -97,18 +137,101 @@ static id sharedInstance;
 	}
 }
 
+
+//----------------------------------------------------------------------------------------
+#pragma mark -
+#pragma mark Helpers
+
+
+- (void) invokeCallBackForTask: (id) taskObj
+{
+	NSInvocation *callback = [taskObj objectForKey:@"callback"];
+	id status = @"completed";
+
+	if ( ![[taskObj objectForKey:@"status"] isEqualToString:@"error"] )
+	{
+		int exitCode = 0;
+		if ( ![[taskObj objectForKey:@"task"] isRunning] )
+			exitCode = [[taskObj objectForKey:@"task"] terminationStatus];
+		
+		[taskObj setValue:[NSNumber numberWithInt:exitCode] forKey:@"exitCode"];
+		
+		// in case taskCompleted is late, which is likely, we set status value here too
+		if (exitCode)
+			status = @"stopped";
+	}
+
+	if ( [[taskObj objectForKey:@"stderr"] length] > 0 )
+		status = @"error";
+
+	[taskObj setValue: status forKey: @"status"];
+	[taskObj setValue: kNSFalse forKey: @"canBeKilled"];
+
+	[[taskObj objectForKey:@"handle"] closeFile];
+	[[taskObj objectForKey:@"errorHandle"] closeFile];
+
+	// see file://localhost/Developer/ADC%20Reference%20Library/documentation/Cocoa/Conceptual/DistrObjects/Tasks/invocations.html
+	[callback setArgument:&taskObj atIndex:2]; // index 2 because of the two hidden default arguments (see NSInvocation doc).
+
+	if ( [callback target] )
+	{
+		[callback invoke]; // target may have been cancelled by cancelCallbacksOnTarget
+		[callback setTarget: nil];
+	}
+}
+
+
+- (NSMutableAttributedString*) appendString:       (NSString*)                  string
+							   toAttributedString: (NSMutableAttributedString*) otherString
+							   errorStyle:         (BOOL)                       isError
+{
+	NSDictionary* txtDict = isError ? gTextStyleErr : gTextStyleStd;
+
+	NSAttributedString *attrStr = [[NSAttributedString alloc] initWithString:string attributes:txtDict];
+	[otherString appendAttributedString:attrStr];
+	[attrStr release];
+	
+	return otherString;
+}
+
+
+- (void) taskIsDone: (NSMutableDictionary*) taskObj
+{
+	// we want to make sure the callback will not be called twice (by the stdout finishing, and by the stderr)
+	// so we need a lock. Moreover, stderr can finish first. So we want both to be finished before we call the callback.
+	NSLock* taskLock = [taskObj objectForKey: @"lock"];
+	[taskLock lock];
+
+	if ([[taskObj valueForKey: @"otherStdDone"] boolValue])
+		[self invokeCallBackForTask: taskObj];
+	else
+		[taskObj setValue: kNSTrue forKey: @"otherStdDone"];
+
+	[taskLock unlock];
+}
+
+
+- (void) stdoutDataAvailable: (NSNotification*) aNotification
+{
+	[self taskDataAvailable: aNotification isError: NO];
+}
+
+
+- (void) stderrDataAvailable: (NSNotification*) aNotification
+{
+	[self taskDataAvailable: aNotification isError: YES];
+}
+
+
+//----------------------------------------------------------------------------------------
 #pragma mark -
 #pragma mark tasks control
 
--(void)newTaskWithDictionary:(NSMutableDictionary *)taskObj
+- (void) newTaskWithDictionary: (NSMutableDictionary*) taskObj
 {
 	NSTask *task = [taskObj objectForKey:@"task"];
-    NSFileHandle *handle = [taskObj objectForKey:@"handle"];
-    NSFileHandle *errorHandle = [taskObj objectForKey:@"errorHandle"];
-	NSAttributedString *attrStr = [[[NSAttributedString alloc] initWithString:@"" attributes:[NSDictionary dictionaryWithObjectsAndKeys:
-											[NSFont fontWithName:@"Courier" size:11],
-											NSFontAttributeName, [NSColor blackColor],
-											NSForegroundColorAttributeName, nil]] autorelease];
+	NSFileHandle *handle = [taskObj objectForKey:@"handle"];
+	NSFileHandle *errorHandle = [taskObj objectForKey:@"errorHandle"];
 
 	[taskObj setValue:[NSMutableString string] forKey:@"stdout"];
 	[taskObj setValue:[NSString string] forKey:@"newStdout"];		// will contain the incoming chunk to be appended to stdout
@@ -116,23 +239,22 @@ static id sharedInstance;
 	[taskObj setValue:[NSString string] forKey:@"newStderr"];		// see above
 	[taskObj setValue:[NSDate date] forKey:@"date"];
 
-	[taskObj setValue:[NSMutableData data] forKey:@"restRowStdoutData"];	// row stdout data
+	[taskObj setValue:[NSMutableData data] forKey:@"stdoutData"];	// row stdout data
 
+	[taskObj setValue:[[NSMutableAttributedString alloc] initWithString:@"" attributes:gTextStyleStd] forKey:@"combinedLog"];
 
-	[taskObj setValue:[[NSMutableAttributedString alloc] initWithString:@"" attributes:[NSDictionary dictionaryWithObjectsAndKeys:
-											[NSFont fontWithName:@"Courier" size:11],
-											NSFontAttributeName, [NSColor blackColor],
-											NSForegroundColorAttributeName, nil]] forKey:@"combinedLog"];
-											
-
-	[taskObj setValue:[NSNumber numberWithBool:YES] forKey:@"canBeKilled"];
+	[taskObj setValue: kNSTrue forKey: @"canBeKilled"];
 	[taskObj setObject:[[[NSLock alloc] init] autorelease] forKey:@"lock"];
 
 	[tasksAC addObject:taskObj];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskDataAvailable:) name:NSFileHandleReadCompletionNotification object:handle];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskDataAvailable:) name:NSFileHandleReadCompletionNotification object:errorHandle];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskCompleted:) name:NSTaskDidTerminateNotification object:task];
+	NSNotificationCenter* notifier = [NSNotificationCenter defaultCenter];
+	[notifier addObserver: self selector: @selector(stdoutDataAvailable:)
+								name: NSFileHandleReadCompletionNotification object: handle];
+	[notifier addObserver: self selector: @selector(stderrDataAvailable:)
+								name: NSFileHandleReadCompletionNotification object: errorHandle];
+	[notifier addObserver: self selector: @selector(taskCompleted:)
+								name: NSTaskDidTerminateNotification         object: task];
 
 //	[activityWindow makeKeyAndOrderFront:self];
 //	[logDrawer open];
@@ -140,17 +262,27 @@ static id sharedInstance;
 	[handle readInBackgroundAndNotify];
 	[errorHandle readInBackgroundAndNotify];
 
-	NS_DURING
+	@try
+	{
 		[task launch];
-	NS_HANDLER
-		if ( [localException name] == NSInvalidArgumentException )
+	}
+	@catch (id exception)
+	{
+		dprintf("%@ %@\n    CAUGHT %@", [task launchPath], [task arguments], exception);
+		if ([exception name] == NSInvalidArgumentException)
 		{
-			[taskObj setValue:[NSString stringWithFormat:@"Problem launching svn binary.\nMake sure svn binary is present at path :\n%@.\nIs Subversion client installed ? If so, make sure the path is properly set in the preferences.", [task launchPath]] forKey:@"stderr"];
+			[taskObj setValue: [NSString stringWithFormat: @"Problem launching svn binary.\n"
+															"Make sure an svn binary is present at path:\n"
+															"'%@'.\nIs Subversion client installed?"
+															" If so, make sure the path is properly set in the preferences.",
+															[task launchPath]]
+					forKey: @"stderr"];
 			[taskObj setValue:@"error" forKey:@"status"];			
 			[self invokeCallBackForTask:taskObj];
 		}
-	NS_ENDHANDLER
+	}
 }
+
 
 /*
 UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
@@ -159,152 +291,136 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 800-FFF			1110xxxx 10xxxxxx 10xxxxxx	E0 A0*-BF 80-BF
 1000-FFFF		1110xxxx 10xxxxxx 10xxxxxx	E1-EF 80-BF 80-BF
 */
-- (void)taskDataAvailable:(NSNotification*)aNotification
+- (void) taskDataAvailable: (NSNotification*) aNotification isError: (BOOL) isError
 {
-    NSData *incomingData = [[aNotification userInfo] objectForKey:NSFileHandleNotificationDataItem];
-	NSString *string;
-	NSFileHandle *taskHandle = [aNotification object];
-	
+    NSData* const incomingData = [[aNotification userInfo] objectForKey: NSFileHandleNotificationDataItem];
+	NSFileHandle* const taskHandle = [aNotification object];
+
+	BOOL found   = NO,
+		 doLog   = (gLogLevel > kLogLevelNone);
+
+	NSString* const key = isError ? @"errorHandle" : @"handle";
 	NSEnumerator *e = [[tasksAC arrangedObjects] objectEnumerator];
 	NSMutableDictionary *taskObj;
-	BOOL found = NO;
-	BOOL isError = NO;
-	
-	while ( taskObj = [e nextObject] ) // check if this this a handle that we know about
+	while ( taskObj = [e nextObject] )
 	{
-		 if ( taskHandle == [taskObj objectForKey:@"handle"] )
-		 {
+		if ( taskHandle == [taskObj objectForKey: key] )
+		{
 			found = YES;
 			break;
-		 }
-	}
-	
-	if ( found == NO )	// if not, is this an error handle that we know about ?
-	{
-		NSEnumerator *e = [[tasksAC arrangedObjects] objectEnumerator];
-		while ( taskObj = [e nextObject] )
-		{
-			 if ( taskHandle == [taskObj objectForKey:@"errorHandle"] )
-			 {
-				found = YES;
-				isError = YES;
-				break;
-			 }
 		}
 	}
-	
-	if ( found == NO ) return; 
 
-    if ( incomingData && [incomingData length] )
-	{	
+	if (!found)
+		;
+    else if ( incomingData && [incomingData length] )
+	{
+		NSLock* const taskLock = [taskObj objectForKey: @"lock"];
+		NSString *string = nil;
 		if ( isError )
 		{
-			// As LANG environment variable set to "en_US.UTF-8", 
-			// error messages will be English only.
-			// We don't have to modify incomingData.
-			string = [[NSString alloc] initWithData:incomingData encoding:NSUTF8StringEncoding];
+			if (gLogLevel >= kLogLevelError)
+			{
+				// As LANG environment variable set to "en_US.UTF-8", error messages will be English only.
+				// We don't have to modify incomingData.
+				string = [[NSString alloc] initWithData:incomingData encoding:NSUTF8StringEncoding];
 
-			NSLock *taskLock = [taskObj objectForKey:@"lock"]; // I'm not sure about the need for a lock here
-			[taskLock lock];
+				[taskLock lock];	// I'm not sure about the need for a lock here
 
-			NSMutableString *currentStderr = [taskObj objectForKey:@"stderr"];
+				NSMutableString *currentStderr = [taskObj objectForKey:@"stderr"];
 
-			[taskObj willChangeValueForKey:@"stderr"]; // there is currently no observer, but there could be in the future
-			[currentStderr appendString:string];
-			[taskObj didChangeValueForKey:@"stderr"];
+				[taskObj willChangeValueForKey:@"stderr"]; // there is currently no observer, but there could be in the future
+				[currentStderr appendString:string];
+				[taskObj didChangeValueForKey:@"stderr"];
 
-			[taskObj setValue:string forKey:@"newStderr"]; // this key is observed. This will trigger this new chunk to be appended directly in the NSTextView log
-
-			[taskLock unlock];
-			
+				[taskObj setValue:string forKey:@"newStderr"];	// this key is observed. This will trigger this new
+																// chunk to be appended directly in the NSTextView log
+				[taskLock unlock];
+			}
 		}
 		else
 		{
-			NSData *restRowStdoutData = [taskObj objectForKey:@"restRowStdoutData"];
+			NSMutableData *restRowStdoutData = [taskObj objectForKey:@"stdoutData"];
 			NSMutableData *tmpIncomingData;
-			
-			if(restRowStdoutData == nil) {
+
+			if (restRowStdoutData == nil)
+			{
 				tmpIncomingData = [NSMutableData dataWithData:incomingData];
-			} else {				
+			}
+			else if ([taskObj objectForKey: @"outputToData"] == kNSTrue)
+			{
+				[restRowStdoutData appendData: incomingData];
+				doLog = NO;
+			}
+			else
+			{
 				tmpIncomingData = [NSMutableData dataWithData:restRowStdoutData];
 				[tmpIncomingData appendData:incomingData];
-				NSLock *taskLock = [taskObj objectForKey:@"lock"];
 				[taskLock lock];
-				[taskObj setValue:nil forKey:@"restRowStdoutData"];
+				[taskObj setValue:nil forKey:@"stdoutData"];
 				[taskLock unlock];
 			}
-			
-			const unsigned char* tmpIncomingDataBytes = (const unsigned char*)[tmpIncomingData bytes];
-			const unsigned int incominDataLength = [tmpIncomingData length];
-			unsigned int offset = incominDataLength -1;
-			if(tmpIncomingDataBytes[offset] & 0x80) {
-				int noFirstBytesLength = 0;
-				while((tmpIncomingDataBytes[offset] & 0xc0) == 0x80) {
-					noFirstBytesLength++;
-					offset--;
+
+			if (doLog)
+			{
+				const unsigned char* tmpIncomingDataBytes = (const unsigned char*)[tmpIncomingData bytes];
+				const unsigned int incominDataLength = [tmpIncomingData length];
+				unsigned int offset = incominDataLength - 1;
+				if (tmpIncomingDataBytes[offset] & 0x80)
+				{
+					int noFirstBytesLength = 0;
+					while ((tmpIncomingDataBytes[offset] & 0xc0) == 0x80)
+					{
+						noFirstBytesLength++;
+						offset--;
+					}
+					
+					int excessLength = noFirstBytesLength + 1;
+					
+					NSData *excessData = [NSData dataWithBytes:(tmpIncomingDataBytes + incominDataLength - excessLength)
+														length:excessLength];
+					//NSLog(@"excessData:%@", excessData);
+					
+					[tmpIncomingData setLength:incominDataLength - excessLength];
+				//	incomingData = tmpIncomingData;
+					
+					[taskLock lock];
+					[taskObj setValue:excessData forKey:@"stdoutData"];
+					[taskLock unlock];
 				}
-				
-				int excessLength = noFirstBytesLength + 1;
-				
-				NSData *excessData = [NSData dataWithBytes:(tmpIncomingDataBytes + incominDataLength - excessLength)
-													length:excessLength];
-				//NSLog(@"excessData:%@", excessData);
-				
-				[tmpIncomingData setLength:incominDataLength - excessLength];
-				incomingData = tmpIncomingData;
-				
-				NSLock *taskLock = [taskObj objectForKey:@"lock"];
+
+				string = [[NSString alloc] initWithData:tmpIncomingData encoding:NSUTF8StringEncoding];
+
+				NSAssert(string != nil, @"stdin incomingData failed to convert");
+
 				[taskLock lock];
-				[taskObj setValue:excessData forKey:@"restRowStdoutData"];
+
+				NSMutableString *currentStdout = [taskObj objectForKey:@"stdout"];
+
+				[taskObj willChangeValueForKey:@"stdout"];
+				[currentStdout appendString:string];
+				[taskObj didChangeValueForKey:@"stdout"];
+
+				[taskObj setValue:string forKey:@"newStdout"];
+
 				[taskLock unlock];
 			}
-
-			string = [[NSString alloc] initWithData:tmpIncomingData encoding:NSUTF8StringEncoding];
-
-			NSAssert(string != nil, @"stdin incomingData failed to convert");
-
-
-			NSLock *taskLock = [taskObj objectForKey:@"lock"];
-			[taskLock lock];
-
-			NSMutableString *currentStdout = [taskObj objectForKey:@"stdout"];
-
-			[taskObj willChangeValueForKey:@"stdout"];
-			[currentStdout appendString:string];
-			[taskObj didChangeValueForKey:@"stdout"];
-
-			[taskObj setValue:string forKey:@"newStdout"];
-
-			[taskLock unlock];
 		}
-		
 
-		NSMutableAttributedString *combinedLog = [taskObj objectForKey:@"combinedLog"]; // this is the combined log
+		if (doLog && gLogLevel >= kLogLevelGlobal)
+		{
+			NSMutableAttributedString *combinedLog = [taskObj objectForKey:@"combinedLog"]; // this is the combined log
 
-		[taskObj willChangeValueForKey:@"combinedLog"];
-		[self appendString:string toAttributedString:combinedLog errorStyle:isError]; // error are appended in red
-		[taskObj didChangeValueForKey:@"combinedLog"];
+			[taskObj willChangeValueForKey:@"combinedLog"];
+			[self appendString:string toAttributedString:combinedLog errorStyle:isError]; // error are appended in red
+			[taskObj didChangeValueForKey:@"combinedLog"];
+		}
 
-
-
-		
 		if ( [[taskObj valueForKey:@"status"] isEqualToString:@"stopped"] ) // set in taskCompleted
 		{
-			// We want to make sure the callback will not be called twice (by the stdout finishing, and by the stderr)
-			// so we need a lock. Moreover, stderr can finish first. So we want both to be finished before we call the callback.
-
-			NSLock *taskLock = [taskObj objectForKey:@"lock"];
-			[taskLock lock];
-			
-			if ( ![[taskObj valueForKey:@"otherStdDone"] boolValue] )
-			{
-				[taskObj setValue:[NSNumber numberWithBool:YES] forKey:@"otherStdDone"];		
-			}
-			else [self invokeCallBackForTask:taskObj];
-
-			[taskLock unlock];
-			
-		} else
+			[self taskIsDone: taskObj];
+		}
+		else
 		{
 			[taskHandle readInBackgroundAndNotify];
 		}
@@ -313,22 +429,12 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
     }
 	else // We're finished with the task
 	{
-		// we want to make sure the callback will not be called twice (by the stdout finishing, and by the stderr)
-		NSLock *taskLock = [taskObj objectForKey:@"lock"];
-		[taskLock lock];
-
-		if ( ![[taskObj valueForKey:@"otherStdDone"] boolValue] )
-		{
-			[taskObj setValue:[NSNumber numberWithBool:YES] forKey:@"otherStdDone"];		
-		}
-		else [self invokeCallBackForTask:taskObj];
-
-		[taskLock unlock];
+		[self taskIsDone: taskObj];
 	}
 }
 
 
-- (void)taskCompleted:(NSNotification*)aNotification
+- (void) taskCompleted: (NSNotification*) aNotification
 {
 	// IMPORTANT : taskCompleted may be called before the task's output is totally read !
 	// This is the reason why the callback should be called from taskDataAvailable, when an empty NSData is finally returned;
@@ -346,28 +452,18 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 			break;
 		 }
 	}
-	
-	if ( found == NO ) return;
-	int exitCode = [[aNotification object] terminationStatus];
-	
 
-	if ( exitCode == 0 )
+	if (found)
 	{
-		[taskObj setValue:@"completed" forKey:@"status"];
-	
-	} else
-	{
-		[taskObj setValue:@"stopped" forKey:@"status"];	
+		int exitCode = [[aNotification object] terminationStatus];
+		id status = [[taskObj objectForKey: @"stderr"] length] ? @"error"
+															   : (exitCode ? @"stopped" : @"completed");
+		[taskObj setValue: status forKey: @"status"];
+		[taskObj setValue: kNSFalse forKey: @"canBeKilled"];
+		[taskObj setValue: [NSNumber numberWithInt: exitCode] forKey: @"exitCode"];
 	}
-	
-	if ( [[taskObj objectForKey:@"stderr"] length] > 0 )
-	{
-		[taskObj setValue:@"error" forKey:@"status"];		
-	}
-	
-	[taskObj setValue:[NSNumber numberWithBool:NO] forKey:@"canBeKilled"];
-	[taskObj setValue:[NSNumber numberWithInt:exitCode] forKey:@"exitCode"];
 }
+
 
 -(void)cancelCallbacksOnTarget:(id)target
 {
@@ -384,76 +480,116 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 			[callback setTarget:nil];
 		 }
 	}
-
 }
 
-#pragma mark -
-#pragma mark Helpers
 
-- (void)invokeCallBackForTask:(id)taskObj
+@end	// Tasks
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+//----------------------------------------------------------------------------------------
+
+@implementation Task
+
+- (id) initWithDelegate: (id<TaskDelegate>) target
+	   object:           (id)               object
 {
-	NSInvocation *callback = [taskObj objectForKey:@"callback"];
-	
-	
-	if ( ![[taskObj objectForKey:@"status"] isEqualToString:@"error"] )
+	if (self = [super init])
 	{
-		int exitCode = 0;
-		if ( ![[taskObj objectForKey:@"task"] isRunning] )
-			exitCode = [[taskObj objectForKey:@"task"] terminationStatus];
-		
-		[taskObj setValue:[NSNumber numberWithInt:exitCode] forKey:@"exitCode"];
-		
-		// in case taskCompleted is late, which is likely, we set status value here too
-		if ( exitCode == 0 )
-		{
-			[taskObj setValue:@"completed" forKey:@"status"];
-		
-		} else
-		{
-			[taskObj setValue:@"stopped" forKey:@"status"];	
-		}
-	
-	}
-	
-	if ( [[taskObj objectForKey:@"stderr"] length] > 0 )
-	{
-		[taskObj setValue:@"error" forKey:@"status"];		
-	}
-	
-	[taskObj setValue:[NSNumber numberWithBool:NO] forKey:@"canBeKilled"];
-	
-	[[taskObj objectForKey:@"handle"] closeFile];
-	[[taskObj objectForKey:@"errorHandle"] closeFile];
+		fTask     = [[[NSTask alloc] init] retain];
+		fDelegate = [target retain];
+		fObject   = [object retain];
 
-	//see file:///Developer/ADC%20Reference%20Library/documentation/Cocoa/Conceptual/DistrObjects/Tasks/invocations.html#//apple_ref/doc/uid/20000744/CJBBACJH
-	[callback setArgument:&taskObj atIndex:2]; // index 2 because of the two hidden default arguments (see NSInvocation doc).
-	
-	if ( [callback target] )
-	{
-		[callback invoke]; // target may have been cancelled by cancelCallbacksOnTarget
+		NSMutableDictionary* env = [[NSMutableDictionary alloc] initWithDictionary:
+													[[NSProcessInfo processInfo] environment]];
+	//	[env setObject: @"YES"         forKey: @"NSUnbufferedIO"];
+		[env setObject: @"en_US.UTF-8" forKey: @"LC_ALL"];
+		[fTask setEnvironment: env];
+
+		[[NSNotificationCenter defaultCenter]
+				addObserver: self selector: @selector(completed:)
+				name: NSTaskDidTerminateNotification object: fTask];
 	}
+
+	return self;
 }
 
-- (NSMutableAttributedString*)appendString:(NSString *)string toAttributedString:(NSMutableAttributedString *)otherString errorStyle:(BOOL)isError
+
+//----------------------------------------------------------------------------------------
+
+- (void) dealloc
 {
-	NSFont *txtFont = [NSFont fontWithName:@"Courier" size:11];
-	NSDictionary *txtDict;
-	
-	if ( isError )
-	{
-		txtDict = [NSDictionary dictionaryWithObjectsAndKeys:txtFont, NSFontAttributeName, [NSColor redColor], NSForegroundColorAttributeName, nil];
-	
-	} else
-	{
-		txtDict = [NSDictionary dictionaryWithObjectsAndKeys:txtFont, NSFontAttributeName, [NSColor blackColor], NSForegroundColorAttributeName, nil];
-	}
-	
-	NSAttributedString *attrStr = [[NSAttributedString alloc] initWithString:string attributes:txtDict];
-	[otherString appendAttributedString:attrStr];
-	[attrStr release];
-	
-	return otherString;
+	[fObject   release];
+	[fDelegate release];
+	[fTask     release];
+
+	[super dealloc];
 }
 
 
-@end
+//----------------------------------------------------------------------------------------
+
+- (NSTask*) task
+{
+	return fTask;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) launch:    (NSString*) path
+		 arguments: (NSArray*)  arguments
+{
+
+	[fTask setLaunchPath: path];
+	[fTask setArguments: arguments];
+
+	[fTask launch];
+//	NSLog(@"launch: %@", fTask);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) launch:    (NSString*) path
+		 arguments: (NSArray*)  arguments
+		 stdOutput: (NSString*) stdOutput
+{
+	if (stdOutput != nil)
+		[fTask setStandardOutput: [NSFileHandle fileHandleForWritingAtPath: stdOutput]];
+
+	[self launch: path arguments: arguments];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) setStandardOutput: (id) file
+{
+	[fTask setStandardOutput: file];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Calls [fDelegate taskCompleted: (Task*) self object: (id) fObject]
+
+- (void) completed: (NSNotification*) aNotification
+{
+	id delegate = fDelegate;
+	if (delegate)
+	{
+		Assert([delegate respondsToSelector: @selector(taskCompleted:object:)]);
+		id object = fObject;
+		fDelegate = nil;
+		fObject   = nil;
+		[delegate taskCompleted: self object: object];
+		[object   release];
+		[delegate release];
+	}
+	[self release];
+}
+
+
+@end	// Task
+

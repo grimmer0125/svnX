@@ -145,7 +145,7 @@ static kern_return_t GetEthernetData(io_iterator_t intfIterator, EnetData *edata
                                                     kCFAllocatorDefault, 0);
         if (bsdName)
         {
-            CFStringGetCString(bsdName, (edata[*numEntries].bsdName), 
+            CFStringGetCString(bsdName, (char*) edata[*numEntries].bsdName, 
                                 sizeof(edata[*numEntries].bsdName), kCFStringEncodingMacRoman);
             CFRelease(bsdName);
         }

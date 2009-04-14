@@ -1,279 +1,493 @@
 #import "MySVN.h"
+#import "MyApp.h"
+#include "CommonUtils.h"
+#include <unistd.h>
+
+
+//----------------------------------------------------------------------------------------
+
+static id
+makeTaskInfo (NSString* name, NSString* commmandPath, NSArray* arguments)
+{
+	return [NSMutableDictionary dictionaryWithObjectsAndKeys:
+				name,															@"name",
+				[NSString stringWithFormat:@"%@ %@",
+					commmandPath, [arguments componentsJoinedByString: @" "]],	@"command",
+				nil];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static id
+makeSvnInfo (NSString* name, NSArray* arguments)
+{
+	return makeTaskInfo(name, SvnCmdPath(), arguments);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSString*
+joinedOptions (NSArray* options1, NSArray* options2)
+{
+	return [NSString stringWithFormat:@"%@ %@", [options1 componentsJoinedByString: @" "],
+												[options2 componentsJoinedByString: @" "]];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSString*
+concatOptions (NSInvocation* generalOptions, NSArray* options)
+{
+	return joinedOptions([MySvn optionsFromSvnOptionsInvocation: generalOptions], options);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static void
+addGeneralOptions (NSMutableArray* arguments, NSInvocation* generalOptions)
+{
+	[arguments addObjectsFromArray: [MySvn optionsFromSvnOptionsInvocation: generalOptions]];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSString*
+shellScriptPath (NSString* script)
+{
+	return [[NSBundle mainBundle] pathForResource: script ofType: @"sh"];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSString*
+svnPath ()
+{
+	return GetPreference(@"svnBinariesFolder");
+}
+
+
+//----------------------------------------------------------------------------------------
+
+NSString*
+SvnCmdPath ()
+{
+	return [svnPath() stringByAppendingPathComponent: @"svn"];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+NSString*
+ShellScriptPath (NSString* script)
+{
+	return shellScriptPath(script);
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
 
 @implementation MySvn
 
+// New-style svn calls (>=0.8)
 
-#pragma mark New-style svn calls (>=0.8)
-
-+(NSMutableDictionary *)fileMergeItems:(NSArray *)itemsPaths generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
++ (NSMutableDictionary*) diffItems:      (NSArray*)      itemsPaths
+						 generalOptions: (NSInvocation*) generalOptions
+						 options:        (NSArray*)      options
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [MySvn bundleScriptPath:@"svnfilemerge.sh"];
-	NSMutableArray *arguments       = [NSMutableArray array];
-
 	// 0: FileMerge, 1: TextWrangler, 2: CodeWarrior, 3: BBEdit, 4: Araxis Merge
-	int defaultSvnApplicationIndex = [[[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"defaultDiffApplication"] intValue];
-	
-	[arguments			 addObject: [[MySvn svnPath] stringByAppendingPathComponent:@"svn"]];
-	[arguments			 addObject: [MySvn bundleScriptPath:@"svndiff.sh"]];
-	[arguments			 addObject: [NSString stringWithFormat:@"%d", defaultSvnApplicationIndex]];
-	[arguments addObjectsFromArray: [self optionsFromSvnOptionsInvocation:generalOptions]];
+	static NSString* const diffAppNames[] = {
+		@"opendiff", @"textwrangler", @"codewarrior", @"bbedit", @"araxissvndiff"
+	};
+	int diffAppIndex = [GetPreference(@"defaultDiffApplication") intValue];
+	if (diffAppIndex < 0 || diffAppIndex >= sizeof(diffAppNames) / sizeof(diffAppNames[0]))
+		diffAppIndex = 0;
+
+	NSMutableArray* arguments = [NSMutableArray arrayWithObjects:
+										@"diff", @"--diff-cmd", shellScriptPath(@"svndiff"),
+										@"--extensions", diffAppNames[diffAppIndex],
+										nil];
+	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 	[arguments addObjectsFromArray: itemsPaths];
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"FileMerge" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	NSString* taskLaunchPath = SvnCmdPath();
+	id additionalTaskInfo = makeTaskInfo(@"svn diff", taskLaunchPath, arguments);
+
+	// <svnCmdPath> diff --diff-cmd <svndiff.sh> --extensions <diffAppName> ...
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
 }
 
-+(NSMutableDictionary *)genericCommand:(NSString *)command arguments:(NSArray *)args generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
+
++ (NSMutableDictionary*) genericCommand: (NSString*)     command
+						 arguments:      (NSArray*)      args
+						 generalOptions: (NSInvocation*) generalOptions
+						 options:        (NSArray*)      options
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [[MySvn svnPath] stringByAppendingPathComponent:@"svn"];
+	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray arrayWithObject:command];
 	
 	[arguments addObjectsFromArray: args];
 
-	if ( ![command isEqualToString:@"info"] && ![command isEqualToString:@"revert"] && ![command isEqualToString:@"add"] && ![command isEqualToString:@"move"] && ![command isEqualToString:@"resolved"] )
-		[arguments addObjectsFromArray: [self optionsFromSvnOptionsInvocation:generalOptions]];
+	if (![command isEqualToString:@"info"] && ![command isEqualToString:@"revert"] &&
+		![command isEqualToString:@"add"] && ![command isEqualToString:@"move"] &&
+		![command isEqualToString:@"resolved"] )
+		addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"svn %@", command] forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	id additionalTaskInfo = makeTaskInfo([@"svn " stringByAppendingString: command], taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
 }
 
-+(NSMutableDictionary *)moveMultiple:(NSArray *)files destination:(NSString *)destinationPath generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
+
++ (NSMutableDictionary*) moveMultiple:   (NSArray*)      files
+						 destination:    (NSString*)     destinationPath
+						 generalOptions: (NSInvocation*) generalOptions
+						 options:        (NSArray*)      options
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [MySvn bundleScriptPath:@"svnmove.sh"];
-	NSMutableArray *arguments       = [NSMutableArray arrayWithObject:[[MySvn svnPath] stringByAppendingPathComponent:@"svn"]];
+	#pragma unused(generalOptions)
+	NSString *taskLaunchPath		= shellScriptPath(@"svnmove");
+	NSMutableArray *arguments       = [NSMutableArray arrayWithObject: SvnCmdPath()];
 	
-	[arguments addObject: [options componentsJoinedByString:@" "]]; // see svnmove.sh
-	[arguments addObject: destinationPath]; // see svnmove.sh
-//	[arguments addObject: [self joinedOptions:[self optionsFromSvnOptionsInvocation:generalOptions] andOptions:options]]; // see svnmove.sh
-	[arguments addObjectsFromArray:files];
-
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"svn move multiple" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
-}
-
-+(NSMutableDictionary *)copyMultiple:(NSArray *)files destination:(NSString *)destinationPath generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
-{
-	NSString *taskLaunchPath		= [MySvn bundleScriptPath:@"svncopy.sh"];
-	NSMutableArray *arguments       = [NSMutableArray arrayWithObject:[[MySvn svnPath] stringByAppendingPathComponent:@"svn"]];
-
-//	[arguments addObject: [self joinedOptions:[self optionsFromSvnOptionsInvocation:generalOptions] andOptions:options]]; // see svncopy.sh
 	[arguments addObject: [options componentsJoinedByString:@" "]]; // see svnmove.sh
 	[arguments addObject: destinationPath]; // see svnmove.sh
 	[arguments addObjectsFromArray:files];
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"svn copy multiple" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	id additionalTaskInfo = makeTaskInfo(@"svn move multiple", taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
 }
 
-+(NSMutableDictionary *)log:(NSString *)path generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
+
++ (NSMutableDictionary*) copyMultiple:  (NSArray*)      files
+						 destination:   (NSString*)     destinationPath
+						 generalOptions:(NSInvocation*) generalOptions
+						 options:       (NSArray*)      options
+						 callback:      (NSInvocation*) callback
+						 callbackInfo:  (id)            callbackInfo
+						 taskInfo:      (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [[MySvn svnPath] stringByAppendingPathComponent:@"svn"];
+	#pragma unused(generalOptions)
+	NSString *taskLaunchPath		= shellScriptPath(@"svncopy");
+	NSMutableArray *arguments       = [NSMutableArray arrayWithObject: SvnCmdPath()];
+
+	[arguments addObject: [options componentsJoinedByString:@" "]]; // see svncopy.sh
+	[arguments addObject: destinationPath]; // see svncopy.sh
+	[arguments addObjectsFromArray:files];
+
+	id additionalTaskInfo = makeTaskInfo(@"svn copy multiple", taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
+}
+
+
++ (NSMutableDictionary*) log:            (NSString*)     path
+						 generalOptions: (NSInvocation*) generalOptions
+						 options:        (NSArray*)      options
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
+{
+	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
 	
 	[arguments			 addObject: @"log"];
-	[arguments addObjectsFromArray: [self optionsFromSvnOptionsInvocation:generalOptions]];
+	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 	[arguments			 addObject: path];	
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"svn log" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	id additionalTaskInfo = makeTaskInfo(@"svn log", taskLaunchPath, arguments);
+//	[additionalTaskInfo setObject: kNSTrue forKey: @"outputToData"];
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: YES];
 }
 
-+(NSMutableDictionary *)list:(NSString *)path generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
+
++ (NSMutableDictionary*) list:           (NSString*)     path
+						 generalOptions: (NSInvocation*) generalOptions
+						 options:        (NSArray*)      options
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [[MySvn svnPath] stringByAppendingPathComponent:@"svn"];
+	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
 	
 	[arguments			 addObject: @"list"];
-	[arguments addObjectsFromArray: [self optionsFromSvnOptionsInvocation:generalOptions]];
+	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 	[arguments			 addObject: path];	
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"svn list" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	id additionalTaskInfo = makeTaskInfo(@"svn list", taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: YES];
 }
 
-+(NSMutableDictionary *)statusAtWorkingCopyPath:(NSString *)path generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
+
++ (NSMutableDictionary*) statusAtWorkingCopyPath: (NSString*)     path
+						 generalOptions:          (NSInvocation*) generalOptions
+						 options:                 (NSArray*)      options
+						 callback:                (NSInvocation*) callback
+						 callbackInfo:            (id)            callbackInfo
+						 taskInfo:                (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [[MySvn svnPath] stringByAppendingPathComponent:@"svn"];
+	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
 	
 	[arguments			 addObject: @"status"];
-	[arguments addObjectsFromArray: [self optionsFromSvnOptionsInvocation:generalOptions]];
+	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 	[arguments			 addObject: path];	
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"svn status" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	id additionalTaskInfo = makeTaskInfo(@"svn status", taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
 }
 
-+(NSMutableDictionary *)updateAtWorkingCopyPath:(NSString *)path generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
+
++ (NSMutableDictionary*) updateAtWorkingCopyPath: (NSString*)     path
+						 generalOptions:          (NSInvocation*) generalOptions
+						 options:                 (NSArray*)      options
+						 callback:                (NSInvocation*) callback
+						 callbackInfo:            (id)            callbackInfo
+						 taskInfo:                (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [[MySvn svnPath] stringByAppendingPathComponent:@"svn"];
+	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
 	
 	[arguments			 addObject: @"update"];
-	[arguments addObjectsFromArray: [self optionsFromSvnOptionsInvocation:generalOptions]];
+	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 	[arguments			 addObject: path];	
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"svn update" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	id additionalTaskInfo = makeTaskInfo(@"svn update", taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
 }
 
-+(NSMutableDictionary *)checkout:(NSString *)file destination:(NSString *)destinationPath generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
+
++ (NSMutableDictionary*) checkout:       (NSString*)     file
+						 destination:    (NSString*)     destinationPath
+						 generalOptions: (NSInvocation*) generalOptions
+						 options:        (NSArray*)      options
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [[MySvn svnPath] stringByAppendingPathComponent:@"svn"];
+	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
 
 	[arguments			 addObject: @"checkout"];
-	[arguments addObjectsFromArray: [self optionsFromSvnOptionsInvocation:generalOptions]];
+	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 	[arguments			 addObject: file];	
 	[arguments			 addObject: destinationPath];	
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"svn checkout" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	id additionalTaskInfo = makeTaskInfo(@"svn checkout", taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
 }
 
-+(NSMutableDictionary *)extractItems:(NSArray *)items generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
+
++ (NSMutableDictionary*) extractItems:   (NSArray*)      items
+						 generalOptions: (NSInvocation*) generalOptions
+						 options:        (NSArray*)      options
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [MySvn bundleScriptPath:@"svnextract.sh"];
+	NSString *taskLaunchPath		= shellScriptPath(@"svnextract");
 	NSMutableArray *arguments       = [NSMutableArray array];
 
-	[arguments			 addObject: [[MySvn svnPath] stringByAppendingPathComponent:@"svn"]];
-	
-	[arguments addObject: [self joinedOptions:[self optionsFromSvnOptionsInvocation:generalOptions] andOptions:options]]; // see svnextract.sh
+	[arguments           addObject: SvnCmdPath()];
+	[arguments           addObject: concatOptions(generalOptions, options)];
 	[arguments addObjectsFromArray: items];	
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"extract" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	id additionalTaskInfo = makeTaskInfo(@"extract", taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
 }
 
-+(NSMutableDictionary *)import:(NSString *)file destination:(NSString *)destinationPath generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
+
++ (NSMutableDictionary*) import:         (NSString*)     file
+						 destination:    (NSString*)     destinationPath
+						 generalOptions: (NSInvocation*) generalOptions
+						 options:        (NSArray*)      options
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [[MySvn svnPath] stringByAppendingPathComponent:@"svn"];
+	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
 
 	[arguments			 addObject: @"import"];
-	[arguments addObjectsFromArray: [self optionsFromSvnOptionsInvocation:generalOptions]];
+	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 	[arguments			 addObject: file];	
 	[arguments			 addObject: destinationPath];	
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"svn import" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	id additionalTaskInfo = makeTaskInfo(@"svn import", taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
 }
 
-+(NSMutableDictionary *)copy:(NSString *)file destination:(NSString *)destinationPath generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
+
++ (NSMutableDictionary*) copy:           (NSString*)     file
+						 destination:    (NSString*)     destinationPath
+						 generalOptions: (NSInvocation*) generalOptions
+						 options:        (NSArray*)      options
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [[MySvn svnPath] stringByAppendingPathComponent:@"svn"];
+	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
 
 	[arguments			 addObject: @"copy"];
-	[arguments addObjectsFromArray: [self optionsFromSvnOptionsInvocation:generalOptions]];
+	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 	[arguments			 addObject: file];	
 	[arguments			 addObject: destinationPath];	
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"svn copy" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	id additionalTaskInfo = makeTaskInfo(@"svn copy", taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
 }
 
-+(NSMutableDictionary *)move:(NSString *)file destination:(NSString *)destinationPath generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
+
++ (NSMutableDictionary*) move:           (NSString*)     file
+						 destination:    (NSString*)     destinationPath
+						 generalOptions: (NSInvocation*) generalOptions
+						 options:        (NSArray*)      options
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [[MySvn svnPath] stringByAppendingPathComponent:@"svn"];
+	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
 
 	[arguments			 addObject: @"move"];
-	[arguments addObjectsFromArray: [self optionsFromSvnOptionsInvocation:generalOptions]];
+	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 	[arguments			 addObject: file];	
 	[arguments			 addObject: destinationPath];	
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"svn move" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	id additionalTaskInfo = makeTaskInfo(@"svn move", taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
 }
 
-+(NSMutableDictionary *)mkdir:(NSArray *)files generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
+
++ (NSMutableDictionary*) mkdir:          (NSArray*)      files
+						 generalOptions: (NSInvocation*) generalOptions
+						 options:        (NSArray*)      options
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [[MySvn svnPath] stringByAppendingPathComponent:@"svn"];
+	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
 
 	[arguments			 addObject: @"mkdir"];
-	[arguments addObjectsFromArray: [self optionsFromSvnOptionsInvocation:generalOptions]];
+	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 	[arguments addObjectsFromArray: files];	
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"svn mkdir" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	id additionalTaskInfo = makeTaskInfo(@"svn mkdir", taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
 }
 
-+(NSMutableDictionary *)delete:(NSArray *)files generalOptions:(NSInvocation *)generalOptions options:(NSArray *)options callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo
+
++ (NSMutableDictionary*) delete:         (NSArray*)      files
+						 generalOptions: (NSInvocation*) generalOptions
+						 options:        (NSArray*)      options
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
 {
-	NSString *taskLaunchPath		= [[MySvn svnPath] stringByAppendingPathComponent:@"svn"];
+	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
 
 	[arguments			 addObject: @"delete"];
-	[arguments addObjectsFromArray: [self optionsFromSvnOptionsInvocation:generalOptions]];
+	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 	[arguments addObjectsFromArray: files];	
 
-	NSMutableDictionary *additionalTaskInfo = [NSMutableDictionary dictionary];
-	[additionalTaskInfo setObject:@"svn delete" forKey:@"name"];
-	[additionalTaskInfo setObject:[NSString stringWithFormat:@"%@ %@", taskLaunchPath, [arguments componentsJoinedByString:@" "]] forKey:@"command"];
-	
-	return [MySvn launchTask:taskLaunchPath arguments:arguments callback:callback callbackInfo:callbackInfo taskInfo:taskInfo additionalTaskInfo:additionalTaskInfo];
+	id additionalTaskInfo = makeTaskInfo(@"svn delete", taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
 }
 
-#pragma mark -
-#pragma mark Helpers
 
-+(NSArray *)optionsFromSvnOptionsInvocation:(NSInvocation *)invocation
+//----------------------------------------------------------------------------------------
+
++ (NSMutableDictionary*) blame:          (NSArray*)      files
+						 revision:       (NSString*)     revision
+						 generalOptions: (NSInvocation*) generalOptions
+						 options:        (NSArray*)      options
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
+{
+	NSString* openWithApp = @"-a Xcode";	// TO_DO: Make settable in Preferences window
+	NSMutableArray* arguments = [NSMutableArray arrayWithObjects:
+						SvnCmdPath(), openWithApp, revision, concatOptions(generalOptions, options), nil];
+	[arguments addObjectsFromArray: files];
+
+	NSString* taskLaunchPath = shellScriptPath(@"svnblame");
+	id additionalTaskInfo = makeTaskInfo(@"svn blame", taskLaunchPath, arguments);
+
+	// svnblame.sh <svn-tool> <open-app> <revision> <options> <url> ...
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	Helpers
+//----------------------------------------------------------------------------------------
+
+static NSDictionary*
+ensureDict (NSDictionary* dictOrNil)
+{
+	return dictOrNil ? dictOrNil : [NSDictionary dictionary];
+}
+
+
++ (NSArray*) optionsFromSvnOptionsInvocation: (NSInvocation*) invocation
 {
 	NSMutableDictionary *dic;
 	[invocation invoke];
@@ -283,12 +497,12 @@
 	NSString *username = [dic objectForKey:@"user"];
 	NSString *password = [dic objectForKey:@"pass"];
 	
-	if ( username != nil && ![username isEqualToString:@""]  )
+	if ([username length])
 	{
 		[arr addObject:@"--username"];
 		[arr addObject:username];
 
-		if ( password != nil && ![password isEqualToString:@""] )
+		if ([password length])
 		{
 			[arr addObject:@"--password"];
 			[arr addObject:password];		
@@ -300,18 +514,26 @@
 	return arr;
 }
 
-+(NSString *)joinedOptions:(NSArray *)options1 andOptions:(NSArray *)options2
+
++ (NSString*) joinedOptions: (NSArray*) options1 andOptions: (NSArray*) options2
 {
-	return [NSString stringWithFormat:@"%@ %@", [options1 componentsJoinedByString:@" "], [options2 componentsJoinedByString:@" "]];
+	return [NSString stringWithFormat:@"%@ %@", [options1 componentsJoinedByString: @" "],
+												[options2 componentsJoinedByString: @" "]];
 }
 
-+(NSMutableDictionary *)launchTask:(NSString *)taskLaunchPath arguments:(NSArray *)arguments callback:(NSInvocation *)callback callbackInfo:(id)callbackInfo taskInfo:(id)taskInfo additionalTaskInfo:(id)additionalTaskInfo
+
++ (NSMutableDictionary*) launchTask:         (NSString*)     taskLaunchPath
+						 arguments:          (NSArray*)      arguments
+						 callback:           (NSInvocation*) callback
+						 callbackInfo:       (id)            callbackInfo
+						 taskInfo:           (id)            taskInfo
+						 additionalTaskInfo: (id)            additionalTaskInfo
+						 outputToData:       (BOOL)          outputToData
 {
-	NSTask *task=[[NSTask alloc] init];
-    NSPipe *pipe=[[NSPipe alloc] init];
+//	NSLog(@"launchTask: '%@' arguments=%@", taskLaunchPath, arguments);
+	NSTask *task = [[NSTask alloc] init];
+    NSPipe *pipe = [[NSPipe alloc] init];
     NSPipe *errorPipe = [[NSPipe alloc] init];
-    NSFileHandle *handle;
-    NSFileHandle *errorHandle;
 
 	NSDictionary *defaultEnvironment = [[NSProcessInfo processInfo] environment];
     NSMutableDictionary *environment = [[NSMutableDictionary alloc] initWithDictionary:defaultEnvironment];
@@ -326,159 +548,216 @@
 
     [task setStandardOutput:pipe];
     [task setStandardError:errorPipe];
-    handle=[pipe fileHandleForReading];
-    errorHandle=[errorPipe fileHandleForReading];
+    NSFileHandle* handle = [pipe fileHandleForReading];
+    NSFileHandle* errorHandle = [errorPipe fileHandleForReading];
     
 	// this will be done by Tasks
-//    [task launch]; 
+//	[task launch]; 
 
 	NSMutableDictionary *taskObj = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-								@"pending", @"status",
-								task, @"task",
-								handle, @"handle",
-								errorHandle, @"errorHandle",
-								[NSNumber numberWithInt:[task processIdentifier]], @"pid",
-								callback, @"callback",
-								((callbackInfo==nil)?[NSDictionary dictionary]:callbackInfo), @"callbackInfo",
-								((taskInfo==nil)?[NSDictionary dictionary]:taskInfo), @"taskInfo",
-								((additionalTaskInfo==nil)?[NSDictionary dictionary]:additionalTaskInfo), @"additionalTaskInfo",
+								@"pending",											@"status",
+								task,												@"task",
+								handle,												@"handle",
+								errorHandle,										@"errorHandle",
+								[NSNumber numberWithInt:[task processIdentifier]],	@"pid",
+								callback,											@"callback",
+								ensureDict(callbackInfo),							@"callbackInfo",
+								ensureDict(taskInfo),								@"taskInfo",
+								ensureDict(additionalTaskInfo),						@"additionalTaskInfo",
+								NSBool(outputToData),								@"outputToData",
 								nil];
-								
-	[[NSApp delegate] newTaskWithDictionary:taskObj];
 
     [errorPipe release];
     [pipe release];
     [task release];
+
+	[[NSApp delegate] newTaskWithDictionary:taskObj];
 	
 	return taskObj;
 }
 
+
+//----------------------------------------------------------------------------------------
 #pragma mark -
 
-+(void)killProcess:(int)pid
++ (void) killProcess: (int) pid
 {
-	NSTask *task=[[NSTask alloc] init];
-    NSPipe *pipe=[[NSPipe alloc] init];
-    NSPipe *errorPipe = [[NSPipe alloc] init];
+	NSTask *task = [[NSTask alloc] init];
+	NSPipe *pipe = [[NSPipe alloc] init];
+	NSPipe *errorPipe = [[NSPipe alloc] init];
 
-    NSFileHandle *handle;
-    NSFileHandle *errorHandle;
+	[task setLaunchPath: @"/bin/kill"];
+	[task setArguments: [NSArray arrayWithObjects: @"-9", [NSString stringWithFormat: @"%d", pid], nil]];
 
-	
-	[task setLaunchPath:@"/bin/kill"];
-	[task setArguments:[NSArray arrayWithObjects:@"-9", [NSString stringWithFormat:@"%d", pid], nil]];
+	[task setStandardOutput: pipe];
+	[task setStandardError: errorPipe];
 
-    [task setStandardOutput:pipe];
-    [task setStandardError:errorPipe];
+//	NSFileHandle* handle = [pipe fileHandleForReading];
+//	NSFileHandle* errorHandle = [errorPipe fileHandleForReading];
 
-    handle=[pipe fileHandleForReading];
-    errorHandle=[errorPipe fileHandleForReading];
-    
-    [task launch];
-    
-    [errorPipe release];
-    [pipe release];
-    [task release];
+	[task launch];
 
-}
-
-+ (NSString *)cachePathForUrl:(NSURL *)url;
-{
-	return [self cachePathForUrl:url revision:nil];
+	[errorPipe release];
+	[pipe release];
+	[task release];
 }
 
 
-/*
-+ (NSString *)cachePathForUrl:(NSURL *)url revision:(NSString *)revision;
-Uses a php script (hmm, yeah, I know... ) to create a path where to store cached information.
-This is used by the repository browser to cache the previously retrieved logs and visited directories.
-*/
-+ (NSString *)cachePathForUrl:(NSURL *)url revision:(NSString *)revision;
+//----------------------------------------------------------------------------------------
+
+enum {
+	kCacheMaxSize				=	400,
+	kCacheMinAge				=	3600 * 8,	// seconds
+	kCacheMaxDeletableFileSize	=	32 * 1024,	// bytes
+	kCacheDeleteCount			=	8
+};
+
+
+//----------------------------------------------------------------------------------------
+// Try to delete up to kCacheDeleteCount entries & their files.
+// Called if adding an entry to the cache with grow it past kCacheMaxSize.
+// Only delete entries older than kCacheMinAge that have no file or whose size is <= kCacheMaxDeletableFileSize.
+// Deletes the least recently accessed entries first.
+
+static void
+removeOldEntries (NSMutableDictionary* cacheDict, NSString* cacheDir,
+				  NSFileManager* fileMgr, CFAbsoluteTime now)
 {
-	static NSMutableDictionary *cacheDict; // this dictionary will cache the results of this method to avoid repetitive calls to the php script
-	
-	if ( cacheDict == nil )
+	struct Desc
 	{
-		cacheDict = [[NSMutableDictionary alloc] init];
-	
-	}
-	
-	NSString *key = [NSString stringWithFormat:@"%@::%@", [url absoluteString], revision];
-	NSString *resultString;
-		
-	if ( resultString = [cacheDict objectForKey:key] )
+		CFAbsoluteTime	time;
+		id				key;
+		id				path;
+	};
+	typedef struct Desc Desc;
+	int count = 0, i;
+	Desc descs[kCacheDeleteCount + 1];
+
+	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+
+	CFAbsoluteTime time0 = now - kCacheMinAge;
+	id key, fattrs;
+	NSEnumerator* enumerator = [cacheDict keyEnumerator];
+	while ((key = [enumerator nextObject]))
 	{
-		return resultString;
-	
-	} else
-	{
-		NSArray *libraryDirectories = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask,  FALSE);
-		
-		NSString *cachesFolder= [[[libraryDirectories objectAtIndex: 0 ] stringByAppendingPathComponent:@"/Caches"] stringByExpandingTildeInPath];
-		NSString *resultString;
-
-		NSTask *aTask=[[NSTask alloc] init];
-		NSPipe *pipe=[[NSPipe alloc] init];
-		NSPipe *errorPipe = [[NSPipe alloc] init];
-		
-		NSFileHandle *handle;
-		NSFileHandle *errorHandle;
-
-		NSArray *argumentsArray;
-
-		
-		if ( revision == nil )
-		{	
-			argumentsArray = [NSArray arrayWithObjects:cachesFolder, [url absoluteString], nil]; // see getCachePathForUrl.php
-
-		} else
+		NSDictionary* cacheEntry = [cacheDict objectForKey: key];
+		CFAbsoluteTime time = [[cacheEntry objectForKey: @"time"] doubleValue];
+		if (time < time0)
 		{
-			argumentsArray = [NSArray arrayWithObjects:cachesFolder, [url absoluteString], revision, nil]; // see getCachePathForUrl.php
+			NSString* path = [cacheDir stringByAppendingPathComponent:
+											[cacheEntry objectForKey: @"name"]];
+			if ((fattrs = [fileMgr fileAttributesAtPath: path traverseLink: NO]) == nil ||
+				[fattrs fileSize] <= kCacheMaxDeletableFileSize)
+			{
+				const Desc d = { time, key, fattrs ? path : nil };
+				descs[count] = d;
+				for (i = count - 1; i >= 0; --i)
+				{
+					if (time >= descs[i].time)
+						break;
+					descs[i + 1] = descs[i];
+					descs[i] = d;
+				}
+
+				if (count < kCacheDeleteCount)
+					++count;
+				else
+					time0 = descs[kCacheDeleteCount - 1].time;
+			}
 		}
-		
-		//NSLog(@"fetching %@", [url absoluteString]);
-		
-		[aTask setLaunchPath:[MySvn bundleScriptPath:@"getCachePathForUrl.php"]];
-		
-		[aTask setArguments:argumentsArray];
-		[aTask setStandardOutput:pipe];
-		[aTask setStandardError:errorPipe];
-		
-		handle = [pipe fileHandleForReading];
-		errorHandle = [errorPipe fileHandleForReading];
-		
-		[aTask launch];
-		[aTask waitUntilExit];
-		resultString = [[[NSString alloc] initWithData:[handle readDataToEndOfFile] encoding:NSUTF8StringEncoding] autorelease];
-
-		[errorPipe release];
-		[pipe release];
-		[aTask release];
-		
-		[cacheDict setValue:resultString forKey:key];
-		
-		return resultString;
 	}
-}
-// CLASS VARIABLES ACCESSORS
-+ (NSString *)bundleScriptPath:(NSString *)script
-{
-		return [[[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"/Contents/Resources/" ]
-								stringByAppendingPathComponent:script];
-}
-+ (NSString *)svnPath
-{
-    static NSString *svnPath;
-	
-	return [[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey:@"svnBinariesFolder"];
-}
-+ (void) setSvnPath: (NSString *) aSvnPath
-{
-    static NSString *svnPath;
 
-    id old = [self svnPath];
-    svnPath = [aSvnPath retain];
-    [old release];
+//	NSLog(@"removeOldEntries: count=%d", count);
+	for (i = 0; i < count; ++i)
+	{
+		Desc* d = &descs[i];
+		if (d->path)
+			if (![fileMgr removeFileAtPath: d->path handler: nil])
+				continue;
+		[cacheDict removeObjectForKey: d->key];
+//		NSLog(@"\n    %f '%@'", d->time, d->key);
+	}
+
+	[pool release];
 }
+
+
+//----------------------------------------------------------------------------------------
+
++ (NSString*) cachePathForKey: (NSString*) key
+{
+	static NSMutableDictionary* cacheDict;	// this dictionary contains the cache
+	static NSString* cacheDir;				// the path to the cache directory
+	static unsigned int nextIndex = 0;
+
+	NSFileManager* const fileMgr = [NSFileManager defaultManager];
+	NSUserDefaults* const prefs = [NSUserDefaults standardUserDefaults];
+	if (cacheDict == nil)
+	{
+		id obj = [prefs dictionaryForKey: @"cacheFilesDict"];
+		cacheDict = obj ? [obj mutableCopyWithZone: nil] : [[NSMutableDictionary alloc] init];
+
+		if ((obj = [prefs objectForKey: @"cacheNextIndex"]))
+			nextIndex = [obj unsignedIntValue];
+	}
+
+	// Find or create the cache directory
+	if (cacheDir == nil)
+	{
+		NSArray* libraryDirectories = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, TRUE);
+		NSString* cachesFolder = [libraryDirectories objectAtIndex: 0];
+		cacheDir = [cachesFolder stringByAppendingPathComponent: [[NSBundle mainBundle] bundleIdentifier]];
+		[cacheDir retain];
+
+		BOOL isDir;
+		if ([fileMgr fileExistsAtPath: cacheDir isDirectory: &isDir])
+		{
+			if (!isDir)
+				return nil;
+		}
+		else	// create directory
+		{
+			if (![fileMgr createDirectoryAtPath: cacheDir attributes: nil])
+				return nil;
+		}
+	}
+
+	NSString* name = nil;
+	NSDictionary* cacheEntry = [cacheDict objectForKey: key];
+	if (cacheEntry)
+	{
+		name = [cacheEntry objectForKey: @"name"];
+	}
+
+	const CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+	if (name == nil)
+	{
+		const unichar kCacheFormat = 'A';		// cache format 'A'
+
+		do {
+			name = [NSString stringWithFormat: @"%C%09u.cache", kCacheFormat, nextIndex++];
+		}
+		while ([fileMgr fileExistsAtPath: [cacheDir stringByAppendingPathComponent: name]]);
+	}
+
+	if (cacheEntry == nil && [cacheDict count] >= kCacheMaxSize)
+		removeOldEntries(cacheDict, cacheDir, fileMgr, now);
+
+	cacheEntry = [NSDictionary dictionaryWithObjectsAndKeys: name, @"name",
+															 [NSNumber numberWithDouble: now], @"time",
+															 nil];
+	[cacheDict setValue: cacheEntry forKey: key];
+	[prefs setObject: cacheDict forKey: @"cacheFilesDict"];
+	[prefs setObject: [NSNumber numberWithUnsignedInt: nextIndex] forKey: @"cacheNextIndex"];
+	[prefs synchronize];
+
+	NSString* resultString = [cacheDir stringByAppendingPathComponent: name];
+
+//	NSLog(@"cacheDict=%@", cacheDict);
+//	NSLog(@"cachePathForKey('%@') => '%@'", key, name);
+	return resultString;
+}
+
 
 @end
+

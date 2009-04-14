@@ -1,158 +1,190 @@
-	#import "MySvnLogParser.h"
+//
+//  MySvnLogParser.m
+//  svnX
+//
+
+#import "MySvnLogParser.h"
 
 
 @implementation MySvnLogParser
 
-- (void)dealloc
+- (id) init
 {
-    [self setLogArray: nil];
-    [self setTmpDict: nil];
-    [self setTmpDict2: nil];
-    [self setTmpString: nil];
-    [self setPathsArray: nil];
+	self = [super init];
+	if (self)
+	{
+		bufString = [[NSMutableString string] retain];
+	}
 
-    [super dealloc];
+	return self;
 }
 
 
--(NSArray *)parseXmlString:(NSString *)string
+- (void) dealloc
 {
-	NSXMLParser *parser = [[NSXMLParser alloc] initWithData:[string dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES]];
-	[parser setDelegate:self];
+	[bufString release];
 
-	[self setLogArray:[NSMutableArray array]];
-	[parser parse];
-	if ( [parser parserError] != nil )
+	[super dealloc];
+}
+
+
++ (NSMutableArray*) parseData: (NSData*) data
+{
+#if 1
+	// HACK to fix 'Error NSXMLParserErrorDomain 1' on encountering control characters
+	int length;
+	BytePtr p = (BytePtr) [data bytes];
+	for (length = [data length]; length--; ++p)
 	{
-		NSLog(@"Error while parsing log xml : %@", [[parser parserError] localizedDescription]);
-	}
-
+		UInt8 ch = *p;
+		if (ch < 32 && ch != 9 && ch != 10 && ch != 13)
+			*p = ' ';
+	}		
+#endif
+	MySvnLogParser* parser = [[self alloc] init];
+	NSMutableArray* result = [parser parseXML: data];
 	[parser release];
-	return [self logArray];
+
+	return result;
 }
 
-- (void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qualifiedName attributes:(NSDictionary *)attributeDict
+
++ (NSMutableArray*) parseString: (NSString*) string
 {
-	if ( [elementName isEqualToString:@"logentry"] )
+	return [self parseData: [string dataUsingEncoding: NSUTF8StringEncoding allowLossyConversion: YES]];
+}
+
+
+- (NSMutableArray*) parseXML: (NSData*) data
+{
+	entry.revision =
+	entry.msg      =
+	entry.date     =
+	entry.author   = @"";
+	entry.paths    = nil;
+	entries = [NSMutableArray array];
+
+	NSXMLParser* parser = [[NSXMLParser alloc] initWithData: data];
+	[parser setDelegate: self];
+
+	[parser parse];
+	if ([parser parserError] != nil)
 	{
-		[self setTmpDict:attributeDict];
-		[attributeDict setObject:[NSNumber numberWithInt:[[attributeDict objectForKey:@"revision"] intValue]] forKey:@"revision_n"];
-		[[self logArray] addObject:[self tmpDict]];
+		NSLog(@"Error while parsing log xml: %@", [[parser parserError] localizedDescription]);
 	}
-	else
-	if ( [elementName isEqualToString:@"date"] )
-	{  
-		[self setTmpString:[NSMutableString string]];
-		[[self tmpDict] setObject:[self tmpString] forKey:@"date"];
-	}
-	else
-	if ( [elementName isEqualToString:@"msg"] )
-	{  
-		[self setTmpString:[NSMutableString string]];
-		[[self tmpDict] setObject:[self tmpString] forKey:@"msg"];
-	}
-	else
-	if ( [elementName isEqualToString:@"author"] )
-	{  
-		[self setTmpString:[NSMutableString string]];
-		[[self tmpDict] setObject:[self tmpString] forKey:@"author"];
-	}
-	else
-	if ( [elementName isEqualToString:@"path"] )
-	{  
-		NSMutableDictionary *attributes = [NSMutableDictionary dictionaryWithDictionary:attributeDict];
+	[parser release];
 
-		if ( [attributeDict objectForKey:@"copyfrom-path"] != nil )
-		{
-			[attributes setValue:[attributeDict objectForKey:@"copyfrom-path"] forKey:@"copyfrompath"];
-			[attributes setValue:[attributeDict objectForKey:@"copyfrom-rev"] forKey:@"copyfromrev"];
-		}
-		[self setTmpDict2:attributes];
-		[self setTmpString:[NSMutableString string]];
+	return entries;
+}
 
-		[[self pathsArray] addObject:tmpDict2];
-		[[self tmpDict2] setObject:[self tmpString] forKey:@"path"];
-	}
-	else
-		if ( [elementName isEqualToString:@"paths"] )
-		{  
-			[self setPathsArray:[NSMutableArray array]];
-		}
-	else
+
+- (NSMutableArray*) parseXMLString: (NSString*) string
+{
+	return [self parseXML: [string dataUsingEncoding: NSUTF8StringEncoding allowLossyConversion: YES]];
+}
+
+
+- (void) parser:          (NSXMLParser*)  parser
+		 didStartElement: (NSString*)     elementName
+		 namespaceURI:    (NSString*)     namespaceURI
+		 qualifiedName:   (NSString*)     qualifiedName
+		 attributes:      (NSDictionary*) attributeDict
+{
+	[bufString setString: @""];
+
+	switch ([elementName characterAtIndex: 0])
 	{
-		[self setTmpString:nil];
+		case 'l':
+			if ([elementName isEqualToString: @"logentry"])
+			{
+				entry.revision = [attributeDict objectForKey: @"revision"];
+			}
+			break;
+
+		case 'p':
+			if ([elementName isEqualToString: @"path"])
+			{
+				action       = [attributeDict objectForKey: @"action"];
+				copyfromPath = [attributeDict objectForKey: @"copyfrom-path"];
+				copyfromRev  = copyfromPath ? [attributeDict objectForKey: @"copyfrom-rev"] : nil;
+			}
+			break;
 	}
 }
 
-- (void)parser:(NSXMLParser *)parser didEndElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName;
+
+- (void) parser:        (NSXMLParser*) parser
+		 didEndElement: (NSString*)    elementName
+		 namespaceURI:  (NSString*)    namespaceURI
+		 qualifiedName: (NSString*)    qName
 {
-	if ( [elementName isEqualToString:@"paths"] )
-	{  
-		[[self tmpDict] setObject:[self pathsArray] forKey:@"paths"];
+	switch ([elementName characterAtIndex: 0])
+	{
+		case 'a':
+			if ([elementName isEqualToString: @"author"])
+			{
+				entry.author = [NSString stringWithString: bufString];
+			}
+			break;
+
+		case 'd':
+			if ([elementName isEqualToString: @"date"])
+			{
+				entry.date = [NSString stringWithString: bufString];
+			}
+			break;
+
+		case 'l':
+			if ([elementName isEqualToString: @"logentry"])
+			{
+				id revision_n = [NSNumber numberWithInt: [entry.revision intValue]];
+				[entries addObject: [NSDictionary dictionaryWithObjectsAndKeys:
+											entry.revision, @"revision",
+											revision_n,     @"revision_n",
+											entry.msg,      @"msg",
+											entry.date,     @"date",
+											entry.author,   @"author",
+											entry.paths,    @"paths",
+											nil]];
+				entry.revision =
+				entry.msg      =
+				entry.date     =
+				entry.author   = @"";
+				entry.paths    = nil;
+			}
+			break;
+
+		case 'm':
+			if ([elementName isEqualToString: @"msg"])
+			{
+				entry.msg = [NSString stringWithString: bufString];
+			}
+			break;
+
+		case 'p':
+			if ([elementName isEqualToString: @"path"])
+			{
+				if (entry.paths == nil)
+					entry.paths = [NSMutableArray array];
+
+				[entry.paths addObject: [NSDictionary dictionaryWithObjectsAndKeys:
+											[NSString stringWithString: bufString],	@"path",
+											action,									@"action",
+											copyfromPath,							@"copyfrompath",
+											copyfromRev,							@"copyfromrev",
+											nil]];
+			}
+			break;
 	}
 }
 
-- (void)parser:(NSXMLParser *)parser foundCharacters:(NSString *)string
+
+- (void) parser:          (NSXMLParser*) parser
+		 foundCharacters: (NSString*)    string
 {
-    [[self tmpString] appendString:string];
+	[bufString appendString: string];
 }
 
-
-// - logArray:
-- (NSMutableArray *)logArray {
-    return logArray; 
-}
-
-// - setLogArray:
-- (void)setLogArray:(NSMutableArray *)aLogArray {
-    id old = [self logArray];
-    logArray = [aLogArray retain];
-    [old release];
-}
-
-// - tmpDict:
-- (NSMutableDictionary *)tmpDict {
-    return tmpDict; 
-}
-
-// - setTmpDict:
-- (void)setTmpDict:(NSMutableDictionary *)atmpDict {
-    id old = [self tmpDict];
-    tmpDict = [atmpDict retain];
-    [old release];
-}
-
-// - tmpDict2:
-- (NSMutableDictionary *)tmpDict2 { return tmpDict2; }
-
-	// - setTmpDict2:
-- (void)setTmpDict2:(NSMutableDictionary *)aTmpDict2 {
-    id old = [self tmpDict2];
-    tmpDict2 = [aTmpDict2 retain];
-    [old release];
-}
-
-// - tmpString:
-- (NSMutableString *)tmpString {
-    return tmpString; 
-}
-
-// - setTmpString:
-- (void)setTmpString:(NSMutableString *)aTmpString {
-    id old = [self tmpString];
-    tmpString = [aTmpString retain];
-    [old release];
-}
-
-
-// - pathsArray:
-- (NSMutableArray *)pathsArray { return pathsArray; }
-
-	// - setPathsArray:
-- (void)setPathsArray:(NSMutableArray *)aPathsArray {
-    id old = [self pathsArray];
-    pathsArray = [aPathsArray retain];
-    [old release];
-}
 
 @end
+

@@ -1,10 +1,14 @@
 #import "MyDragSupportWindow.h"
+#import "MyWorkingCopy.h"
+#import "MyWorkingCopyController.h"
+
+NSString* const kTypeRepositoryPathAndRevision = @"REPOSITORY_PATH_AND_REVISION_TYPE";
 
 @implementation MyDragSupportWindow
 
 -(void)awakeFromNib
 {
-     [self registerForDraggedTypes:[NSArray arrayWithObjects:@"REPOSITORY_PATH_AND_REVISION_TYPE", nil]];
+     [self registerForDraggedTypes:[NSArray arrayWithObjects: kTypeRepositoryPathAndRevision, nil]];
 }
 
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
@@ -16,9 +20,9 @@
 {
     NSPasteboard *pboard = [sender draggingPasteboard];
 
-	NSDictionary *fileObj = [NSUnarchiver unarchiveObjectWithData:[pboard dataForType:@"REPOSITORY_PATH_AND_REVISION_TYPE"]];
+	NSDictionary *fileObj = [NSUnarchiver unarchiveObjectWithData:[pboard dataForType: kTypeRepositoryPathAndRevision]];
 
-	[[[self document] controller] requestSwitchToRepositoryPath:fileObj];
+	[[[(id) self document] controller] requestSwitchToRepositoryPath:fileObj];
 	
 	return YES;
 }

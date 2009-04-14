@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title></title>
+<style type="text/css">
+/* Styles for Tabular + Unified diffs */
+.D ul { clear: both; margin: 0; padding: 0 }
+.D li { background: #f7f7f7; position: relative; width: 100%; }
+.D h2 { border: 1px solid #ddd; font-size: 13px; letter-spacing: normal;
+		margin: 0 auto; padding: 1px 0 3px 7px; }
+.D h2 .switch { float: right; font-size: 11px; line-height: 1.6; }
+.D h2 .switch span { border-left: 1px solid #ccc; cursor: pointer; padding: 3px 9px 5px; }
+.D h2 .switch span:hover { background: #77F; }
+.D h2 .switch span.active { background: #BBF; cursor: default; }
+.D h2 .switch span.active:hover { background: #BBF; }
+
+/* Tabular/Inline diff view */
+.D table { border: 1px solid #ddd; border-spacing: 0; border-top: 0; empty-cells: show;
+		   font-size: 12px; line-height: 130%; padding: 0; margin: 0 auto; table-layout: fixed;
+		   width: 100%; }
+.D table col.N { width: 4em }
+.D table th { border-right: 1px solid #ddd; border-bottom: 1px solid #998; font-size: 11px; }
+.D table tr.rev th { background: #eee; color: #a00; text-align: center; }
+.D table tbody th { background: #eed; color: #443; font-weight: normal; padding: 0 .5em;
+					text-align: right; vertical-align: top; }
+.D table tbody td { background: #fff; font: normal 11px monospace; overflow: visible;
+					padding: 1px 2px; vertical-align: top; }
+.D td ins, .D td del { text-decoration: none; }
+
+/* Inline diff view */
+.D td.F { background: #ffd; border-color: #cc0; border-style: solid; border-width: 1px 0 0 0; }
+.D td.L { background: #fdd; border-color: #c00; border-style: solid; border-width: 0 1px 0 1px; }
+.D td.R { background: #dfd; border-color: #0a0; border-style: solid; border-width: 0 1px 0 1px; }
+.D tr.A td.L, .D tr.A td.R { border-top-width: 1px }
+.D tr.B td.L, .D tr.B td.R { border-bottom-width: 1px }
+.D td del { background: #e99; color: #000; }
+.D td ins { background: #9e9; color: #000; }
+
+/* Unified diff view */
+.D pre { background: #ffe; border: 1px solid #ddd; border-top-width: 0; font-size: 11px; margin: 0; }
+</style></head>
+
+<body><script type="text/javascript">//<![CDATA[
+
+String.prototype.beginswith = function(str) { return this.indexOf(str) == 0; }
+
+function esc(text)
+{
+	text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+			   .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+			   .replace(/\t/g, "&nbsp; &nbsp; ").replace(/  /g, "&nbsp; ")
+			   .replace(/\r/g, "<br/>");
+	return (text.charCodeAt(0) == 32) ? '&nbsp;' + text.substring(1) : text;
+}
+
+function esc1(text)
+{
+	return esc(text.substring(1));
+}
+
+function rev(s)
+{
+	var tmp = s.match(/([0-9]+)\)$|(copy)\)$/);
+	if (tmp)
+	{
+		if (tmp[2])
+			return "Work";
+		else if (tmp[1])
+			return "r" + tmp[1];
+	}
+	return "";
+}
+
+function diffHead(lines)
+{
+	var i = 0, S = "", title = "", tA = "", tB = "", m = "", ip = false, lN = lines.length;
+
+	if (lines[i].beginswith("Index: "))
+		title = esc(lines[i++].substring(7));
+	else if (lines[i].beginswith("Property changes on: "))
+	{
+		ip = true;
+		title = esc(lines[i++].substring(21));
+		if (lines[i].beginswith("____"))
+			++i;
+	}
+
+	if (!ip)
+	{
+		if (lines[i].beginswith("===="))
+			++i;
+	
+		if (lines[i].beginswith("--- "))
+			tA = rev(lines[i++]);
+		else if (lines[i].beginswith("Cannot display:"))	// file marked as a binary type.
+			m = esc(lines[i++]).concat('<br/>', esc(lines[i++]));
+	
+		if (lN > i && lines[i].beginswith("+++ "))
+			tB = rev(lines[i++]);
+	}
+
+	S = S.concat("<div class='D'><ul><li>\n",
+				 "<h2><span class='switch'><span class='active' onclick='tab(this,0)'>Tabular</span>",
+				 "<span onclick='tab(this,1)'>Unified</span></span>", title, "</h2>\n",
+				 "<table summary='diff' cellspacing='0'>\n",
+				 "<colgroup><col class='N'/><col class='N'/><col/></colgroup>\n");
+	if (!ip)
+		S = S.concat("<tr class='rev'><th>", tA, "</th><th>", tB, "</th><td>", m, "</td></tr>\n");
+	return {S:S, i:i, p:ip};
+}
+
+var cFirst = "<tr class='A'>",
+	cLast  = "<tr class='B'>",
+	cOnly  = "<tr class='A B'>",
+	cOther = "<tr>",
+	lnumRE = /^@@ -([0-9]+),?[0-9]* \+([0-9]+),?[0-9]* @@ *(.*)/;
+
+function diffLines(lines)
+{
+	var t = diffHead(lines), i = t.i, S = t.S,
+		numA = 0, numB = 0, line, linCount = lines.length,
+		prevTyp, typ = -1, nextTyp = (i < linCount) ? lines[i].charCodeAt(0) : -2;
+	var isFirst, isLast, tr;
+
+	while (i < linCount)
+	{
+		line = lines[i++];
+		prevTyp = typ;
+		typ = nextTyp;
+		nextTyp = (i < linCount) ? lines[i].charCodeAt(0) : 0;
+		isFirst = (typ != prevTyp);
+		isLast  = (typ != nextTyp);
+		tr = isLast ? "</td></tr></tbody>\n" : "</td></tr>\n";
+		switch (typ)
+		{
+		case 64:		// '@'
+			t = line.match(lnumRE);
+			numA = parseInt(t[1]);
+			numB = parseInt(t[2]);
+			if (t[3].length)
+				S = S.concat("<tr><th colspan='2'>Function:</th><td class='F'>", t[3], "</td></tr>");
+			else if (i > 5)
+				S += "<tr><th>…</th><th>…</th><td class='F'></td></tr>";
+			break;
+		case 43:	// '+'
+			S = S.concat(isFirst ? "<tbody>" : "",
+						 (isFirst && prevTyp != 45) ? (isLast ? cOnly : cFirst) : (isLast ? cLast : cOther),
+						 "<th></th><th>", numB++, "</th><td class='R'>", esc1(line), tr);
+			break;
+		case 45:	// '-'
+			S = S.concat(isFirst ? "<tbody>" : "",
+						 (isLast && nextTyp != 43) ? (isFirst ? cOnly : cLast) : (isFirst ? cFirst : cOther),
+						 "<th>", numA++, "</th><th></th><td class='L'>", esc1(line), tr);
+			break;
+		case 32:	// ' '
+			S = S.concat(isFirst ? "<tbody><tr><th>" : "<tr><th>",
+						 numA++, "</th><th>", numB++, "</th><td>", esc1(line), tr);
+			break;
+		case 92:	// '\\'
+			S = S.concat(isFirst ? "<tbody>" : "", "<tr><th></th><th></th><td>", esc1(line), tr);
+			break;
+		}
+	}
+
+	t = lines.join('\n').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	return S.concat("</table><pre style='display:none'>", t, "</pre></li></ul></div>\n");
+}
+
+function tab(me, uni)
+{
+	me[uni ? 'previousSibling' : 'nextSibling'].className = "";
+	me.className = "active";
+	var unified = me.parentNode.parentNode.parentNode.lastChild;
+	unified.style.display = uni ? "" : "none";
+	unified.previousSibling.style.display = uni ? "none" : "";
+}
+
+function diff1(lines)
+{
+	var node = document.createElement("div");
+	node.innerHTML = diff(lines);
+	document.body.appendChild(node);
+}
+
+var diff = diffLines;
+

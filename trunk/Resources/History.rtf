@@ -1,0 +1,360 @@
+{\rtf1\mac\ansicpg10000\cocoartf824\cocoasubrtf480
+{\fonttbl\f0\fswiss\fcharset77 Arial-BoldMT;\f1\fnil\fcharset111 ZapfDingbatsITC;\f2\fswiss\fcharset77 ArialMT;
+\f3\fswiss\fcharset77 Arial-ItalicMT;}
+{\colortbl;\red255\green255\blue255;\red102\green102\blue102;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww14100\viewh23040\viewkind0
+\deftab720
+\pard\tx566\tx1133\tx1700\pardeftab720\sl320\ql\qnatural
+
+\f0\b\fs26 \cf2 1.0\
+\pard\tx1660\tx2160\pardeftab720\sl320\ql\qnatural
+
+\f1\b0 \cf0 J
+\f2  Repositories & Working Copies windows:\
+  \'a5 Hide/Show edit fields.  [When hidden - editing is disabled. Toggling is via a disclosure button or Cmd-E.  The state is saved/restored to/from the preferences.]\
+  \'a5 Pressing return or enter when the list is focused opens the highlighted item.\
+  \'a5 Pressing an alpha-numeric key when the list is focused jumps to the next name beginning with that character.\
+  \'a5 Double-click in list activates existing window if possible.\
+  \'a5 Alt-double-click always opens new window. [Old double-click behaviour.]\
+  \'a5 Optionally abbreviate Working Copy paths.\
+
+\f1 J
+\f2  Working Copy window:\
+  \'a5 Updated layout, toolbar, Commit Message sheet & Update alert.\
+  \'a5 Pressing return or enter when the file list is focused & a single file is highlighted opens that file.\
+  \'a5 Pressing an alpha-numeric key when the file list is focused highlights the next name beginning with that character.\
+  \'a5 Added keyboard support for toolbar items: cmd-shift-F => Reveal in Finder, cmd-R => Refresh, cmd-alt-R => Refresh with updates, cmd-U => Update, cmd-D => Diff, cmd-shift-D => Diff with sheet, cmd-S => Repository.\
+  \'a5 Extended the Filter pop-up with Conflict & Changed (modified, added, deleted, replaced, conflict, missing or wrong kind) items & added command keys.\
+  \'a5 Replaced Flat Mode & Smart Mode toolbar check-boxes with new View segmented toolbar control.  Maps cmd-ctrl-T => Tree View, cmd-ctrl-F => Flat View & cmd-ctrl-S => Smart View.\
+  \'a5 Improved the look of the tree list and fixed the keyboard focus when it's hidden (also hides the splitter bar).\
+  \'a5 Save & restore each window's frame, view & filter modes.\
+  \'a5 Improvements, corrections & optimisations to file list's help tags.\
+  \'a5 Refresh is up to 5-10 times as fast.  Uses less memory.\
+  \'a5 Fixed commit failure due to mixed end-of-line characters in commit message. [Maps all EoLs to \\n.]\
+  \'a5 Fixed dragging of non-selected items in Flat & Smart modes.\
+  \'a5 Maintain file selection after refresh or view mode change.  Also maintain tree state.\
+  \'a5 New recent items menu in search field.\
+  \'a5 Added auto-refresh option (with preference checkbox).  Refreshes Working Copy window each time it\'d5s focused.\
+  \'a5 Added new svn update options sheet.  [Alt-click Update action button or toolbar icon to see options for updating selection or entire WC.  Supports updating to any file to any revision & most 
+\f3\i svn update
+\f2\i0  options.]\
+
+\f1 J
+\f2  Repository window:\
+  \'a5 Updated layout & toolbar.\
+  \'a5 Added new Report toolbar item.  Displays an HTML formatted, printable, log report of any item in the browser.  [Alt-click excludes path lists from report. Report window has toolbar with buttons for smaller/bigger text & printing.  Long reports span multiple HTML pages.]\
+  \'a5 For all commands normalise end-of-line characters & strip control-characters in commit messages.\
+  \'a5 Faster & better caching of log & repository browser lists.\
+  \'a5 Improved drag feedback (transparent icons).\
+  \'a5 Improved help tags (folders don't have size info).\
+  \'a5 New recent items menu in search field.\
+  \'a5 Correctly browse files with names that start or end with white-space.\
+  \'a5 Replace Advanced/Simple tabbed view with an \'d4Advanced\'d5 toggle button.\
+  \'a5 Added new Blame toolbar item.  [Supports multiple files & alt-click => verbose.]\
+  \'a5 Search messages and/or paths in Advanced mode.\
+  \'a5 Added initial support for peg revisions (currently Diff & Blame only).  Allows use of commands on deleted files.\
+  \'a5 Replaced 'Browse as a sub-repository' directory items' contextual pop-up menu with double-clicking any item in the browser switches to its log view.\
+  \'a5 Added key equivalents for toolbar items: cmd-D => Diff, cmd-B & cmd-alt-B => Blame, cmd-R & cmd-alt-R => Report, cmd-K => Checkout, cmd-S => Export & cmd-O => Output.\
+
+\f1 J
+\f2  Replace Advanced/Simple tabbed view in Diff sheets with an \'d4Advanced\'d5 toggle button.\
+
+\f1 J
+\f2  Added support for finding in messages & paths in log views.\
+
+\f1 J
+\f2  New look Preferences dialog with new 'Abbreviate Working Copy path' option.\
+
+\f1 J
+\f2  Improved diff feedback by better preserving file extensions & including revision numbers in temporary file names.\
+
+\f1 J
+\f2  Leopard compatible icons.\
+
+\f1 J
+\f2  Many bug fixes & optimisations.\
+
+\f1 J
+\f2  Updated for compatibility with Subversion 1.5.\
+
+\f1 J
+\f2  Added new Review and Commit window.\
+  \'a5 Opened by clicking \'d4Review\'c9\'d5 button in a\'caWorking Copy window.\
+  \'a5 Initially adds all commitable items to the Avalable Items list and marks them as \'d4will commit\'d5 (checked).\
+  \'a5 Refreshing the Avalable Items list adds new items as \'d4don\'d5t commit\'d5 (unchecked).\
+  \'a5 The Avalable Items list responds to cmd-shift-A => check all, cmd-shift-N => check none, cmd-R => refresh.\
+  \'a5 The selected item responds to cmd-D => Diff, cmd-O or double click => Open, cmd-T => toggle commit status & cmd-shift-F => reveal file in Finder.\
+  \'a5 Drag items to Finder to copy them or to an application\'d5s icon to open them.\
+  \'a5 Items display same help tags as in WC.\
+  \'a5 Displays formated or raw diff of selected file.  User switchable by clicking \'d4Tabular\'d5 or \'d4Unified\'d5.\
+  \'a5 Saves & restores window size & splits.\
+  \'a5 Lists, and allows reuse of, the 50 most recent commit messages.\
+  \'a5 Custom commit message templates with keyword substitution & embeddable shell scripts.\
+     Keywords are:<MACHINE>, <USER>, <DATE>, <FILES>\'c9</FILES>, <FILES> & <SCRIPT>\'c9</SCRIPT>.\
+
+\f1 J
+\f2  Updated help documentation & added commit message template examples.\
+
+\f1 J
+\f2  Prompt the user to accept or reject un-trusted SSL server certificates.  [Requires \'d4Use old parsing method\'d5 preference to be off.]\
+
+\f0\b \cf2 \
+\pard\tx566\tx1133\tx1700\pardeftab720\sl320\ql\qnatural
+\cf2 0.9.13\
+\pard\tx1660\tx2160\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Improved stability on Leopard.\
+
+\f0\b \cf2 \
+\pard\tx566\tx1133\tx1700\pardeftab720\sl320\ql\qnatural
+\cf2 0.9.12\
+\pard\tx1660\tx2160\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Fix wrong status bug for conflicted items.\
+
+\f0\b \cf2 \
+\pard\tx566\tx1133\tx1700\pardeftab720\sl320\ql\qnatural
+\cf2 0.9.11\
+\pard\tx1660\tx2160\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Added Araxis Merge support (Thanks Doug Anderson & Tommy Krul). It expects araxissvndiff to be in /usr/local/bin.\
+\'a5 Updated Sparkle Plus to version 96.\
+\'a5 Fixed : reverted the ability to rename (renamable!) files in hierarchical mode.\
+\
+
+\f0\b \cf2 0.9.10\
+
+\f2\b0 \cf0 \'a5 New bullet-proof parsing method for svn status that uses --xml output. Requires a subversion 1.4 client. Can be disabled in the preferences.\
+\'a5 Added a tooltip that explains the meaning of the columns' characters.\
+\'a5 Added a thin vertical separator in working copy browser.\
+\'a5 Added a basic warning if svn is not found in the path that it set in preferences.(patch by vskbros).\
+\'a5 Applied patch by robbie from prelab.net to fix diff issue (http://svnx.lachoseinteractive.net/ticket/84).\
+\'a5 Renamed "FileMerge" to "Diff".\
+\pard\tx566\tx1133\tx1700\pardeftab720\sl320\ql\qnatural
+
+\f0\b \cf2 \
+0.9.9\
+\pard\tx1660\tx2160\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Fixed applescript issue occuring only on Mac Intel.\
+\'a5 Added ability to set a date format in the preferences.\
+\'a5 Repository browser : fixed sorting by revision number. This requires a new cache format, so cache in old format is automatically deleted and rebuilt.\
+\'a5 Applied patch by Christian Mittendorf, helps on systems where php is not installed in /usr/bin.\
+\pard\tx566\tx1133\tx1700\pardeftab720\sl320\ql\qnatural
+
+\f0\b \cf2 \
+0.9.8\
+\pard\tx1660\tx2160\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Rewrote the broken file history panel applescript invocation from scratch. It now tries to find a known working copy the file belongs to, then opens this working copy window and displays the sheet for the file. (See "Invoking svnX's file history panel from Applescript" from the Help menu for usage.)\
+\pard\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+\cf0 \'a5 Support for BBEdit diff.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+\cf0 \'a5 Implemented auto-update with Sparkle Plus.\
+\'a5 "Reveal In Finder" now opens the root directory of the local repository if no file/folder is selected in the Working copy list.
+\f0\b \cf2 \
+\
+\pard\tx566\pardeftab720\sl320\ql\qnatural
+\cf2 0.9.7
+\f2\b0 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+\cf0 \'a5 In the repository window, the url is now clickable : you can now click a segment of the url to browse an upper level of the repository.\
+\'a5 Also, you can now "browse a folder as a sub-repository" using the contextual menu in the bottom column view.\
+\'a5 When the hierarchical list in the working copies inspector is reloaded, the first selected item is now brought into view.\
+\'a5 Added a checkbox in preferences to choose whether an item is added to the working copies list when a folder is checked out. When active, after check-out an item is added to list with correct path and the working copies window is brought to front and the Name field is selected.\
+\'a5 Added a Reveal In Finder toolbar item.\
+\'a5 Now compiled as Universal Binary.\
+\'a5 Fixed : in old revisions, could not browse paths that had been moved or deleted. Now use path@revision syntax in svn list, svn checkout @ svn export.\
+\'a5 Fixed : svnX now properly closes the pipes it opens.
+\f0\b \cf2 \
+\pard\tx566\pardeftab720\sl320\ql\qnatural
+\cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+\cf2 0.9.6.4
+\f2\b0 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+\cf0 \'a5 Fixed status bar of the working copy window which displayed the repository UUID instead of the current revision when using subversion 1.3.\
+
+\f0\b \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+\cf2 0.9.6.3
+\f2\b0 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+\cf0 \'a5 Subversion 1.3.0 compatibility.\
+\'a5 Working Copies and Repositories lists should now properly be saved.\
+
+\f0\b \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+\cf2 0.9.6.2
+\f2\b0 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+\cf0 \'a5 Passords are now hidden in text fields.\
+
+\f0\b \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+\cf2 0.9.6.1
+\f2\b0 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+\cf0 \'a5 Fixed issue introduced in 0.9.6 when trying to FileMerge a file with no extension.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 \
+0.9.6
+\f2\b0 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+\cf0 \'a5 Added lock/unlock support for subversion 1.2.\
+\'a5 Integrates a patch by Yuichi Fujishige that should provide better support for UTF-16 strings. Should fix the log file stall issue.\
+\'a5 Diff comparisons should no longer be messed up when launched several at time (thanks James Dessart).\
+\'a5 The temp file diff compares against is now given the same extension, so FileMerge coloring (from XCode 2.1) is right.\
+\'a5 Fixed "svn resolved" issue.\
+\
+
+\f0\b \cf2 0.9.5\
+
+\f2\b0 \cf0 \'a5 Fixed export of a single non-directory item by drag&drop that was broken in 0.9.4.\
+
+\f0\b \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+\cf2 0.9.4\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Preliminary support for diff applications other than FileMerge. Added TextWrangler and CodeWarrior as possible choice in general preferences. (thanks to Sean McBride for the modified script!).\
+\'a5 Fixed broken nib file that affected svn switch in v.0.9.3\
+
+\f0\b \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+\cf2 0.9.3\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Fixed issue when canceling a rename in the working copy window .\
+\'a5 Fixed several possible crash situations.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 \
+0.9.2\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Implemented 
+\f0\b svn switch
+\f2\b0  by drag&drop between the repository and the working copy !\
+\'a5 Now warns if svn binary is not accessible.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 0.9.1\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Implemented 
+\f0\b svn import by drag&drop
+\f2\b0  from the Finder to the repository browser !\
+\'a5 Fixed : checkout output missing from drawer when triggered by drag&drop.\
+\'a5 Fixed issue where empty user/password could be sent instead of none.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 0.9\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Preliminary svn authentification support.\
+\'a5 Task management is now totally revamped\
+\'a5 Each task is now displayed in the activity window.\
+\'a5 Main tasks output (checkout & export in the repository window, update & commits in the working copy window) is also displayed in a drawer.\
+\'a5 Dramatically improved log display performance.\
+\'a5 Working copy outline view improvement ("non flat" view) :\
+\'a5 Optimized outline view calculation.\
+\'a5 Now keeps the selected folder in the outline view after a copy/move.\
+\'a5 If a single file is copied or moved using the outliner in the working copy window, an intermediate sheet now lets the user rename it.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 0.83\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Fixed out-of-sync issue between the revision and the browser after a svn copy/move/delete in advanced mode.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 0.82\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Fixed problem introduced in 0.81 where svn log would be called twice when a new repository window was open in "advanced" log view mode.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 0.81\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 BUG FIX : Fixed problem introduced in v.0.8 that could result in incomplete data in the working copy window.\
+\'a5 NEW : The default log view mode for new repository windows (advanced or simple) can now be set in the preferences.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 0.8\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 NEW : you can now search into repository paths.\
+\'a5 NEW : implemented drag & drop from the repository file browser (export or checkout). (check this out!!)\
+\'a5 NEW : new task management architecture. Most important operations are accessible in the Activity window.\
+\'a5 Note : Not all operations have moved to this new system yet.\
+\'a5 Added svn export to toolbar.\
+\'a5 Bug fixes :\
+\'a5 No longer crashes when a working window is closed during a refresh.\
+\'a5 Fixed a glitch that made the author name sometimes disappear from the log view.\
+\'a5 Many minor fixes\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 0.7\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Bug fix : you should now be able to use any utf8 char in your commit messages, provided you're using the latest version of subversion binaries.\
+\'a5 You can invoke svnX from TextMate (or any AppleScript-capable editor) and be presented with a window with the different revisions of the edited file. (see the help file from the Help menu).\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 0.6\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Added svn move support to the repository inspector\
+\'a5 Pressing the Alt key while clicking Refresh in the working copy browser now performs a svn status --show-updates.\
+\'a5 Turned "metal" buttons into aqua ones.\
+\'a5 The working copy's root (".") is now shown.\
+\'a5 Added drag & drop support in favorite working copies and favorite repositories windows.\
+\'a5 Fixed crash when working copy is an "aggregate" of externals.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 0.5\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 NEW: Repository inspector.\
+\'a5 Working copy:\
+\'a5 Fixed move, copy and rename.\
+\'a5 Fixed inconsistencies between flat mode and smart mode.\
+\'a5 FileMerge integration.\
+\'a5 Many other bug fixes and improvements.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 0.12\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Changed the behavior of the split view so it can't no longer be out of sync with toggle view mode.\
+\'a5 Double-click in an empty favorite working copies row no longer opens a broken document.\
+\'a5 New Transformer to clean-up the path of the favorite working copy (solves the trailing slash bug).\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 0.11\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 No longer embeds the svn binary inside the package. Uses a path to the user's binaries instead.\
+\'a5 Slight change in the interface.\
+\'a5 Now uses NSAlert to display svn error messages.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl300\ql\qnatural
+
+\f0\b \cf2 0.1\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\sl320\ql\qnatural
+
+\f2\b0 \cf0 \'a5 Initial release.}

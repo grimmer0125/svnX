@@ -11121,7 +11121,7 @@
 				<integer>246</integer>
 			</dict>
 		</dict>
-		<string>svnFileMerge:</string>
+		<string>svnDiff:</string>
 		<dict>
 			<key>$class</key>
 			<dict>
@@ -11506,7 +11506,10 @@
 			</dict>
 		</dict>
 		<string>NSToolTipHelpKey</string>
-		<string>View items as a tree, flat or smart.Tree: supports move, copy &amp; rename of files.Flat: displays all files &amp; their relative paths.Smart: like flat but only changed files.</string>
+		<string>View items as a tree, flat or smart.
+Tree: supports move, copy &amp; rename of files.
+Flat: displays all files &amp; their relative paths.
+Smart: like flat but only changed files.</string>
 		<dict>
 			<key>$class</key>
 			<dict>
@@ -11952,7 +11955,7 @@
 				<integer>250</integer>
 			</dict>
 		</dict>
-		<string>svnFileMerge:</string>
+		<string>svnDiff:</string>
 		<dict>
 			<key>$class</key>
 			<dict>

@@ -1,5 +1,5 @@
 //
-// Controller of the working copy browser
+// MyWorkingCopyController.m - Controller of the working copy browser
 //
 #include "MyWorkingCopyController.h"
 #include "MyWorkingCopy.h"
@@ -11,6 +11,7 @@
 #include "SvnInterface.h"
 #include "CommonUtils.h"
 #include "DbgUtils.h"
+#include "ViewUtils.h"
 
 
 enum {
@@ -228,7 +229,7 @@ makeCommandDict (NSString* command, NSString* destination)
 								[window stringWithSavedFrame],                   keyWidowFrame,
 								[NSNumber numberWithInt: [self currentMode]],    keyViewMode,
 								[NSNumber numberWithInt: [document filterMode]], keyFilterMode,
-								NSBool(showToolbar),  keyShowToolbar,
+								NSBool(showToolbar),                             keyShowToolbar,
 								nil];
 
 	ConstString nameKey = [document windowTitle];
@@ -299,7 +300,7 @@ makeCommandDict (NSString* command, NSString* destination)
 	}
 	else if (ch >= ' ')
 	{
-		NSTableView* const tableView = [[window contentView] viewWithTag: vFlatTable];
+		NSTableView* const tableView = tableResult;
 		NSArray* const dataArray = [svnFilesAC arrangedObjects];
 		const int rows = [dataArray count];
 		int i, selRow = [svnFilesAC selectionIndex];
@@ -387,17 +388,17 @@ makeCommandDict (NSString* command, NSString* destination)
 - (IBAction) openAWorkingCopy: (id) sender
 {
 	#pragma unused(sender)
-    NSOpenPanel *oPanel = [NSOpenPanel openPanel];
-	
-    [oPanel setAllowsMultipleSelection:NO];
-    [oPanel setCanChooseDirectories:YES];
-	[oPanel setCanChooseFiles:NO];
+    NSOpenPanel* oPanel = [NSOpenPanel openPanel];
 
-	[oPanel beginSheetForDirectory:NSHomeDirectory() file:nil types:nil modalForWindow:[self window]
-				modalDelegate: self
-				didEndSelector:@selector(openPanelDidEnd:returnCode:contextInfo:)
-				contextInfo:nil
-		];
+    [oPanel setAllowsMultipleSelection: NO];
+    [oPanel setCanChooseDirectories: YES];
+	[oPanel setCanChooseFiles: NO];
+
+	[oPanel beginSheetForDirectory: NSHomeDirectory() file: nil types: nil
+					modalForWindow: [self window]
+					modalDelegate:  self
+					didEndSelector: @selector(openPanelDidEnd:returnCode:contextInfo:)
+					contextInfo:    NULL];
 }
 
 
@@ -408,7 +409,7 @@ makeCommandDict (NSString* command, NSString* destination)
 	#pragma unused(contextInfo)
 	if (returnCode == NSOKButton)
 	{
-		NSString* pathToFile = [[[sheet filenames] objectAtIndex:0] copy];
+		NSString* pathToFile = [[[sheet filenames] objectAtIndex: 0] copy];
 
 		[document setWorkingCopyPath: pathToFile];
 		[document svnRefresh];
@@ -507,7 +508,7 @@ static NSString* const gVerbs[] = {
 		[self openOutlineView];
 		tag = vTreeTable;
 	}
-	[window makeFirstResponder: [[window contentView] viewWithTag: tag]];
+	[window makeFirstResponder: WGetView(window, tag)];
 }
 
 
@@ -872,8 +873,8 @@ enum {
 	vDateField		=	103,
 	vRecursive		=	104,
 	vIgnoreExts		=	105,
+	vUpdateKind		=	200,
 
-	vRevisionType	=	200,
 	vRevHead		=	201,
 	vRevBase		=	202,
 	vRevCommitted	=	203,
@@ -887,8 +888,7 @@ enum {
 
 - (void) requestSvnUpdate: (BOOL) forSelection
 {
-	NSWindow* const sheet = updateSheet;
-	NSView* const view = [sheet contentView];
+	NSView* const root = [updateSheet contentView];
 	NSString* msg;
 	if (forSelection)
 	{
@@ -900,24 +900,21 @@ enum {
 	}
 	else
 		msg = @"Update entire working copy to:";
-	Assert([view viewWithTag: vUpdateDesc]);
-	[[view viewWithTag: vUpdateDesc] setStringValue: msg];
+	SetViewString(root, vUpdateDesc, msg);
 
 	const SvnRevNum revNum = [[document revision] intValue];
 	// TO_DO
-//	[[view viewWithTag: vNumberStepper] setMaxValue: <repo HEAD revNum>];
+//	[GetView(root, vNumberStepper) setMaxValue: <repo HEAD revNum>];
 	if (!updateInited)
 	{
 		updateInited = TRUE;
-		Assert([view viewWithTag: vNumberField]);
-		[[view viewWithTag: vNumberField] setIntValue: revNum];
-		[[view viewWithTag: vNumberStepper] setIntValue: revNum];
+		SetViewInt(root, vNumberField, revNum);
+		SetViewInt(root, vNumberStepper, revNum);
 
-		Assert([view viewWithTag: vDateField]);
-		[[view viewWithTag: vDateField] setDateValue: [NSDate date]];
+		[GetView(root, vDateField) setDateValue: [NSDate date]];
 	}
 
-	[NSApp beginSheet:     sheet
+	[NSApp beginSheet:     updateSheet
 		   modalForWindow: [self window]
 		   modalDelegate:  self
 		   didEndSelector: @selector(updateSheetDidEnd:returnCode:contextInfo:)
@@ -929,17 +926,12 @@ enum {
 
 - (IBAction) updateRevision: (id) sender
 {
-	NSView* const view = [updateSheet contentView];
-	const int tag = [[sender selectedCell] tag];
+	NSWindow* const aWindow = updateSheet;
+	const int kind = [[sender selectedCell] tag];
 
-	Assert([view viewWithTag: vNumberField]);
-	[[view viewWithTag: vNumberField] setEnabled: (tag == vRevNumber)];
-
-	Assert([view viewWithTag: vNumberStepper]);
-	[[view viewWithTag: vNumberStepper] setEnabled: (tag == vRevNumber)];
-
-	Assert([view viewWithTag: vDateField]);
-	[[view viewWithTag: vDateField] setEnabled: (tag == vRevDate)];
+	WViewEnable(aWindow, vNumberField,   (kind == vRevNumber));
+	WViewEnable(aWindow, vNumberStepper, (kind == vRevNumber));
+	WViewEnable(aWindow, vDateField,     (kind == vRevDate));
 
 	[updateSheet selectNextKeyView: self];
 }
@@ -978,9 +970,8 @@ enum {
 	[sheet orderOut: self];
 	if (returnCode != NSOKButton) return;
 
-	NSView* const view = [sheet contentView];
-	Assert([view viewWithTag: vRevisionType]);	// NSMatrix
-	NSCell* cell = [[view viewWithTag: vRevisionType] selectedCell];
+	NSView* const root = [sheet contentView];
+	NSCell* cell = [GetView(root, vUpdateKind) selectedCell];
 	Assert(cell);
 
 	NSString* revision = nil;
@@ -1004,7 +995,7 @@ enum {
 
 		case vRevNumber:
 		{
-			const SvnRevNum revNum = [[view viewWithTag: vNumberField] intValue];
+			const SvnRevNum revNum = GetViewInt(root, vNumberField);
 			Assert(revNum >= 1 && revNum <= 9999999);
 			revision = SvnRevNumToString(revNum);
 			break;
@@ -1012,7 +1003,7 @@ enum {
 
 		case vRevDate:
 			revision = [NSString stringWithFormat: @"{%@}",
-				[[[[view viewWithTag: vDateField] dateValue] description] substringToIndex: 10]];
+				[[[GetView(root, vDateField) dateValue] description] substringToIndex: 10]];
 			break;
 
 		default:
@@ -1023,9 +1014,9 @@ enum {
 	if (revision != nil)
 	{
 		id arg1 = nil, arg2 = nil;
-		if (![[view viewWithTag: vRecursive] intValue])
+		if (!GetViewInt(root, vRecursive))
 			arg1 = @"--non-recursive";
-		if ([[view viewWithTag: vIgnoreExts] intValue])
+		if (GetViewInt(root, vIgnoreExts))
 			*(arg1 ? &arg2 : &arg1) = @"--ignore-externals";
 
 		[document performSelector: contextInfo ? @selector(svnUpdateSelectedItems:)	// current selection
@@ -1086,7 +1077,7 @@ enum {
 }
 
 
-- (void) svnFileMerge: (id) sender
+- (void) svnDiff: (id) sender
 {
 	#pragma unused(sender)
 	if (AltOrShiftPressed())
@@ -1190,12 +1181,12 @@ enum {
 						stringByAppendingPathComponent: [renamePanelTextField stringValue]]
 			forKey: @"destination"];
 
-	if (returnCode == 1)
+	if (returnCode == NSOKButton)
 	{
 		[self runAlertBeforePerformingAction: action];
 	}
 
-	[action release];																					
+	[action release];
 }
 
 
@@ -1212,8 +1203,8 @@ enum {
 - (void) requestSwitchToRepositoryPath: (NSDictionary*) repositoryPathObj
 {
 //	NSLog(@"%@", repositoryPathObj);
-	NSString *path = [repositoryPathObj valueForKeyPath:@"url.absoluteString"];
-	NSString *revision = [repositoryPathObj valueForKey:@"revision"];
+	NSString* path = [repositoryPathObj valueForKeyPath: @"url.absoluteString"];
+	NSString* revision = [repositoryPathObj valueForKey: @"revision"];
 
 	NSMutableDictionary* action = makeCommandDict(@"switch", path);
 	[action setObject: revision forKey: @"revision"];
@@ -1221,25 +1212,32 @@ enum {
 	[switchPanelSourceTextField setStringValue: PathWithRevision([document repositoryUrl], [document revision])];
 	[switchPanelDestinationTextField setStringValue: PathWithRevision(path, revision)];
 
-	[NSApp beginSheet:switchPanel modalForWindow:[self window] modalDelegate:self
-		   didEndSelector:@selector(switchPanelDidEnd:returnCode:contextInfo:) contextInfo:[action retain]];
+	[NSApp beginSheet:     switchPanel
+		   modalForWindow: [self window]
+		   modalDelegate:  self
+		   didEndSelector: @selector(switchPanelDidEnd:returnCode:contextInfo:)
+		   contextInfo:    [action retain]];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (IBAction) switchPanelValidate: (id) sender
 {
-	[NSApp endSheet:switchPanel returnCode:[sender tag]];
+	[NSApp endSheet: switchPanel returnCode: [sender tag]];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) switchPanelDidEnd: (NSWindow*) sheet
 		 returnCode:        (int)       returnCode
 		 contextInfo:       (void*)     contextInfo
 {
-	[sheet orderOut: nil];
+	[sheet orderOut: self];
 	NSMutableDictionary* action = contextInfo;
 
-	if (returnCode == 1)
+	if (returnCode == NSOKButton)
 	{
 		id objs[10];
 		int count = 0;
@@ -1257,7 +1255,7 @@ enum {
 					   afterDelay: 0.1];
 	}
 
-	[action release];																					
+	[action release];
 }
 
 
@@ -1289,6 +1287,8 @@ enum {
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) svnCommand: (id) action
 {
 	NSString* const command = [action objectForKey: @"command"];
@@ -1317,6 +1317,8 @@ enum {
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) commandPanelDidEnd: (NSAlert*) alert
 		 returnCode:         (int)      returnCode
 		 contextInfo:        (void*)    contextInfo
@@ -1324,7 +1326,7 @@ enum {
 	#pragma unused(alert)
 	id action = contextInfo;
 
-	if (returnCode == 1)
+	if (returnCode == NSOKButton)
 	{
 		[self performSelector: @selector(svnCommand:) withObject: action afterDelay: 0.1];
 	}
@@ -1352,7 +1354,7 @@ enum {
 		 returnCode:        (int)       returnCode
 		 contextInfo:       (void*)     contextInfo
 {
-	if (returnCode == 1)
+	if (returnCode == NSOKButton)
 	{
 #if 1
 		[document svnCommit: [commitPanelText string]];
@@ -1375,11 +1377,11 @@ enum {
 	// close any existing sheet that is not an svnError sheet (workaround a "double sheet" effect
 	// that can occur because svn info and svn status are launched simultaneously)
 	if ( !isDisplayingErrorSheet && [window attachedSheet] != nil )
-		[NSApp endSheet:[window attachedSheet]];
+		[NSApp endSheet: [window attachedSheet]];
 
  	[self stopProgressIndicator];
 	
-	if ( !isDisplayingErrorSheet )
+	if (!isDisplayingErrorSheet)
 	{
 		isDisplayingErrorSheet = YES;
 
@@ -1389,12 +1391,12 @@ enum {
 										   otherButton: nil
 							 informativeTextWithFormat: @"%@", errorString];
 
-		[alert setAlertStyle:NSCriticalAlertStyle];
+		[alert setAlertStyle: NSCriticalAlertStyle];
 
-		[alert	beginSheetModalForWindow:window
-						   modalDelegate:self
-						  didEndSelector:@selector(svnErrorSheetEnded:returnCode:contextInfo:)
-						     contextInfo:nil];
+		[alert	beginSheetModalForWindow: window
+						   modalDelegate: self
+						  didEndSelector: @selector(svnErrorSheetEnded:returnCode:contextInfo:)
+						     contextInfo: nil];
 	}
 }
 

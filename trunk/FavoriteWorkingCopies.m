@@ -128,9 +128,7 @@ static NSString* const kDocType = @"workingCopy";
 		 fullPath:         (NSString*) fullPath
 {
 	NSArray* docs = [[NSDocumentController sharedDocumentController] documents];
-	NSEnumerator* enumerator = [docs objectEnumerator];
-	id obj;
-	while (obj = [enumerator nextObject])
+	for_each(enumerator, obj, docs)
 	{
 		if ([[obj fileType] isEqualToString: kDocType] &&
 			[[obj windowTitle] isEqualToString: name] &&
@@ -244,8 +242,7 @@ static NSString* const kDocType = @"workingCopy";
 
 	// Find among the known working copies one that has a matching path
 	NSEnumerator *e = [[favoriteWorkingCopiesAC arrangedObjects] objectEnumerator];
-	id wc;
-	while ((wcDocument == nil) && (wc = [e nextObject]))
+	for (id wc; (wcDocument == nil) && (wc = [e nextObject]) != nil; )
 	{
 		NSString* const fullPath = [wc valueForKey: @"fullPath"];
 		NSRange r = [aPath rangeOfString: fullPath options: NSLiteralSearch | NSAnchoredSearch];
@@ -255,11 +252,8 @@ static NSString* const kDocType = @"workingCopy";
 			bestMatchWc = wc;
 			bestMatchScore = r.length;
 
-			NSEnumerator* openDocumentsEnumerator = [documents objectEnumerator];
-			id anOpenDocument;
-
 			// if the working copy is currently open in svnx we stop there and use it
-			while ( anOpenDocument = [openDocumentsEnumerator nextObject] )
+			for_each(enumerator, anOpenDocument, documents)
 			{
 				if ([[anOpenDocument fileType] isEqualToString: kDocType] &&
 					[[anOpenDocument workingCopyPath] isEqualToString: fullPath])
@@ -343,9 +337,7 @@ static NSString* const kDocType = @"workingCopy";
 	// create new array of selected rows for remote drop
     // could do deferred provision, but keep it direct for clarity
 	NSMutableArray *rowCopies = [NSMutableArray arrayWithCapacity:[rows count]];    
-	NSEnumerator *rowEnumerator = [rows objectEnumerator];
-	NSNumber *idx;
-	while (idx = [rowEnumerator nextObject])
+	for_each(enumerator, idx, rows)
 	{
 		[rowCopies addObject:[[favoriteWorkingCopiesAC arrangedObjects] objectAtIndex:[idx intValue]]];
 	}

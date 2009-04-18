@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------------------
 //	ViewUtils.h - NSView & NSWindow utilities
 //
-//	Copyright © Chris, 2008.  All rights reserved.
+//	Copyright © Chris, 2008 - 2009.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #pragma once
@@ -51,6 +51,39 @@
 
 
 //----------------------------------------------------------------------------------------
+
+id			GetView					(NSView* rootView, int tag);
+int			GetViewInt				(NSView* rootView, int tag);
+void		SetViewInt				(NSView* rootView, int tag, int value);
+
+NSString*	GetViewString			(NSView* rootView, int tag);
+void		SetViewString			(NSView* rootView, int tag, NSString* value);
+void		ViewShow				(NSView* rootView, int tag, bool isVisible);
+void		ViewEnable				(NSView* rootView, int tag, bool isEnabled);
+
+id			WGetView				(NSWindow* window, int tag);
+int			WGetViewInt				(NSWindow* window, int tag);
+void		WSetViewInt				(NSWindow* window, int tag, int value);
+NSString*	WGetViewString			(NSWindow* window, int tag);
+void		WSetViewString			(NSWindow* window, int tag, NSString* value);
+void		WViewEnable				(NSWindow* window, int tag, bool isEnabled);
+void		WViewShow				(NSWindow* window, int tag, bool isVisible);
+static inline
+void		WHideView				(NSWindow* window, int tag)
+										{ return WViewShow(window, tag, FALSE); }
+static inline
+void		WShowView				(NSWindow* window, int tag)
+										{ return WViewShow(window, tag, TRUE); }
+int			TagOfSelectedItem		(NSPopUpButton* view);
+static inline
+int			CurrentTag				(NSPopUpButton* view)
+										{ return TagOfSelectedItem(view); }
+static inline
+int			SelectedTag				(NSMatrix* view)
+										{ return [[view selectedCell] tag]; }
+
+bool		IsInResponderChain		(NSWindow* window, NSResponder* obj);
+bool		IsViewInResponderChain	(NSView* obj);
 
 NSPoint		locationInView			(NSEvent* event, NSView* destView);
 

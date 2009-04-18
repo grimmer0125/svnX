@@ -67,7 +67,7 @@
 		  help:       @"Refresh the display.\n"
 					   "Alt-click to also show repository updates."];
 
-	[self createItem: @"svnFileMerge" label: @"Diff" image: @"FileMerge"
+	[self createItem: @"svnDiff" label: @"Diff" image: @"FileMerge"
 		  help:       @"Compare selected files with its base revision.\n"
 					   "Alt-click to compare other revisions."];
 
@@ -116,7 +116,7 @@
 				@"View",
 				NSToolbarSeparatorItemIdentifier,
 				@"revealInFinder",
-				@"svnFileMerge",
+				@"svnDiff",
 				NSToolbarFlexibleSpaceItemIdentifier,
 				@"Search",
 				NSToolbarSeparatorItemIdentifier,
@@ -137,7 +137,7 @@
 				@"Working Copy Path",
 				@"Search",
 				@"revealInFinder",
-				@"svnFileMerge",
+				@"svnDiff",
 				@"svnUpdate",
 				@"openRepository",
 				@"refresh",

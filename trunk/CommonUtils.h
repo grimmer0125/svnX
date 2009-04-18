@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------------------
 //	CommonUtils.h - Common Cocoa utilities & definitions
 //
-//	Copyright © Chris, 2003 - 2008.  All rights reserved.
+//	Copyright © Chris, 2003 - 2009.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #pragma once
@@ -12,6 +12,9 @@
 #define	for_each1(en, it)			for (id it; (it = [en nextObject]) != nil; )
 #define	for_each_(en, it, coll)		en = [(coll) objectEnumerator]; for_each1(en, it)
 #define	for_each(en, it, coll)		NSEnumerator* for_each_(en, it, coll)
+
+static inline UInt64 microseconds()
+	{ UnsignedWide t; Microseconds(&t); return *(UInt64*) &t; }
 
 
 //----------------------------------------------------------------------------------------
@@ -35,7 +38,6 @@ int				GetPreferenceInt		(NSString* prefKey);
 void			SetPreference			(NSString* prefKey, id prefValue);
 
 NSInvocation*	MakeCallbackInvocation	(id target, SEL selector);
-
 bool			AltOrShiftPressed		();
 
 

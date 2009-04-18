@@ -34,18 +34,14 @@
 - (NSString*) currentRevision;
 - (void) setCurrentRevision: (NSString*) aCurrentRevision;
 
-- (NSString*) path; // Sets the path to get the log from. If set, url and revision won't be used.
+// Sets the path to get the log from. If set, url and revision won't be used.
 - (void) setPath: (NSString*) aPath;
 
 - (NSMutableArray*) logArray;
 - (void) setLogArray: (NSMutableArray*) aLogArray;
 
-- (int) mostRecentRevision;
-- (void) setMostRecentRevision: (int) aMostRecentRevision;
-
 - (BOOL) advanced;
 - (void) setAdvanced: (BOOL) isAdvanced;
 
-- (NSString*) getCachePath;
-
 @end
+

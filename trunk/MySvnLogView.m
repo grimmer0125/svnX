@@ -63,6 +63,18 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 #pragma mark -
 //----------------------------------------------------------------------------------------
 
+@interface MySvnLogView (Private)
+
+	- (NSString*) path;
+	- (int) mostRecentRevision;
+	- (void) setMostRecentRevision: (int) aMostRecentRevision;
+	- (NSString*) getCachePath;
+
+@end
+
+
+//----------------------------------------------------------------------------------------
+
 @implementation MySvnLogView
 
 - (id) initWithFrame: (NSRect) frameRect
@@ -75,8 +87,8 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 
 		if ([NSBundle loadNibNamed: @"MySvnLogView2" owner: self])
 		{
-			[_view setFrame: [self bounds]];
-			[self addSubview: _view];
+			[fView setFrame: [self bounds]];
+			[self addSubview: fView];
 
 		//  [self addObserver:self forKeyPath:@"currentRevision"
 		//			options:(NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld) context:nil];
@@ -104,7 +116,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 - (void) unload
 {
 	// the nib is responsible for releasing its top-level objects
-//	[_view release];	// this is done by super
+//	[fView release];	// this is done by super
 	[logsAC release];
 	[logsACSelection release];
 
@@ -141,16 +153,19 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 
 - (void) resetUrl: (NSURL*) anUrl
 {
-	[self setUrl:anUrl];
-	[self setMostRecentRevision:0];
-	[self setLogArray:nil];
+	[self setUrl: anUrl];
+	[self setMostRecentRevision: 0];
+	[self setLogArray: nil];
 }
 
 
 //----------------------------------------------------------------------------------------
+#pragma mark	-
+//----------------------------------------------------------------------------------------
 
 - (IBAction) copy: (id) sender
 {
+	#pragma unused(sender)
 	NSString* str = nil;
 	id view = [[self window] firstResponder];
 	if (view == logTable)
@@ -181,10 +196,10 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 	if ([[self window] firstResponder] == logTable &&
 		[[theEvent characters] characterAtIndex: 0] == ' ')
 	{
-		NSString* rev = [self selectedRevision];
-		if (rev)
+		NSString* revision = [self selectedRevision];
+		if (revision)
 		{
-			[self setCurrentRevision: rev];
+			[self setCurrentRevision: revision];
 			[logTable setNeedsDisplay: YES];
 		}
 	}
@@ -237,6 +252,8 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) fetchSvnLog
 {
 	[self fetchSvn];
@@ -260,7 +277,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 - (void) fetchSvnLogForUrl
 {
 	NSDictionary* cacheDict = nil;
-	BOOL useCache = [GetPreference(@"cacheSvnQueries") boolValue];
+	BOOL useCache = GetPreferenceBool(@"cacheSvnQueries");
 
 	NSData* cacheData;
 	if (useCache && (cacheData = [NSData dataWithContentsOfFile: [self getCachePath]]))
@@ -289,6 +306,8 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 	[self doSvnLog: [self path] pegRevision: nil];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) fetchSvnReceiveDataFinished: (id) taskObj
 {

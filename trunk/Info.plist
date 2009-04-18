@@ -60,7 +60,7 @@
 	<key>CFBundleSignature</key>
 	<string>svnX</string>
 	<key>CFBundleVersion</key>
-	<string>1.0</string>
+	<string>1.1b0</string>
 	<key>NSAppleScriptEnabled</key>
 	<string>YES</string>
 	<key>NSMainNibFile</key>
@@ -69,5 +69,12 @@
 	<string>NSApplication</string>
 	<key>SUFeedURL</key>
 	<string>http://www.lachoseinteractive.net/en/community/subversion/svnx/history/rss/</string>
+	<key>CFBundleName</key>
+	<string>svnX</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.1</string>
+	<key>CFBundleGetInfoString</key>
+	<string>1.1b0, © 2004-2008 La Chose
+© 2008-2009 Chris</string>
 </dict>
 </plist>

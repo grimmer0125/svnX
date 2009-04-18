@@ -1,3 +1,7 @@
+//
+// MyRepository.m - Manages the repository inspector interface
+//
+
 #import "MyRepository.h"
 #import "MySvn.h"
 #import "Tasks.h"
@@ -39,10 +43,21 @@ TrimSlashes (id obj)
 
 @interface MyRepository (Private)
 
+	- (BOOL) svnErrorIf: (id) taskObj;
+	- (void) svnError: (NSString*) errorString;
+
 	- (void) displayUrlTextView;
 
 	- (void) updateLog;
 	- (void) fetchSvnInfo: (SEL) selector;
+	- (void) fetchSvnInfo;
+	- (void) fetchSvnInfoReceiveDataFinished: (NSString*) result;
+	- (NSArray*) userValidatedFiles: (NSArray*) files
+				 forDestination:     (NSURL*)   destinationURL;
+
+	- (void) setRevision:         (NSString*) aRevision;
+	- (void) setUrl:              (NSURL*)    anUrl;
+	- (void) setDisplayedTaskObj: (NSMutableDictionary*) aDisplayedTaskObj;
 
 @end
 
@@ -73,10 +88,10 @@ TrimSlashes (id obj)
 	[svnBrowserView unload];
 
 	[self setUrl: nil];
- 	[rootUrl release];
+ 	[fRootURL release];
 	[self setRevision: nil];
 	[windowTitle release];
- 	[user release];
+	[user release];
 	[pass release];
 
 	[self setDisplayedTaskObj: nil];
@@ -109,7 +124,10 @@ TrimSlashes (id obj)
 - (void) showWindows
 {
 	[super showWindows];
-	[[self window] setTitle: [NSString stringWithFormat: @"Repository: %@", windowTitle]];
+	const BOOL showURL = GetPreferenceBool(@"repURLInWindowTitle");
+	[[self window] setTitle: [NSString stringWithFormat: (showURL ? @"Repository: %@ - %@"
+																  : @"Repository: %@"),
+														 windowTitle, fRootURL]];
 }
 
 
@@ -150,17 +168,17 @@ TrimSlashes (id obj)
 	[svnLogView addObserver:self forKeyPath:@"currentRevision" options:NSKeyValueChangeSetting context:nil];
 
 	[svnBrowserView setSvnOptionsInvocation: [self makeSvnOptionInvocation]];
-	[svnBrowserView setUrl: url];
+	[svnBrowserView setUrl: fURL];
 
 	[svnLogView setIsFetching: TRUE];
 	[svnLogView setSvnOptionsInvocation: [self makeSvnOptionInvocation]];
-	[svnLogView setUrl: url];
-//	[svnLogView setSvnOptions: [self makeSvnOptionInvocation] url: url currentRevision: [self revision]];
-//	[svnLogView setupUrl: url options: [self makeSvnOptionInvocation] currentRevision: [self revision]];
+	[svnLogView setUrl: fURL];
+//	[svnLogView setSvnOptions: [self makeSvnOptionInvocation] url: fURL currentRevision: [self revision]];
+//	[svnLogView setupUrl: fURL options: [self makeSvnOptionInvocation] currentRevision: [self revision]];
 
 	// display the known url as raw text while svn info is fetching data
 	[urlTextView setBackgroundColor: [NSColor windowBackgroundColor]];
-	[urlTextView setString: [url absoluteString]];
+	[urlTextView setString: [fURL absoluteString]];
 
 	[drawerLogView setDocument: self];
 	[drawerLogView setUp];
@@ -203,6 +221,8 @@ TrimSlashes (id obj)
 	windowTitle = [title retain];
  	user = [username retain];
 	pass = [password retain];
+	Assert(fRootURL == nil);
+	fRootURL = [repoURL retain];
 	[self setUrl: repoURL];
 }
 
@@ -226,69 +246,44 @@ TrimSlashes (id obj)
 
 //----------------------------------------------------------------------------------------
 #pragma mark	-
-#pragma mark	Repository URL
-//----------------------------------------------------------------------------------------
-
-- (void) browsePath: (NSString*) relativePath
-		 revision:   (NSString*) pegRevision
-{
-	NSString* newURL = [[rootUrl absoluteString] stringByAppendingString: relativePath];
-	[self changeRepositoryUrl: [NSURL URLWithString: newURL]];
-	[self setRevision: pegRevision];
-}
-
-
-//----------------------------------------------------------------------------------------
-
-- (void) openLogPath: (NSDictionary*) pathInfo
-		 revision:    (NSString*)     pegRevision
-{
-#if 0
-	[self browsePath: [pathInfo objectForKey: @"path"] revision: pegRevision];
-#endif
-}
-
-
-//----------------------------------------------------------------------------------------
-
-- (void) changeRepositoryUrl: (NSURL*) anUrl
-{
-	[self setUrl: anUrl];
-	[svnBrowserView setUrl: url];
-	[svnLogView resetUrl: url];
-	[self displayUrlTextView];
-	[svnLogView fetchSvnLog];
-	[svnBrowserView fetchSvn];
-}
-
-
-//----------------------------------------------------------------------------------------
-#pragma mark	-
 #pragma mark	clickable url
 //----------------------------------------------------------------------------------------
 
 - (void) displayUrlTextView
 {
-	const int rootLength = [UnEscapeURL(rootUrl) length];
-	NSString* tmpString = UnEscapeURL(url);
+	const int rootLength = [UnEscapeURL(fRootURL) length];
+	NSString* tmpString = UnEscapeURL(fURL);
 	const id layout = [urlTextView layoutManager];
 
-	[urlTextView setString:@""]; // workaround to clean-up the style for sure
-	[urlTextView setString:tmpString];
-	[[urlTextView textStorage] setFont:[NSFont boldSystemFontOfSize:11]];
+	[urlTextView setString: @""];	// workaround to clean-up the style for sure
+	[urlTextView setString: tmpString];
+	[urlTextView setFont: [NSFont systemFontOfSize: 11]];
+	[urlTextView setFont: [NSFont boldSystemFontOfSize: 11] range: NSMakeRange(0, rootLength)];
 	[layout addTemporaryAttributes:
 						[NSDictionary dictionaryWithObject: [NSNumber numberWithInt: NSUnderlineStyleNone]
 													forKey: NSUnderlineStyleAttributeName]
 			forCharacterRange: NSMakeRange(0, [tmpString length])];
 
+	NSMutableDictionary* linkAttributes =
+		[NSMutableDictionary dictionaryWithObjectsAndKeys:
+			[NSNumber numberWithFloat: -0.5],					NSKernAttributeName,
+			[NSColor blackColor],								NSForegroundColorAttributeName,
+			[NSNumber numberWithInt: NSUnderlineStyleThick],	NSUnderlineStyleAttributeName,
+			[NSCursor pointingHandCursor],						NSCursorAttributeName,
+			[NSColor blueColor],								NSUnderlineColorAttributeName,
+			nil];
+
 	// Make a link on each part of the url. Stop at the root of the repository.
-	while ( TRUE )
+	while (TRUE)
 	{
 		NSString* tmp = [[tmpString stringByDeletingLastComponent] stringByAppendingString: @"/"];
 		const int tmpLength = [tmp length];
-		NSRange range = NSMakeRange(tmpLength, [tmpString length] - tmpLength - 1);
+		int oldLength = [tmpString length] - 1;
+		if ([tmpString characterAtIndex: oldLength] != '/')
+			++oldLength;
+		NSRange range = { tmpLength, oldLength - tmpLength };
 
-		if ( tmpLength < rootLength )
+		if (tmpLength < rootLength)
 		{
 			int l = range.location;
 			range.location = 0;
@@ -296,18 +291,12 @@ TrimSlashes (id obj)
 		}
 
 		NSString* urlString = EscapeURL(tmpString);
-		NSMutableDictionary* linkAttributes =
-				[NSMutableDictionary dictionaryWithObject: urlString forKey: NSLinkAttributeName];
-		[linkAttributes setObject: [NSColor blackColor] forKey: NSForegroundColorAttributeName];
-		[linkAttributes setObject: [NSNumber numberWithInt: NSUnderlineStyleThick]
-						forKey:    NSUnderlineStyleAttributeName];
-		[linkAttributes setObject: [NSCursor pointingHandCursor] forKey: NSCursorAttributeName];
-		[linkAttributes setObject: [NSColor blueColor] forKey: NSUnderlineColorAttributeName];
-
-		[[urlTextView textStorage] addAttributes: linkAttributes range: range]; // required to set the link
+		[linkAttributes setObject: urlString forKey: NSToolTipAttributeName];
+		[linkAttributes setObject: urlString forKey: NSLinkAttributeName];
+		[[urlTextView textStorage] addAttributes: linkAttributes range: range];   // required to set the link
 		[layout addTemporaryAttributes: linkAttributes forCharacterRange: range]; // required to turn it to black
 
-		if ( tmpLength < rootLength ) break;
+		if (tmpLength < rootLength) break;
 
 		tmpString = tmp;
 	}
@@ -343,7 +332,7 @@ TrimSlashes (id obj)
 - (NSString*) pathAtCurrentRevision: (id) obj
 {
 	// <path>@<revision>
-	return [NSString stringWithFormat: @"%@@%@", TrimSlashes(obj), revision];
+	return [NSString stringWithFormat: @"%@@%@", TrimSlashes(obj), fRevision];
 }
 
 
@@ -372,6 +361,45 @@ TrimSlashes (id obj)
 - (void) updateLog_InfoCompleted: (id) taskObj
 {
 	[self fetchSvnLog];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	Repository URL
+//----------------------------------------------------------------------------------------
+
+- (void) browsePath: (NSString*) relativePath
+		 revision:   (NSString*) pegRevision
+{
+	NSString* newURL = [[fRootURL absoluteString] stringByAppendingString: relativePath];
+	[self changeRepositoryUrl: [NSURL URLWithString: newURL]];
+	[self setRevision: pegRevision];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Set browse URL from a path in a log entry
+
+- (void) openLogPath: (NSDictionary*) pathInfo
+		 revision:    (NSString*)     pegRevision
+{
+#if 0
+	[self browsePath: [pathInfo objectForKey: @"path"] revision: pegRevision];
+#endif
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) changeRepositoryUrl: (NSURL*) anUrl
+{
+	[self setUrl: anUrl];
+	[svnBrowserView setUrl: fURL];
+	[svnLogView resetUrl: fURL];
+	[self displayUrlTextView];
+	[svnLogView fetchSvnLog];
+	[svnBrowserView fetchSvn];
 }
 
 
@@ -409,7 +437,7 @@ svnInfoReceiver (void*       baton,
 
 
 //----------------------------------------------------------------------------------------
-// svn info of <url> via SvnInterface (called by separate thread)
+// svn info of <fRootURL> via SvnInterface (called by separate thread)
 
 - (void) svnDoInfo: (Message*) completedMsg
 {
@@ -421,7 +449,7 @@ svnInfoReceiver (void*       baton,
 		SvnClient ctx = SvnSetupClient(&fSvnEnv, self);
 
 		char path[PATH_MAX * 2];
-		if (ToUTF8([url absoluteString], path, sizeof(path)))
+		if (ToUTF8([fRootURL absoluteString], path, sizeof(path)))
 		{
 			int len = strlen(path);
 			if (len > 0 && path[len - 1] == '/')
@@ -436,10 +464,11 @@ svnInfoReceiver (void*       baton,
 									   svnInfoReceiver, &env, !kSvnRecurse,
 									   ctx, pool));
 
-			[rootUrl release];
-			rootUrl = (NSURL*) CFURLCreateWithBytes(kCFAllocatorDefault,
-													(const UInt8*) env.fURL, strlen(env.fURL),
-													kCFStringEncodingUTF8, NULL);
+			[fRootURL release];
+			fRootURL = (NSURL*) CFURLCreateWithBytes(kCFAllocatorDefault,
+													 (const UInt8*) env.fURL, strlen(env.fURL),
+													 kCFStringEncodingUTF8, NULL);
+			fHeadRevision = env.fRevision;
 			[completedMsg sendToOnMainThread: self];
 			[self performSelectorOnMainThread: @selector(displayUrlTextView) withObject: nil waitUntilDone: NO];
 		}
@@ -463,12 +492,12 @@ svnInfoReceiver (void*       baton,
 
 - (void) fetchSvnInfo: (SEL) completedMsg
 {
-	if (GetPreferenceBool(@"useOldParsingMethod") || !SvnInitialize())
+	if (!SvnWantAndHave())
 	{
 		if (completedMsg == nil)
 			completedMsg = @selector(svnInfoCompletedCallback:);
 		[MySvn    genericCommand: @"info"
-					   arguments: [NSArray arrayWithObject: [url absoluteString]]
+					   arguments: [NSArray arrayWithObject: [fURL absoluteString]]
 				  generalOptions: [self svnOptionsInvocation]
 						 options: nil
 						callback: MakeCallbackInvocation(self, completedMsg)
@@ -521,8 +550,8 @@ svnInfoReceiver (void*       baton,
 			if ([line length] > 16 &&
 				[[line substringWithRange:NSMakeRange(0, 17)] isEqualToString:@"Repository Root: "])
 			{
-				[rootUrl release];
-				rootUrl = [[NSURL URLWithString: [line substringFromIndex: 17]] retain];
+				[fRootURL release];
+				fRootURL = [[NSURL URLWithString: [line substringFromIndex: 17]] retain];
 				[self displayUrlTextView];
 				break;
 			}
@@ -560,7 +589,7 @@ svnInfoReceiver (void*       baton,
 	}
 	else
 	{
-		[MySvnOperationController runSheet: kSvnCopy repository: self url: url sourceItem: selection];
+		[MySvnOperationController runSheet: kSvnCopy repository: self url: fURL sourceItem: selection];
 	}
 }
 
@@ -579,7 +608,7 @@ svnInfoReceiver (void*       baton,
 	}
 	else
 	{
-		[MySvnOperationController runSheet: kSvnMove repository: self url: url sourceItem: selection];
+		[MySvnOperationController runSheet: kSvnMove repository: self url: fURL sourceItem: selection];
 	}
 }
 
@@ -587,16 +616,14 @@ svnInfoReceiver (void*       baton,
 - (IBAction) svnMkdir: (id) sender
 {
 	#pragma unused(sender)
-	[MySvnOperationController runSheet: kSvnMkdir repository: self url: url
-							  sourceItem: nil];
+	[MySvnOperationController runSheet: kSvnMkdir repository: self url: fURL sourceItem: nil];
 }
 
 
 - (IBAction) svnDelete: (id) sender
 {
 	#pragma unused(sender)
-	[MySvnOperationController runSheet: kSvnDelete repository: self url: url
-							  sourceItem: nil];
+	[MySvnOperationController runSheet: kSvnDelete repository: self url: fURL sourceItem: nil];
 }
 
 
@@ -624,12 +651,10 @@ svnInfoReceiver (void*       baton,
 	NSArray* const selectedObjects = [svnBrowserView selectedItems];
 //	NSLog(@"svnBlame: %@", selectedObjects);
 	NSMutableArray* files = [NSMutableArray array];
-	NSEnumerator* enumerator = [selectedObjects objectEnumerator];
-	id item;
-	while (item = [enumerator nextObject])
+	for_each(enumerator, item, selectedObjects)
 	{
 		if (![[item valueForKey: @"isDir"] boolValue])
-			[files addObject: PathPegRevision([item valueForKey: @"url"], revision)];
+			[files addObject: PathPegRevision([item valueForKey: @"url"], fRevision)];
 	}
 
 	if ([files count] == 0)
@@ -639,7 +664,7 @@ svnInfoReceiver (void*       baton,
 	else
 	{
 		[MySvn blame:          files
-			   revision:       revision
+			   revision:       fRevision
 			   generalOptions: [self svnOptionsInvocation]
 			   options:        [NSArray arrayWithObjects: AltOrShiftPressed() ? @"--verbose" : @"", nil]
 			   callback:       MakeCallbackInvocation(self, @selector(svnErrorIf:))
@@ -743,7 +768,7 @@ svnInfoReceiver (void*       baton,
 			[MySvn    checkout: [self pathAtCurrentRevision: (id) contextInfo]
 				   destination: destinationPath
 				generalOptions: [self svnOptionsInvocation]
-					   options: [NSArray arrayWithObjects: @"-r", revision, nil]
+					   options: [NSArray arrayWithObjects: @"-r", fRevision, nil]
 					  callback: [self makeCallbackInvocationOfKind:SVNXCallbackExtractedToFileSystem]
 				  callbackInfo: destinationPath
 					  taskInfo: [self documentNameDict]]];
@@ -770,9 +795,7 @@ svnInfoReceiver (void*       baton,
 	// We use a single shell script to do all because we want to
 	// handle it as a single task (that will be easier to terminate)
 
-	NSEnumerator *e = [validatedFiles objectEnumerator];
-	NSDictionary *item;
-	while ( item = [e nextObject] )
+	for_each(enumerator, item, validatedFiles)
 	{
 		NSString *destinationPath = [destPath stringByAppendingPathComponent:[item valueForKey:@"name"]];
 		NSString *sourcePath = [self pathAtCurrentRevision: item];
@@ -787,7 +810,7 @@ svnInfoReceiver (void*       baton,
 	[self setDisplayedTaskObj:
 		[MySvn	extractItems: shellScriptArguments
 			  generalOptions: [self svnOptionsInvocation]
-					 options: [NSArray arrayWithObjects: @"-r", revision, nil]
+					 options: [NSArray arrayWithObjects: @"-r", fRevision, nil]
 					callback: [self makeCallbackInvocationOfKind:SVNXCallbackExtractedToFileSystem]
 				callbackInfo: destPath
 					taskInfo: [self documentNameDict]]
@@ -808,7 +831,7 @@ svnInfoReceiver (void*       baton,
 		[MySvn    checkout: [self pathAtCurrentRevision: item]
 			   destination: destinationPath
 			generalOptions: [self svnOptionsInvocation]
-				   options: [NSArray arrayWithObjects: @"-r", revision, nil]
+				   options: [NSArray arrayWithObjects: @"-r", fRevision, nil]
 				  callback: [self makeCallbackInvocationOfKind:SVNXCallbackExtractedToFileSystem]
 			  callbackInfo: destinationPath
 				  taskInfo: [self documentNameDict]]
@@ -885,7 +908,7 @@ svnInfoReceiver (void*       baton,
 			[alert release];
 		}
 	}
-	
+
 	if (isCheckout)		// => checkout
 	{
 		[self checkoutFiles: validatedFiles toDestination: destinationURL];
@@ -979,7 +1002,7 @@ svnInfoReceiver (void*       baton,
 			[MySvn		  copy: sourceUrl
 				   destination: targetUrl
 				generalOptions: [self svnOptionsInvocation]
-					   options: [NSArray arrayWithObjects: @"-r", revision, @"-m", commitMessage, nil]
+					   options: [NSArray arrayWithObjects: @"-r", fRevision, @"-m", commitMessage, nil]
 					  callback: [self makeCallbackInvocationOfKind:SVNXCallbackCopy]
 				  callbackInfo: nil
 					  taskInfo: [self documentNameDict]];
@@ -1024,22 +1047,25 @@ svnInfoReceiver (void*       baton,
 
 - (void) svnCommandComplete: (id) taskObj
 {
-	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
+	if ([[taskObj valueForKey: @"status"] isEqualToString: @"completed"])
 	{
 		[svnLogView fetchSvnLog];
 	} 
-	
+
 	[self svnErrorIf: taskObj];
 }
 
 
-- (void) svnErrorIf: (id) taskObj
+- (BOOL) svnErrorIf: (id) taskObj
 {
 	id stdString = [taskObj valueForKey: @"stderr"];
 	if ([stdString length] > 0)
 	{
 		[self svnError: stdString];
+		return TRUE;
 	}
+
+	return FALSE;
 }
 
 
@@ -1070,13 +1096,10 @@ svnInfoReceiver (void*       baton,
 - (NSArray*) userValidatedFiles: (NSArray*) files
 			 forDestination:     (NSURL*)   destinationURL
 {
-	NSEnumerator *en = [files objectEnumerator];
-	id item;
 	NSMutableArray *validatedFiles = [NSMutableArray array];
-
 	BOOL yesToAll = NO;
 
-	while ( item = [en nextObject] )
+	for_each(enumerator, item, files)
 	{
 		if ( yesToAll )
 		{
@@ -1225,24 +1248,27 @@ svnInfoReceiver (void*       baton,
 
 
 // - url:
-- (NSURL*) url { return url; }
+- (NSURL*) url { return fURL; }
 
 - (void) setUrl: (NSURL*) anUrl
 {
-	id old = url;
-	url = [anUrl retain];
+	id old = fURL;
+	fURL = [anUrl retain];
 	[old release];
 }
 
 
 // - revision:
-- (NSString*) revision { return revision; }
+- (NSString*) revision { return fRevision; }
 
 - (void) setRevision: (NSString*) aRevision
 {
-	id old = revision;
-	revision = [aRevision retain];
-	[old release];
+	if (aRevision != fRevision)
+	{
+		id old = fRevision;
+		fRevision = [aRevision retain];
+		[old release];
+	}
 }
 
 
@@ -1259,6 +1285,18 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
+
+- (NSString*) browsePath
+{
+	NSDictionary* selection = [self selectedItemOrNil];
+
+	return [(selection ? [selection valueForKey: @"url"] : fURL) absoluteString];
+}
+
+
+//----------------------------------------------------------------------------------------
+
 - (SvnClient) svnClient
 {
 	return SvnSetupClient(&fSvnEnv, self);
@@ -1267,3 +1305,5 @@ svnInfoReceiver (void*       baton,
 
 @end
 
+//----------------------------------------------------------------------------------------
+// End of MyRepository.m

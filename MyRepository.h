@@ -1,13 +1,13 @@
 /* Manages the repository inspector interface */
 
 #import <Cocoa/Cocoa.h>
-#import "MySVN.h";
 
 @class MySvnLogView, MySvnRepositoryBrowserView, DrawerLogView;
 
 /* Manages the repository inspector. */
 @interface MyRepository : NSDocument
 {
+@protected
 	IBOutlet MySvnLogView*					svnLogView;
 	IBOutlet MySvnRepositoryBrowserView*	svnBrowserView;
 
@@ -19,15 +19,16 @@
 	IBOutlet NSTextField*					fileNameTextField;
 	IBOutlet NSPanel*						importCommitPanel;
 
-	BOOL operationInProgress;
+	BOOL									operationInProgress;
 
-	NSURL *url;
-	NSURL *rootUrl;
-	NSString *revision;
-	NSString *user;
-	NSString *pass;
-	NSString *windowTitle;
-	
+	NSURL*									fRootURL;		// repository URL
+	NSURL*									fURL;			// current URL
+	NSString*								fRevision;		// current revision
+	NSString*								user;
+	NSString*								pass;
+	NSString*								windowTitle;
+
+	unsigned int							fHeadRevision;	// repository head revision
 	NSMutableDictionary*					displayedTaskObj;
 	struct SvnEnv*							fSvnEnv;		// The svn client environment
 }
@@ -49,27 +50,18 @@
 		 password:   (NSString*) password
 		 url:        (NSURL*)    repoURL;
 
-- (void) setDisplayedTaskObj: (NSMutableDictionary*) aDisplayedTaskObj;
-
+- (void) browsePath: (NSString*) relativePath
+		 revision:   (NSString*) pegRevision;
 - (void) openLogPath: (NSDictionary*) pathInfo
 		 revision:    (NSString*)     pegRevision;
 - (void) changeRepositoryUrl: (NSURL*) anUrl;
 
 - (NSString*) revision;
-- (void) setRevision: (NSString*) aRevision;
-
 - (NSString*) windowTitle;
+- (NSURL*)    url;
+- (NSString*) browsePath;
 - (struct svn_client_ctx_t*) svnClient;
 
-- (NSURL*) url;
-- (void) setUrl: (NSURL*) anUrl;
-
-- (void) fetchSvnInfo;
-- (void) fetchSvnInfoReceiveDataFinished: (NSString*) result;
-
-- (void) svnErrorIf: (id) taskObj;
-- (void) svnError: (NSString*) errorString;
-- (NSArray*) userValidatedFiles: (NSArray*) files forDestination: (NSURL*) destinationURL;
 - (void) dragOutFilesFromRepository: (NSArray*) filesDicts toURL: (NSURL*) destinationURL;
 - (void) dragExternalFiles: (NSArray*) files ToRepositoryAt: (NSDictionary*) representedObject;
 

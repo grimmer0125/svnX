@@ -133,6 +133,7 @@ SvnInitialize ()
 						{ "svn_client", svn_client_version },
 						{ "svn_fs",     svn_fs_version     },
 						{ "svn_subr",   svn_subr_version   },
+					//	{ "svn_wc",     svn_wc_version     },
 						{ NULL, NULL }
 					};
 
@@ -155,6 +156,27 @@ SvnInitialize ()
 	}
 
 	return exists;
+}
+
+
+//----------------------------------------------------------------------------------------
+// Returns TRUE if the Subversion lib is wanted & was initialized successfully.
+
+BOOL
+SvnWantAndHave ()
+{
+	NSString* const kDontWantSvnLib = @"useOldParsingMethod";
+	if (GetPreferenceBool(kDontWantSvnLib))
+		return FALSE;		// Don't want svn lib
+
+	BOOL haveLib = SvnInitialize();
+
+	if (!haveLib)			// Can't have svn lib (so don't want it)
+	{
+		SetPreference(kDontWantSvnLib, kNSTrue);
+	}
+
+	return haveLib;
 }
 
 

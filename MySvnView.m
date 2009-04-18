@@ -1,7 +1,12 @@
+//
+// MySvnView.m - Superclass of MySvnLogView & MySvnRepositoryBrowserView
+//
+
 #import "MySvnView.h"
 #import "MyRepository.h"
 #import "Tasks.h"
 #include "CommonUtils.h"
+#include "DbgUtils.h"
 
 
 @implementation MySvnView
@@ -38,7 +43,7 @@
 //	[self setUrl: nil]; 
 //	[self setRevision: nil]; 
 
-	[_view release];	// the nib is responsible for releasing its top-level objects
+	[fView release];	// the nib is responsible for releasing its top-level objects
 
 	// these objects are bound to the file owner and retain it
 	// we need to unbind them 
@@ -145,34 +150,34 @@
 #pragma mark	-
 #pragma mark	Accessors
 
-- (NSInvocation*) svnOptionsInvocation { return svnOptionsInvocation; }
+- (NSInvocation*) svnOptionsInvocation { return fOptionsInvocation; }
 
 - (void) setSvnOptionsInvocation: (NSInvocation*) aSvnOptionsInvocation
 {
-	id old = svnOptionsInvocation;
-	svnOptionsInvocation = [aSvnOptionsInvocation retain];
+	id old = fOptionsInvocation;
+	fOptionsInvocation = [aSvnOptionsInvocation retain];
 	[old release];
 }
 
 
 // - url:
-- (NSURL*) url { return url; }
+- (NSURL*) url { return fURL; }
 
 - (void) setUrl: (NSURL*) anUrl
 {
-	id old = url;
-	url = [anUrl retain];
+	id old = fURL;
+	fURL = [anUrl retain];
 	[old release];
 }
 
 
 // - revision:
-- (NSString*) revision { return revision; }
+- (NSString*) revision { return fRevision; }
 
 - (void) setRevision: (NSString*) aRevision
 {
-	id old = revision;
-	revision = [aRevision retain];
+	id old = fRevision;
+	fRevision = [aRevision retain];
 	[old release];
 }
 

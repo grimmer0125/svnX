@@ -21,11 +21,15 @@
 typedef enum svn_wc_status_kind		SvnWCStatusKind;
 typedef apr_pool_t*					SvnPool;
 typedef apr_array_header_t*			SvnArray;
+typedef apr_hash_t*					SvnHash;
+typedef apr_hash_index_t*			SvnHashIndex;
 typedef svn_boolean_t				SvnBool;
+typedef svn_string_t*				SvnString;
 typedef svn_opt_revision_t			SvnOptRevision;
 typedef svn_revnum_t				SvnRevNum;
 typedef svn_error_t*				SvnError;
 typedef svn_client_ctx_t*			SvnClient;
+typedef svn_client_proplist_item_t*	SvnProplistItem;
 typedef svn_auth_baton_t*			SvnAuth;
 typedef svn_auth_provider_object_t* SvnAuthProvider;
 typedef svn_wc_status2_t*			SvnStatus;
@@ -33,7 +37,8 @@ typedef const svn_info_t*			SvnInfo;
 typedef struct SvnEnv				SvnEnv;
 
 static const int kSvnRetryLimit = 2;
-static const SvnBool kSvnRecurse = true;
+static const SvnBool kSvnRecurse = true,
+					 kSvnLock    = true;
 
 
 //----------------------------------------------------------------------------------------
@@ -85,6 +90,7 @@ void SvnDoReport	(SvnError err);
 //----------------------------------------------------------------------------------------
 
 BOOL		SvnInitialize		();
+BOOL		SvnWantAndHave		();
 SvnPool		SvnNewPool			();
 void		SvnDeletePool		(SvnPool pool);
 NSString*	SvnRevNumToString	(SvnRevNum rev);

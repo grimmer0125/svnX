@@ -34,13 +34,12 @@
             OUTLETS = {logsAC = NSArrayController; svnLog = id; }; 
             SUPERCLASS = MySvnView; 
         }, 
-        {CLASS = MySvnLogView2; LANGUAGE = ObjC; SUPERCLASS = MySvnLogView; }, 
         {CLASS = MySvnRepositoryBrowserView; LANGUAGE = ObjC; SUPERCLASS = MySvnView; }, 
         {
             ACTIONS = {refetch = id; }; 
             CLASS = MySvnView; 
             LANGUAGE = ObjC; 
-            OUTLETS = {"_view" = id; progress = id; refetch = id; }; 
+            OUTLETS = {fView = NSView; progress = id; refetch = id; }; 
             SUPERCLASS = NSView; 
         }
     ); 

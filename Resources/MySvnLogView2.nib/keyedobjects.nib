@@ -4468,7 +4468,7 @@
 			<key>$classname</key>
 			<string>NSCustomView</string>
 		</dict>
-		<string>_view</string>
+		<string>fView</string>
 		<dict>
 			<key>$classes</key>
 			<array>

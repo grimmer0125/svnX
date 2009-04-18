@@ -54,7 +54,7 @@
 - (IBAction) revealInFinder: (id) sender;
 - (IBAction) refresh:        (id) sender;
 - (IBAction) svnUpdate:      (id) sender;
-- (IBAction) svnFileMerge:   (id) sender;
+- (IBAction) svnDiff:        (id) sender;
 - (IBAction) openRepository: (id) sender;
 - (IBAction) toggleSidebar:  (id) sender;
 - (IBAction) changeMode:     (id) sender;

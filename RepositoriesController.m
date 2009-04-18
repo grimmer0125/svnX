@@ -139,9 +139,7 @@ StringToURL (NSString* urlString)
 {
 	NSURL* url = StringToURL(urlString);
 
-	NSEnumerator* enumerator = [[[NSDocumentController sharedDocumentController] documents] objectEnumerator];
-	id obj;
-	while (obj = [enumerator nextObject])
+	for_each(enumerator, obj, [[NSDocumentController sharedDocumentController] documents])
 	{
 		if ([[obj fileType] isEqualToString: @"repository"] &&
 			[[obj windowTitle] isEqualToString: name] &&

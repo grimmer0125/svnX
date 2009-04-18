@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------------------
 //	DbgUtils.h - Cocoa debugging and error handling
 //
-//	Copyright © Chris, 2003 - 2008.  All rights reserved.
+//	Copyright © Chris, 2003 - 2009.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #pragma once
@@ -12,7 +12,7 @@
 	#define qDebug		1
 #endif
 #ifndef kAppName
-	#define	kAppName	"svnX"
+	#define	kAppName	""
 #endif
 
 #define	qTime		(qDebug && 0)

@@ -1,12 +1,185 @@
 //----------------------------------------------------------------------------------------
 //	ViewUtils.m - NSView & NSWindow utilities
 //
-//	Copyright © Chris, 2008.  All rights reserved.
+//	Copyright © Chris, 2008 - 2009.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #include "ViewUtils.h"
 #include "CommonUtils.h"
 #include "DbgUtils.h"
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	View Based
+//----------------------------------------------------------------------------------------
+
+id
+GetView (NSView* rootView, int tag)
+{
+	id view = [rootView viewWithTag: tag];
+	if (view == nil)
+		dprintf("WARNING: Couldn't find view for tag=%d view=%@", tag, rootView);
+	return view;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+int
+GetViewInt (NSView* rootView, int tag)
+{
+	return [GetView(rootView, tag) intValue];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+SetViewInt (NSView* rootView, int tag, int value)
+{
+	[GetView(rootView, tag) setIntValue: value];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+NSString*
+GetViewString (NSView* rootView, int tag)
+{
+	return [GetView(rootView, tag) stringValue];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+SetViewString (NSView* rootView, int tag, NSString* value)
+{
+	[GetView(rootView, tag) setStringValue: value];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+ViewEnable (NSView* rootView, int tag, bool isEnabled)
+{
+	[GetView(rootView, tag) setEnabled: isEnabled];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+ViewShow (NSView* rootView, int tag, bool isVisible)
+{
+	[GetView(rootView, tag) setHidden: !isVisible];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	Window Based
+//----------------------------------------------------------------------------------------
+
+id
+WGetView (NSWindow* window, int tag)
+{
+	id view = [[window contentView] viewWithTag: tag];
+//	id view = [window->_contentView viewWithTag: tag];
+	if (view == nil)
+		dprintf("WARNING: Couldn't find view for tag=%d window=%@", tag, window);
+	return view;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+int
+WGetViewInt (NSWindow* window, int tag)
+{
+	return [WGetView(window, tag) intValue];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+WSetViewInt (NSWindow* window, int tag, int value)
+{
+	[WGetView(window, tag) setIntValue: value];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+NSString*
+WGetViewString (NSWindow* window, int tag)
+{
+	return [WGetView(window, tag) stringValue];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+WSetViewString (NSWindow* window, int tag, NSString* value)
+{
+	[WGetView(window, tag) setStringValue: value];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+WViewEnable (NSWindow* window, int tag, bool isEnabled)
+{
+	[WGetView(window, tag) setEnabled: isEnabled];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+WViewShow (NSWindow* window, int tag, bool isVisible)
+{
+	[WGetView(window, tag) setHidden: !isVisible];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+//----------------------------------------------------------------------------------------
+
+int
+TagOfSelectedItem (NSPopUpButton* view)
+{
+	return [[view itemAtIndex: [view indexOfSelectedItem]] tag];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+bool
+IsInResponderChain (NSWindow* window, NSResponder* obj)
+{
+	for (NSResponder* responder = [window firstResponder];
+		 responder != nil; responder = [responder nextResponder])
+	{
+		if (responder == obj)
+			return true;
+	}
+
+	return false;
+}
+
+//----------------------------------------------------------------------------------------
+
+bool
+IsViewInResponderChain (NSView* obj)
+{
+	return IsInResponderChain([obj window], obj);
+}
 
 
 //----------------------------------------------------------------------------------------
@@ -349,10 +522,8 @@ getSubviewSplitViews (NSView* rootView, NSMutableArray* array)
 	NSArray* subviews = [rootView subviews];
 	if ([subviews count])
 	{
-		NSEnumerator* oEnum;
-		NSView* view;
 		const Class splitViewClass = [NSSplitView class];
-		for (oEnum = [subviews objectEnumerator]; view = [oEnum nextObject]; )
+		for_each(oEnum, view, subviews)
 		{
 			if ([view isKindOfClass: splitViewClass])
 				[array addObject: view];

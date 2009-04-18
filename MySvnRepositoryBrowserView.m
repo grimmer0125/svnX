@@ -135,7 +135,6 @@ makeMiniIcon (NSImage* image)
 @end	// IconCache
 
 
-
 //----------------------------------------------------------------------------------------
 #pragma mark	-
 //----------------------------------------------------------------------------------------
@@ -157,8 +156,8 @@ makeMiniIcon (NSImage* image)
 		showRoot = YES;
 		if ([NSBundle loadNibNamed:@"MySvnRepositoryBrowserView" owner:self])
 		{
-			[_view setFrame:[self bounds]];
-			[self addSubview:_view];
+			[fView setFrame: [self bounds]];
+			[self addSubview: fView];
 		}
 	}
 
@@ -179,7 +178,7 @@ makeMiniIcon (NSImage* image)
 - (void) unload
 {
 	// the nib is responsible for releasing its top-level objects
-//	[_view release];	// this is done by super
+//	[fView release];	// this is done by super
 
 	// these objects are bound to the file owner and retain it
 	// we need to unbind them 
@@ -252,7 +251,8 @@ makeMiniIcon (NSImage* image)
 		 createRowsForColumn: (int)        column
 		 inMatrix:            (NSMatrix*)  matrix
 {
-	if ( [self revision] == nil ) return; 
+	const id revision = [self revision];
+	if (revision == nil) return; 
 
 	if (isSubBrowser)
 		[(MyDragSupportMatrix*) matrix setupForSubBrowser];
@@ -274,15 +274,15 @@ makeMiniIcon (NSImage* image)
 
 		[cell setImage: [gIconCache rootIcon]];
 		[cell setLeaf:NO];
-		[cell setRepresentedObject:[NSDictionary dictionaryWithObjectsAndKeys:
-															kNSTrue, @"isRoot",
-															@"root", @"name",
-															@"", @"path",
-															[self url], @"url",
-															[self revision], @"revision",
-															NSFileTypeDirectory, @"fileType",
-															kNSTrue, @"isDir",
-															nil]];
+		[cell setRepresentedObject:
+			[NSDictionary dictionaryWithObjectsAndKeys: kNSTrue,				@"isRoot",
+														@"root",				@"name",
+														@"",					@"path",
+														[self url],				@"url",
+														revision,				@"revision",
+														NSFileTypeDirectory,	@"fileType",
+														kNSTrue,				@"isDir",
+														nil]];
 
 		[matrix addRowWithCells:[NSArray arrayWithObject:cell]];
 		[matrix putCell:cell atRow:0 column:0];
@@ -298,7 +298,7 @@ makeMiniIcon (NSImage* image)
 //----------------------------------------------------------------------------------------
 #pragma mark	-
 #pragma mark	svn related methods
-
+//----------------------------------------------------------------------------------------
 // Triggers the fetching
 
 - (void) fetchSvn
@@ -316,21 +316,23 @@ makeMiniIcon (NSImage* image)
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) fetchSvnListForUrl: (NSString*) theURL
 		 column:             (int)       column
 		 matrix:             (NSMatrix*) matrix
 {
 	NSString* url2 = theURL;
-	
+
 	if (showRoot)
 		url2 = [url2 substringFromIndex:5]; // get rid of "root" prefix
 
-	NSURL *cleanUrl = [NSURL URLWithString:[[url2 trimSlashes] escapeURL] relativeToURL:[self url]];
-
-	BOOL useCache = [GetPreference(@"cacheSvnQueries") boolValue];
+	NSURL* cleanUrl = [NSURL URLWithString: [[url2 trimSlashes] escapeURL] relativeToURL: [self url]];
+	NSString* const revision = [self revision];
 	NSData* cachedXML;
 
-	if (useCache && ![[self revision] isEqualToString:@"HEAD"] &&
+	if (GetPreferenceBool(@"cacheSvnQueries") &&
+		![revision isEqualToString: @"HEAD"] &&
 		(cachedXML = [NSData dataWithContentsOfFile: [self getCachePathForUrl: cleanUrl]]))
 	{
 		NSArray* resultArray = [SvnListParser parseData: cachedXML];
@@ -342,9 +344,9 @@ makeMiniIcon (NSImage* image)
 		[self setIsFetching:YES];
 
 		[self setPendingTask:
-			[MySvn	list: [NSString stringWithFormat:@"%@@%@", [cleanUrl absoluteString], [self revision]]
+			[MySvn	list: [NSString stringWithFormat:@"%@@%@", [cleanUrl absoluteString], revision]
 		  generalOptions: [self svnOptionsInvocation]
-				 options: [NSArray arrayWithObjects:@"--xml", @"-r", [self revision], nil]
+				 options: [NSArray arrayWithObjects:@"--xml", @"-r", revision, nil]
                 callback: [self makeCallbackInvocationOfKind:10]
 			callbackInfo: [NSDictionary dictionaryWithObjectsAndKeys:
 												matrix, @"matrix",
@@ -355,6 +357,8 @@ makeMiniIcon (NSImage* image)
 	}
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (NSString*) pathToColumn: (int) column
 {
@@ -367,6 +371,8 @@ makeMiniIcon (NSImage* image)
 	return result;
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) fetchSvnReceiveDataFinished: (id) taskObj
 {
@@ -390,6 +396,8 @@ makeMiniIcon (NSImage* image)
 	}
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) displayResultArray: (NSArray*)  resultArray
 		 column:             (int)       column
@@ -470,6 +478,7 @@ makeMiniIcon (NSImage* image)
 //----------------------------------------------------------------------------------------
 #pragma mark	-
 #pragma mark	Accessors
+//----------------------------------------------------------------------------------------
 
 // - browserPath:
 - (NSString*) browserPath { return browserPath; }

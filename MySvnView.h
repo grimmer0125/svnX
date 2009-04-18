@@ -5,42 +5,42 @@
 
 @interface MySvnView : NSView
 {
-	IBOutlet id		_view;
-	IBOutlet id		progress;
-	IBOutlet id		refetch;
+@protected
+	IBOutlet NSView*		fView;
+	IBOutlet id				progress;
+	IBOutlet id				refetch;
 
-	NSInvocation*	svnOptionsInvocation;
-	NSString*		pass;
-	NSURL*			url;
-	NSString*		revision;
+	NSInvocation*	fOptionsInvocation;
+	NSURL*			fURL;
+	NSString*		fRevision;
 	id				pendingTask;
 	BOOL			isFetching;
 }
 
-- (IBAction)refetch:(id)sender;
+- (IBAction) refetch: (id) sender;
 
-- (void)unload;
+- (void) unload;
 
-- (void)fetchSvn;
-- (void)svnCommandComplete:(id)taskObj;
-- (void)svnError:(NSString*)errorString;
-- (void)fetchSvnReceiveDataFinished:(id)taskObj;
+- (void) fetchSvn;
+- (void) svnCommandComplete: (id) taskObj;
+- (void) svnError: (NSString*) errorString;
+- (void) fetchSvnReceiveDataFinished: (id) taskObj;
 
-- (NSInvocation *)makeCallbackInvocationOfKind:(int)callbackKind;
-- (NSInvocation *) svnOptionsInvocation;
-- (void) setSvnOptionsInvocation: (NSInvocation *) aSvnOptionsInvocation;
+- (NSInvocation*) makeCallbackInvocationOfKind: (int) callbackKind;
+- (NSInvocation*) svnOptionsInvocation;
+- (void) setSvnOptionsInvocation: (NSInvocation*) aSvnOptionsInvocation;
 
-- (NSURL *)url;
-- (void)setUrl:(NSURL *)anUrl;
+- (NSURL*) url;
+- (void) setUrl: (NSURL*) anUrl;
 
-- (NSString *)revision;
-- (void)setRevision:(NSString *)aRevision;
+- (NSString*) revision;
+- (void) setRevision: (NSString*) aRevision;
 
-- (BOOL)isFetching;
-- (void)setIsFetching:(BOOL)flag;
+- (BOOL) isFetching;
+- (void) setIsFetching: (BOOL) flag;
 
-- (id)pendingTask;
-- (void)setPendingTask:(id)aPendingTask;
+- (id) pendingTask;
+- (void) setPendingTask: (id) aPendingTask;
 
 - (MyRepository*) repository;
 - (NSDictionary*) documentNameDict;

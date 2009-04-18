@@ -22,18 +22,18 @@
 
 - (NSDragOperation) draggingEntered: (id <NSDraggingInfo>) sender
 {
-    NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
-	
+	NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
+
 	if (sourceDragMask & NSDragOperationMove)
 	{
 		return NSDragOperationMove;
-    }
+	}
 	if (sourceDragMask & NSDragOperationCopy)
 	{
 		return NSDragOperationCopy;
-    }
-    // default
-    return NSDragOperationNone;
+	}
+	// default
+	return NSDragOperationNone;
 }
 
 

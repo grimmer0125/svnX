@@ -1,12 +1,14 @@
 //----------------------------------------------------------------------------------------
 //	CommonUtils.m - Common Cocoa utilities
 //
-//	Copyright © Chris, 2003 - 2008.  All rights reserved.
+//	Copyright © Chris, 2003 - 2009.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #include <Cocoa/Cocoa.h>
 #include "CommonUtils.h"
 #include "DbgUtils.h"
+#include "MySVN.h"
+#include "Tasks.h"
 
 
 //----------------------------------------------------------------------------------------
@@ -73,6 +75,23 @@ bool
 AltOrShiftPressed ()
 {
 	return ([[NSApp currentEvent] modifierFlags] & (NSAlternateKeyMask | NSShiftKeyMask)) != 0;
+}
+
+
+//----------------------------------------------------------------------------------------
+// Open one or more files using open.sh given their full paths.
+
+void
+OpenFiles (id fileOrFiles)
+{
+	NSMutableArray* arguments = [NSMutableArray arrayWithObject: GetDiffAppName()];
+	if ([fileOrFiles isKindOfClass: [NSArray class]])
+		[arguments addObjectsFromArray: fileOrFiles];
+	else
+		[arguments addObject: fileOrFiles];
+
+	[[[Task alloc] initWithDelegate: nil object: nil]
+			launch: ShellScriptPath(@"open") arguments: arguments];
 }
 
 

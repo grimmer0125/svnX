@@ -39,6 +39,7 @@ void			SetPreference			(NSString* prefKey, id prefValue);
 
 NSInvocation*	MakeCallbackInvocation	(id target, SEL selector);
 bool			AltOrShiftPressed		();
+void			OpenFiles				(id fileOrFiles);
 
 
 //----------------------------------------------------------------------------------------

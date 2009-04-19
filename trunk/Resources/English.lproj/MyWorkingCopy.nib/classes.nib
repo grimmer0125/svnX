@@ -74,10 +74,7 @@
                 svnDiff = id; 
                 svnUpdate = id; 
                 switchPanelValidate = id; 
-                updateCancelled = id; 
-                updateIncDec = id; 
-                updateOKed = id; 
-                updateRevision = id; 
+                updateSheetDoClick = id; 
             }; 
             CLASS = MyWorkingCopyController; 
             LANGUAGE = ObjC; 

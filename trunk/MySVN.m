@@ -91,6 +91,26 @@ ShellScriptPath (NSString* script)
 
 
 //----------------------------------------------------------------------------------------
+
+NSString*
+GetDiffAppName ()
+{
+	// 0: FileMerge, 1: TextWrangler, 2: CodeWarrior, 3: BBEdit,
+	// 4: Araxis Merge, 5: DiffMerge, 6: Changes
+	static NSString* const diffAppNames[] = {
+		@"opendiff", @"textwrangler", @"codewarrior", @"bbedit",
+		@"araxissvndiff", @"diffmerge", @"changes"
+	};
+
+	int diffAppIndex = GetPreferenceInt(@"defaultDiffApplication");
+	if (diffAppIndex < 0 || diffAppIndex >= sizeof(diffAppNames) / sizeof(diffAppNames[0]))
+		diffAppIndex = 0;
+
+	return diffAppNames[diffAppIndex];
+}
+
+
+//----------------------------------------------------------------------------------------
 #pragma mark	-
 
 @implementation MySvn
@@ -104,17 +124,9 @@ ShellScriptPath (NSString* script)
 						 callbackInfo:   (id)            callbackInfo
 						 taskInfo:       (id)            taskInfo
 {
-	// 0: FileMerge, 1: TextWrangler, 2: CodeWarrior, 3: BBEdit, 4: Araxis Merge
-	static NSString* const diffAppNames[] = {
-		@"opendiff", @"textwrangler", @"codewarrior", @"bbedit", @"araxissvndiff"
-	};
-	int diffAppIndex = [GetPreference(@"defaultDiffApplication") intValue];
-	if (diffAppIndex < 0 || diffAppIndex >= sizeof(diffAppNames) / sizeof(diffAppNames[0]))
-		diffAppIndex = 0;
-
 	NSMutableArray* arguments = [NSMutableArray arrayWithObjects:
 										@"diff", @"--diff-cmd", shellScriptPath(@"svndiff"),
-										@"--extensions", diffAppNames[diffAppIndex],
+										@"--extensions", GetDiffAppName(),
 										nil];
 	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];

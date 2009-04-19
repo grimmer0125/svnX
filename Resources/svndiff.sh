@@ -66,6 +66,8 @@ case "$1" in
 	"textwrangler"  ) /usr/bin/twdiff --case-sensitive "$file1" "$file2" ;;
 	"bbedit"        ) /usr/bin/bbdiff --case-sensitive "$file1" "$file2" ;;
 	"araxissvndiff" ) /usr/local/bin/araxissvndiff "$file1" "$file2" "$file1" "$file2" ;;
+	"diffmerge"     ) /usr/local/bin/diffmerge.sh -ro1 --title1="$file1" --title2="$file2" "$file1" "$file2" ;;
+	"changes"       ) /usr/bin/chdiff "$file1" "$file2" ;;
 	"opendiff" | *  ) 
 		if [ $isWorkingCopy ]; then 
 			/usr/bin/opendiff "$file1" "$file2" -merge "$file2" &> /dev/null

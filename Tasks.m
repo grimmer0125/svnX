@@ -389,9 +389,8 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 					[taskLock unlock];
 				}
 
-				string = [[NSString alloc] initWithData:tmpIncomingData encoding:NSUTF8StringEncoding];
-
-				NSAssert(string != nil, @"stdin incomingData failed to convert");
+				string = [[NSString alloc] initWithData: tmpIncomingData encoding: NSUTF8StringEncoding];
+				Assert(string != nil);	// stdin incomingData failed to convert
 
 				[taskLock lock];
 

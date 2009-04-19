@@ -36,14 +36,76 @@ static NSString* gInitName = nil;
 
 
 //----------------------------------------------------------------------------------------
+// Subversion 1.4.6 commands that support recursive flags
+//			Add, Remove, Update, Revert, Resolved, Lock, Unlock, Copy, Move, Rename
+// Default:  Y     -        Y      N         N      -      -      -      -      -
+// Allow -R: N     -        N      Y         Y      -      -      -      -      -
+// Allow -N: Y     -        Y      N         N      -      -      -      -      -
+
+
+//----------------------------------------------------------------------------------------
+// Add, Delete, Update, Revert, Resolved, Lock, Unlock, Commit, Review
+
+static NSString* const gCommands[] = {
+	@"add", @"remove", @"update", @"revert", @"resolved", @"lock", @"unlock", @"commit", @"review"
+};
+
+static NSString* const gVerbs[] = {
+	@"add", @"remove", @"update", @"revert", @"resolve", @"lock", @"unlock", @"commit", @"review"
+};
+
+enum SvnCommand {
+	cAdd = 0, cRemove, cUpdate, cRevert, cResolved	//, cLock, cUnlock, cCopy, cMove, cRename
+};
+
+
+//----------------------------------------------------------------------------------------
+
+static NSMutableDictionary*
+makeCommand (NSString* command, NSString* verb, NSString* destination)
+{
+	return [NSMutableDictionary dictionaryWithObjectsAndKeys: command,     @"command",
+															  verb,        @"verb",
+															  destination, @"destination",
+															  nil];
+}
+
+
+//----------------------------------------------------------------------------------------
 
 static NSMutableDictionary*
 makeCommandDict (NSString* command, NSString* destination)
 {
-	return [NSMutableDictionary dictionaryWithObjectsAndKeys: command, @"command",
-															  command, @"verb",
-															  destination, @"destination",
-															  nil];
+	return makeCommand(command, command, destination);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static bool
+supportsRecursiveFlag (NSString* cmd)
+{
+	return ([cmd isEqualToString: @"revert"] || [cmd isEqualToString: @"resolved"]);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static bool
+supportsNonRecursiveFlag (NSString* cmd)
+{
+	return ([cmd isEqualToString: @"add"] || [cmd isEqualToString: @"update"]);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static id
+getRecursiveOption (NSString* cmd, bool isRecursive)
+{
+	if (isRecursive)
+		return supportsRecursiveFlag(cmd) ? @"--recursive" : nil;
+	return supportsNonRecursiveFlag(cmd) ? @"--non-recursive" : nil;
 }
 
 
@@ -64,10 +126,11 @@ makeCommandDict (NSString* command, NSString* destination)
 	- (void) renamePanelForCopy: (BOOL)      isCopy
 			 destination:        (NSString*) destination;
 
-	- (void) requestSvnUpdate: (BOOL) forSelection;
-	- (void) updateSheetDidEnd: (NSWindow*) sheet
-			 returnCode:        (int)       returnCode
-			 contextInfo:       (void*)     contextInfo;
+	- (void) requestSvnUpdate:   (BOOL)      forSelection;
+	- (void) updateSheetSetKind: (id)        updateKindView;
+	- (void) updateSheetDidEnd:  (NSWindow*) sheet
+			 returnCode:         (int)       returnCode
+			 contextInfo:        (void*)     contextInfo;
 
 	- (NSArray*) selectedFilePaths;
 
@@ -435,22 +498,10 @@ makeCommandDict (NSString* command, NSString* destination)
 
 
 //----------------------------------------------------------------------------------------
-// Add, Delete, Update, Revert, Resolved, Lock, Unlock, Commit, Review
-
-static NSString* const gCommands[] = {
-	@"add", @"remove", @"update", @"revert", @"resolved", @"lock", @"unlock", @"commit", @"review"
-};
-
-static NSString* const gVerbs[] = {
-	@"add", @"remove", @"update", @"revert", @"resolve", @"lock", @"unlock", @"commit", @"review"
-};
-
-
-//----------------------------------------------------------------------------------------
 
 - (IBAction) performAction: (id) sender
 {
-	const unsigned int action = [[sender selectedCell] tag];
+	const unsigned int action = SelectedTag(sender);
 	enum { kUpdate = 2, kReview = 8 };
 	if (action == kReview)
 	{
@@ -463,8 +514,7 @@ static NSString* const gVerbs[] = {
 	else if (action < sizeof(gCommands) / sizeof(gCommands[0]))
 	{
 		[self performSelector: @selector(runAlertBeforePerformingAction:)
-			  withObject: [NSDictionary dictionaryWithObjectsAndKeys: gCommands[action], @"command",
-																	  gVerbs[action], @"verb", nil]
+			  withObject: makeCommand(gCommands[action], gVerbs[action], nil)
 			  afterDelay: 0];
 	}
 }
@@ -486,10 +536,10 @@ static NSString* const gVerbs[] = {
 - (void) doubleClickInTableView: (id) sender
 {
 	#pragma unused(sender)
-	NSDictionary* selection;
-	if (selection = [self selectedItemOrNil])
+	NSArray* const selection = [svnFilesAC selectedObjects];
+	if ([selection count] > 0)
 	{
-		[[NSWorkspace sharedWorkspace] openFile: [selection objectForKey: @"fullPath"]];
+		OpenFiles([selection valueForKey: @"fullPath"]);
 	}
 }
 
@@ -582,6 +632,7 @@ static NSString* const gVerbs[] = {
 {
 	[self stopProgressIndicator];
 
+//	NSOutlineView* const view = outliner;
 	NSIndexSet* selectedRows = [outliner selectedRowIndexes];
 	unsigned int index,
 				 selectedRow = [selectedRows firstIndex],
@@ -912,6 +963,7 @@ enum {
 		SetViewInt(root, vNumberStepper, revNum);
 
 		[GetView(root, vDateField) setDateValue: [NSDate date]];
+		[self updateSheetSetKind: nil];
 	}
 
 	[NSApp beginSheet:     updateSheet
@@ -924,40 +976,50 @@ enum {
 
 //----------------------------------------------------------------------------------------
 
-- (IBAction) updateRevision: (id) sender
+- (void) updateSheetSetKind: (id) updateKindView
 {
 	NSWindow* const aWindow = updateSheet;
-	const int kind = [[sender selectedCell] tag];
+	if (updateKindView == nil)
+		updateKindView = WGetView(aWindow, vUpdateKind);
+	const int kind = SelectedTag(updateKindView);
 
 	WViewEnable(aWindow, vNumberField,   (kind == vRevNumber));
 	WViewEnable(aWindow, vNumberStepper, (kind == vRevNumber));
 	WViewEnable(aWindow, vDateField,     (kind == vRevDate));
 
-	[updateSheet selectNextKeyView: self];
+	[aWindow makeFirstResponder: aWindow];
+	[aWindow selectNextKeyView: self];
 }
 
 
 //----------------------------------------------------------------------------------------
 
-- (IBAction) updateIncDec: (id) sender
+- (IBAction) updateSheetDoClick: (id) sender
 {
-	[[[updateSheet contentView] viewWithTag: vNumberField] setIntValue: [sender intValue]];
-}
+	const int tag = [sender tag];
+	switch (tag)
+	{
+		case NSOKButton:
+			if (SelectedTag(WGetView(updateSheet, vUpdateKind)) == vRevNumber &&
+				![updateSheet makeFirstResponder: nil])
+			{
+				NSBeep();
+				break;
+			}
+			// Fall through
+		case NSCancelButton:
+			[NSApp endSheet: updateSheet returnCode: tag];
+			break;
 
+		case vNumberField:
+		case vNumberStepper:
+			[WGetView(updateSheet, tag ^ vNumberField ^ vNumberStepper) takeIntValueFrom: sender];
+			break;
 
-//----------------------------------------------------------------------------------------
-
-- (IBAction) updateOKed: (id) sender
-{
-	[NSApp endSheet: [sender window] returnCode: NSOKButton];
-}
-
-
-//----------------------------------------------------------------------------------------
-
-- (IBAction) updateCancelled: (id) sender
-{
-	[NSApp endSheet: [sender window] returnCode: NSCancelButton];
+		case vUpdateKind:
+			[self updateSheetSetKind: sender];
+			break;
+	}
 }
 
 
@@ -971,11 +1033,9 @@ enum {
 	if (returnCode != NSOKButton) return;
 
 	NSView* const root = [sheet contentView];
-	NSCell* cell = [GetView(root, vUpdateKind) selectedCell];
-	Assert(cell);
 
 	NSString* revision = nil;
-	switch ([cell tag])
+	switch (SelectedTag(GetView(root, vUpdateKind)))
 	{
 		case vRevHead:
 			revision = @"HEAD";
@@ -1007,7 +1067,7 @@ enum {
 			break;
 
 		default:
-			dprintf("UNKNOWN cell.tag=%d", [cell tag]);
+			dprintf("UNKNOWN cell.tag=%d", SelectedTag(GetView(root, vUpdateKind)));
 			break;
 	}
 
@@ -1266,7 +1326,8 @@ enum {
 
 - (void) runAlertBeforePerformingAction: (NSDictionary*) command
 {
-	if ([[command objectForKey: @"command"] isEqualToString: @"commit"])
+	NSString* cmd = [command objectForKey: @"command"];
+	if ([cmd isEqualToString: @"commit"])
 	{
 		[self startCommitMessage: @"selected"];
 	}
@@ -1275,10 +1336,23 @@ enum {
 		NSString* message = [NSString stringWithFormat: @"Are you sure you want to %@ the selected items?",
 														[command objectForKey: @"verb"]];
 		NSAlert* alert = [NSAlert alertWithMessageText: message
-										 defaultButton: @"Yes"
-									   alternateButton: @"No"
+										 defaultButton: @"OK"
+									   alternateButton: @"Cancel"
 										   otherButton: nil
 							 informativeTextWithFormat: @""];
+
+		// Add recursive checkbox if supported by command:
+		// TO_DO: (possibly) check for folder
+		bool isDefaultRecursive = supportsNonRecursiveFlag(cmd);
+		if (isDefaultRecursive || supportsRecursiveFlag(cmd))
+		{
+			NSButton* recursive = [alert addButtonWithTitle: @"Recursive"];
+			[recursive setButtonType: NSSwitchButton];
+			[[recursive cell] setCellAttribute: NSCellLightsByContents to: 1];
+			[recursive setState: (isDefaultRecursive ? NSOnState : NSOffState)];
+			[recursive setAction: NULL];
+		}
+
 		[alert beginSheetModalForWindow: window
 						  modalDelegate: self
 						 didEndSelector: @selector(commandPanelDidEnd:returnCode:contextInfo:)
@@ -1293,24 +1367,31 @@ enum {
 {
 	NSString* const command = [action objectForKey: @"command"];
 	NSArray* itemPaths = [action objectForKey: @"itemPaths"];
+	id recursive = [action objectForKey: @"recursive"];
+	if (recursive != nil)
+		recursive = getRecursiveOption(command, [recursive boolValue]);
 
 	if ([command isEqualToString: @"rename"] ||
 		[command isEqualToString: @"move"] ||
 		[command isEqualToString: @"copy"])
 	{
+		Assert(recursive == nil);
 		[document svnCommand: command options: [action objectForKey: @"options"] info: action itemPaths: itemPaths];
 	}
 	else if ([command isEqualToString: @"remove"])
 	{
+		Assert(recursive == nil);
 		[document svnCommand: command options: [NSArray arrayWithObject: @"--force"] info: nil itemPaths: itemPaths];
 	}
 	else if ([command isEqualToString: @"commit"])
 	{
+		Assert(recursive == nil);
 		[self startCommitMessage: @"selected"];
 	}
-	else
+	else // Add, Update, Revert, Resolved, Lock, Unlock
 	{
-		[document svnCommand: command options: nil info: nil itemPaths: itemPaths];
+		[document svnCommand: command options: (recursive ? [NSArray arrayWithObject: recursive] : nil)
+									  info: nil itemPaths: itemPaths];
 	}
 
 	[action release];
@@ -1323,11 +1404,17 @@ enum {
 		 returnCode:         (int)      returnCode
 		 contextInfo:        (void*)    contextInfo
 {
-	#pragma unused(alert)
 	id action = contextInfo;
 
 	if (returnCode == NSOKButton)
 	{
+		NSArray* buttons = [alert buttons];
+		if ([buttons count] >= 3)	// Has Recursive checkbox
+		{
+			[action setObject: NSBool([[buttons objectAtIndex: 2] state] == NSOnState)
+					forKey: @"recursive"];
+		}
+
 		[self performSelector: @selector(svnCommand:) withObject: action afterDelay: 0.1];
 	}
 	else

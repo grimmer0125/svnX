@@ -53,11 +53,15 @@ addTransform (Class itsClass, NSString* itsName)
 	[dictionary setObject:svnFileStatusModifiedColor forKey:@"svnFileStatusModifiedColor"];
 	[dictionary setObject:svnFileStatusNewColor forKey:@"svnFileStatusNewColor"];
 	[dictionary setObject:svnFileStatusMissingColor forKey:@"svnFileStatusMissingColor"];
-	
-	[dictionary setObject:@"/usr/local/bin" forKey:@"svnBinariesFolder"];
-	[dictionary setObject: kNSTrue forKey: @"cacheSvnQueries"];
-	[dictionary setObject:[NSNumber numberWithInt:0] forKey:@"defaultDiffApplication"];
-	[dictionary setObject:@"%m/%d/%y %H:%M:%S" forKey:@"dateformat"];
+
+	SInt32 response;
+	if (Gestalt(gestaltSystemVersion, &response) != noErr)
+		response = 0;
+	[dictionary setObject: (response >= 0x1050) ? @"/usr/bin" : @"/usr/local/bin"
+													  forKey: @"svnBinariesFolder"];
+	[dictionary setObject: kNSTrue                    forKey: @"cacheSvnQueries"];
+	[dictionary setObject: [NSNumber numberWithInt:0] forKey: @"defaultDiffApplication"];
+	[dictionary setObject: @"%m/%d/%y %H:%M:%S"       forKey: @"dateformat"];
 
 	// Working Copy
 	[dictionary setObject: kNSTrue  forKey: @"addWorkingCopyOnCheckout"];

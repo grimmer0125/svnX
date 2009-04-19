@@ -488,7 +488,7 @@ enum {
 	ReviewFile* item = [self selectedItemOrNil];
 	if (item)
 	{
-		[[NSWorkspace sharedWorkspace] openFile: [item fullPath]];
+		OpenFiles([item fullPath]);
 	}
 }
 

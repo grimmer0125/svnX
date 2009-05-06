@@ -1,7 +1,11 @@
+//
+// MySvnOperationController.m - Manages the repository copy, move, delete, mkdir & diff UIs
+//
+
 #import "MySvnOperationController.h"
 #import "MySvnRepositoryBrowserView.h"
 #import "NSString+MyAdditions.h"
-#include "DbgUtils.h"
+#import "CommonUtils.h"
 
 
 @implementation MySvnOperationController
@@ -38,7 +42,7 @@
 	{
 		Assert(svnOperation != kSvnDiff);
 		if (svnOperation == kSvnMove)
-			[objectController setValue:@"HEAD" forKeyPath:@"content.sourceItem.revision"];
+			[objectController setValue: @"HEAD" forKeyPath: @"content.sourceItem.revision"];
 
 		[targetBrowser setupForSubBrowser: YES allowsLeaves: NO allowsMultipleSelection: NO];
 	}
@@ -67,6 +71,8 @@
 		svnOperation = operation;
 		if ([NSBundle loadNibNamed: nibName owner: self])
 		{
+			if (targetBrowser != nil)
+				[targetBrowser setRepository: repository];
 			[self setupUrl: url options: [repository svnOptionsInvocation]
 				  sourceItem: sourceItem];
 
@@ -108,7 +114,7 @@
 
 - (void) finished
 {
-	[targetBrowser setRevision:nil];
+	[targetBrowser setRevision: nil];
 	[targetBrowser reset];
 	[targetBrowser unload]; // targetBrowser was loaded from a nib (see "unload" comments).
 
@@ -177,8 +183,11 @@
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (IBAction) addDirectory: (id) sender
 {
+	#pragma unused(sender)
 	if ([[self getTargetName] length] == 0)
 	{
 		[svnSheet makeFirstResponder: targetName];
@@ -198,13 +207,15 @@
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (IBAction) addItems: (id) sender
 {
+	#pragma unused(sender)
 	NSArray* const theItems = [arrayController arrangedObjects];
 	NSMutableArray* selectedItems = [NSMutableArray array];
-	NSEnumerator* en = [[targetBrowser selectedItems] objectEnumerator];
-	id it;
-	while (it = [en nextObject])
+
+	for_each(en, it, [targetBrowser selectedItems])
 	{
 		if (![theItems containsObject: it])
 			[selectedItems addObject: it];
@@ -216,6 +227,8 @@
 		NSBeep();
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (IBAction) validate: (id) sender
 {

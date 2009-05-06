@@ -90,6 +90,7 @@
 		 qualifiedName:   (NSString*)     qualifiedName
 		 attributes:      (NSDictionary*) attributeDict
 {
+	#pragma unused(parser, namespaceURI, qualifiedName)
 	[bufString setString: @""];
 
 	switch ([elementName characterAtIndex: 0])
@@ -116,8 +117,9 @@
 - (void) parser:        (NSXMLParser*) parser
 		 didEndElement: (NSString*)    elementName
 		 namespaceURI:  (NSString*)    namespaceURI
-		 qualifiedName: (NSString*)    qName
+		 qualifiedName: (NSString*)    qualifiedName
 {
+	#pragma unused(parser, namespaceURI, qualifiedName)
 	switch ([elementName characterAtIndex: 0])
 	{
 		case 'a':
@@ -182,6 +184,7 @@
 - (void) parser:          (NSXMLParser*) parser
 		 foundCharacters: (NSString*)    string
 {
+	#pragma unused(parser)
 	[bufString appendString: string];
 }
 

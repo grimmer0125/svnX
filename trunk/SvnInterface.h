@@ -1,12 +1,13 @@
 //----------------------------------------------------------------------------------------
 //	SvnInterface.h - Interface to Subversion libraries
 //
-//	Copyright © Chris, 2003 - 2008.  All rights reserved.
+//	Copyright © Chris, 2003 - 2009.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #pragma once
 
 #include "DbgUtils.h"
+#include "CommonUtils.h"
 
 #ifndef DARWIN
 #define	DARWIN
@@ -27,6 +28,7 @@ typedef svn_boolean_t				SvnBool;
 typedef svn_string_t*				SvnString;
 typedef svn_opt_revision_t			SvnOptRevision;
 typedef svn_revnum_t				SvnRevNum;
+typedef svn_node_kind_t				SvnNodeKind;
 typedef svn_error_t*				SvnError;
 typedef svn_client_ctx_t*			SvnClient;
 typedef svn_client_proplist_item_t*	SvnProplistItem;
@@ -89,10 +91,11 @@ void SvnDoReport	(SvnError err);
 
 //----------------------------------------------------------------------------------------
 
-BOOL		SvnInitialize		();
-BOOL		SvnWantAndHave		();
-SvnPool		SvnNewPool			();
+BOOL		SvnInitialize		(void);
+BOOL		SvnWantAndHave		(void);
+SvnPool		SvnNewPool			(void);
 void		SvnDeletePool		(SvnPool pool);
+SvnRevNum	SvnRevNumFromString	(NSString* revision);
 NSString*	SvnRevNumToString	(SvnRevNum rev);
 NSString*	SvnStatusToString	(SvnWCStatusKind kind);
 SvnClient	SvnSetupClient		(SvnEnv** envRef, SvnInterface* delegate);

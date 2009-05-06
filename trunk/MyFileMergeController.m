@@ -7,7 +7,8 @@
 #import "MySvnLogView.h"
 #import "MyWorkingCopy.h"
 #import "NSString+MyAdditions.h"
-#include "CommonUtils.h"
+#import "Tasks.h"
+#import "CommonUtils.h"
 
 
 @implementation MyFileMergeController
@@ -153,6 +154,7 @@
 
 - (IBAction) compareUrl: (id) sender
 {
+	#pragma unused(sender)
 	NSString* path = [[objectController valueForKeyPath: @"content.sourceItem.url"] absoluteString];
 	[self comparePath: PathPegRevision(path, [svnLogView revision]) toWorkingCopy: NO];
 }
@@ -162,13 +164,13 @@
 
 - (void) fileMergeCallback: (id) taskObj
 {
-	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
+	if (isCompleted(taskObj))
 	{
 		;
 	}
-	else if ( [[taskObj valueForKey:@"stderr"] length] > 0 )
+	else if (taskObj = stdErr(taskObj))
 	{
-		[svnLogView svnError: [taskObj valueForKey: @"stderr"]];
+		[svnLogView svnError: taskObj];
 	}
 }
 

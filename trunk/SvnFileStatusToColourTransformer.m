@@ -1,6 +1,6 @@
 
 #import "SvnFileStatusToColourTransformer.h"
-#include "CommonUtils.h"
+#import "CommonUtils.h"
 
 
 @implementation SvnFileStatusToColourTransformer

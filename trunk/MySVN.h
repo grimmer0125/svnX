@@ -143,7 +143,8 @@
 
 @end
 
-NSString* SvnCmdPath ();
-NSString* ShellScriptPath (NSString* script);
-NSString* GetDiffAppName ();
+NSString* SvnPath			(void);
+NSString* SvnCmdPath		(void);
+NSString* ShellScriptPath	(NSString* script);
+NSString* GetDiffAppName	(void);
 

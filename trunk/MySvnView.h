@@ -9,6 +9,7 @@
 	IBOutlet NSView*		fView;
 	IBOutlet id				progress;
 	IBOutlet id				refetch;
+	IBOutlet MyRepository*	fRepository;	// Only valid in repository window
 
 	NSInvocation*	fOptionsInvocation;
 	NSURL*			fURL;
@@ -43,6 +44,8 @@
 - (void) setPendingTask: (id) aPendingTask;
 
 - (MyRepository*) repository;
+- (void) setRepository: (MyRepository*) repository;
+
 - (NSDictionary*) documentNameDict;
 
 @end

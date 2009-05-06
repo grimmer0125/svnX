@@ -5,9 +5,8 @@
 #import "Tasks.h"
 #import "NSString+MyAdditions.h"
 #import "AppKit/NSGraphicsContext.h"
-#include "CommonUtils.h"
-#include "DbgUtils.h"
-#include "SvnInterface.h"
+#import "CommonUtils.h"
+#import "SvnInterface.h"
 
 
 enum {
@@ -18,6 +17,8 @@ enum {
 	SVNXCallbackFileMerge
 };
 
+static const unsigned kCompareOptions = NSCaseInsensitiveSearch | NSNumericSearch;
+
 
 //----------------------------------------------------------------------------------------
 
@@ -25,17 +26,6 @@ static BOOL
 useOldParsingMethod ()
 {
 	return GetPreferenceBool(@"useOldParsingMethod");
-}
-
-
-//----------------------------------------------------------------------------------------
-// Compare names alphabetically & case insensitively.
-
-static int
-compareDisplayPaths (id obj1, id obj2, void* context)
-{
-	#pragma unused(context)
-	return [[obj1 objectForKey: @"displayPath"] caseInsensitiveCompare: [obj2 objectForKey: @"displayPath"]];
 }
 
 
@@ -52,6 +42,7 @@ enum { kMaxIcons = 128 };
 static ICEntry gIconFolder = { NULL },
 			   gIconFile   = { NULL },
 			   gIconCache[kMaxIcons] = { NULL };
+static NSImage*	gIconFolder32 = nil;
 
 
 //----------------------------------------------------------------------------------------
@@ -152,6 +143,7 @@ initIconCache ()
 		setImageForIconType(@"Finder", kFinderIcon);
 		setImageForIconType(@"delete", kToolbarDeleteIcon);
 		NSImage* image = setImageForIconType(@"mkdir", kGenericFolderIcon);
+		gIconFolder32 = [image copy];
 		[image lockFocus];
 		[[NSImage imageNamed: @"PlusTopRight"] compositeToPoint: NSMakePoint(0, 0) operation: NSCompositeSourceOver];
 		[image unlockFocus];
@@ -229,13 +221,24 @@ getIcon (ConstCStr path, Boolean* isDirectory)
 
 //----------------------------------------------------------------------------------------
 
-NSImage* GenericFolderImage ();
+NSImage* GenericFolderImage (void);
+NSImage* GenericFolderImage32 (void);
 
 NSImage*
 GenericFolderImage ()
 {
 	initIconCache();
 	return gIconFolder.fImage;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+NSImage*
+GenericFolderImage32 ()
+{
+	initIconCache();
+	return gIconFolder32;
 }
 
 
@@ -250,8 +253,8 @@ GenericFolderImage ()
 
 - (void) svnError: (NSDictionary*) taskObj
 {
-	NSString* errMsg = [taskObj valueForKey: @"stderr"];
-	if ([errMsg length] > 0)
+	NSString* errMsg = stdErr(taskObj);
+	if (errMsg)
 		[controller svnError: errMsg];
 }
 
@@ -344,26 +347,32 @@ GenericFolderImage ()
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (NSString*) windowNibName
 {
 	return @"MyWorkingCopy";
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) windowControllerDidLoadNib: (NSWindowController*) aController
 {
 	[aController setShouldCascadeWindows: NO];
 
 	// set table view's default sorting to status type column
-	
-	[svnFilesAC setSortDescriptors:[NSArray arrayWithObjects: [[[NSSortDescriptor alloc] 
-                                                 initWithKey:@"col1" ascending:NO] autorelease],
-												 [[[NSSortDescriptor alloc] 
-                                                 initWithKey:@"path" ascending:YES] autorelease], nil]];
+	id desc1 = [[NSSortDescriptor alloc] initWithKey: @"col1" ascending: NO],
+	   desc2 = [[NSSortDescriptor alloc] initWithKey: @"path" ascending: YES];
+	[svnFilesAC setSortDescriptors: [NSArray arrayWithObjects: desc1, desc2, nil]];
+	[desc1 release];
+	[desc2 release];
 
-    [super windowControllerDidLoadNib:aController];
+    [super windowControllerDidLoadNib: aController];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (int*) reviewCount
 {
@@ -371,14 +380,16 @@ GenericFolderImage ()
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) close
 {
 	// tell the task center to cancel pending callbacks to prevent crash
-	[[Tasks sharedInstance] cancelCallbacksOnTarget:self];
+	[[Tasks sharedInstance] cancelCallbacksOnTarget: self];
 
-	[self removeObserver:self forKeyPath:@"smartMode"];
-	[self removeObserver:self forKeyPath:@"flatMode"];
-	[self removeObserver:self forKeyPath:@"filterMode"];
+	[self removeObserver: self forKeyPath: @"smartMode"];
+	[self removeObserver: self forKeyPath: @"flatMode"];
+	[self removeObserver: self forKeyPath: @"filterMode"];
 
 	[controller cleanup];
 
@@ -386,11 +397,15 @@ GenericFolderImage ()
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (NSInvocation*) genericCompletedCallback
 {
 	return MakeCallbackInvocation(self, @selector(svnGenericCompletedCallback:));
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (NSDictionary*) documentNameDict
 {
@@ -402,6 +417,42 @@ GenericFolderImage ()
 #pragma mark	-
 #pragma mark	svn status
 //----------------------------------------------------------------------------------------
+/*
+	Working Copy Item = {
+		col1:				<char>									(NSString)
+		col2:				<char>									(NSString)
+		col3:				<char>									(NSString)
+		col4:				<char>									(NSString)
+		col5:				<char>									(NSString)
+		col6:				<char>									(NSString)
+		col7:				<char>									(NSString)
+		col8:				<char>									(NSString)
+		dirPath:             "dir-in-wc/"							(NSString)
+		displayPath:         "file-name" or "dir-in-wc/file-name"	(NSString)
+		fullPath:            "/Users/.../file-name"					(NSString)
+		icon:                <16x16-image>							(NSImage)
+		path:                "dir-in-wc/file-name"					(NSString)
+		revisionCurrent:     <revision-number>						(NSString)
+		revisionLastChanged: <revision-number>						(NSString)
+		user:                <author>								(NSString)
+
+		modified:				(NSBool)
+		new:					(NSBool)
+		missing:				(NSBool)
+		added:					(NSBool)
+		deleted:				(NSBool)
+
+		renamable:				(NSBool)
+		addable:				(NSBool)
+		removable:				(NSBool)
+		updatable:				(NSBool)
+		revertable:				(NSBool)
+		committable:			(NSBool)
+		resolvable:				(NSBool)
+		lockable:				(NSBool)
+		unlockable:				(NSBool)
+	}
+*/
 
 struct SvnStatusEnv
 {
@@ -581,7 +632,7 @@ svnStatusReceiver (void*       baton,
 	NSString* const revisionLastChanged = entry ? SvnRevNumToString(entry->cmt_rev)  : @"";
 	NSString* const theUser             = entry ? UTF8(entry->cmt_author)            : @"";
 	NSString* const dirPath = [itemPath stringByDeletingLastPathComponent];
-	[env->newSvnFiles addObject: [NSMutableDictionary dictionaryWithObjectsAndKeys:
+	[env->newSvnFiles addObject: [NSDictionary dictionaryWithObjectsAndKeys:
 									column1,             @"col1",
 									column2,             @"col2",
 									column3,             @"col3",
@@ -633,7 +684,7 @@ typedef struct SvnInfoEnv SvnInfoEnv;
 //----------------------------------------------------------------------------------------
 // WC 'svn info' callback.  Sets <revision> and <repositoryUrl>.
 
-SvnError
+static SvnError
 svnInfoReceiver (void*       baton,
 				 const char* path,
 				 SvnInfo     info,
@@ -700,7 +751,6 @@ svnInfoReceiver (void*       baton,
 		if (treeDirs)
 			[self setSvnDirectories: treeDirs];
 		[controller saveSelection];
-	//	[env.newSvnFiles sortUsingFunction: compareDisplayPaths context: NULL];
 		[self setSvnFiles: env.newSvnFiles];
 		[controller fetchSvnStatusVerboseReceiveDataFinished];
 		[controller restoreSelection];
@@ -712,15 +762,8 @@ svnInfoReceiver (void*       baton,
 
 - (void) fetchSvnStatus: (BOOL) showUpdates_
 {
-	BOOL useSvnLib = !useOldParsingMethod();
-	if (useSvnLib && !SvnInitialize())		// Can't use svn lib
-	{
-		useSvnLib = FALSE;
-		SetPreference(@"useOldParsingMethod", kNSTrue);
-	}
-
 	[controller setStatusMessage: @"Refreshing"];
-	if (useSvnLib)
+	if (SvnWantAndHave())
 	{
 		NSAutoreleasePool* autoPool = [[NSAutoreleasePool alloc] init];
 		// Create top-level memory pool.
@@ -779,9 +822,9 @@ svnInfoReceiver (void*       baton,
 
 - (void) svnStatusCompletedCallback: (NSMutableDictionary*) taskObj
 {
-	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
+	if (isCompleted(taskObj))
 	{
-		[self computesVerboseResultArray: [taskObj valueForKey:@"stdout"]];
+		[self computesVerboseResultArray: stdOut(taskObj)];
 
 		[controller fetchSvnStatusVerboseReceiveDataFinished];
 	}
@@ -1164,7 +1207,7 @@ svnInfoReceiver (void*       baton,
 
 		NSImage* icon = [workspace iconForFile: itemFullPath];
 		[icon setSize: kIconSize];
-		[newSvnFiles addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:
+		[newSvnFiles addObject: [NSDictionary dictionaryWithObjectsAndKeys:
 									column1, @"col1",
 									column2, @"col2",
 									column3, @"col3",
@@ -1258,9 +1301,9 @@ svnInfoReceiver (void*       baton,
 
 - (void) svnInfoCompletedCallback: (id) taskObj
 {
-	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
+	if (isCompleted(taskObj))
 	{
-		[self fetchSvnInfoReceiveDataFinished:[taskObj valueForKey:@"stdout"]];
+		[self fetchSvnInfoReceiveDataFinished: stdOut(taskObj)];
 	}
 
 	[self svnError: taskObj];
@@ -1442,7 +1485,7 @@ svnInfoReceiver (void*       baton,
 {
 	[controller stopProgressIndicator];
 
-	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
+	if (isCompleted(taskObj))
 	{
 		[self svnRefresh];		
 	}
@@ -1491,7 +1534,7 @@ svnInfoReceiver (void*       baton,
 {
 	[controller stopProgressIndicator];
 
-	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
+	if (isCompleted(taskObj))
 	{
 		[self svnRefresh];		
 	}
@@ -1524,7 +1567,7 @@ svnInfoReceiver (void*       baton,
 
 - (void) fileMergeCallback: (id) taskObj
 {
-	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
+	if (isCompleted(taskObj))
 		;
 
 	[self svnError: taskObj];
@@ -1815,7 +1858,7 @@ static int
 compareNames (id obj1, id obj2, void* context)
 {
 	#pragma unused(context)
-	return [[obj1 name] caseInsensitiveCompare: [obj2 name]];
+	return [[obj1 name] compare: [obj2 name] options: kCompareOptions];
 }
 
 

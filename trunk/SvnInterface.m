@@ -1,14 +1,15 @@
 //----------------------------------------------------------------------------------------
 //	SvnInterface.m - Interface to Subversion libraries
 //
-//	Copyright © Chris, 2003 - 2008.  All rights reserved.
+//	Copyright © Chris, 2003 - 2009.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
-#include "SvnInterface.h"
-#include "svn_config.h"
-#include "svn_fs.h"
-#include "svn_auth.h"
-#include "NSString+MyAdditions.h"
+#import "MyApp.h"
+#import "SvnInterface.h"
+#import "svn_config.h"
+#import "svn_fs.h"
+#import "svn_auth.h"
+#import "NSString+MyAdditions.h"
 
 
 #define	SvnPush(array, obj)		((*(typeof(obj)*) apr_array_push(array)) = (obj))
@@ -201,6 +202,19 @@ SvnDeletePool (SvnPool pool)
 
 //----------------------------------------------------------------------------------------
 
+SvnRevNum
+SvnRevNumFromString (NSString* revision)
+{
+	if (revision == nil)
+		return SVN_INVALID_REVNUM;
+	if ([revision isEqualToString: @"HEAD"])
+		return INT_MAX;
+	return [revision intValue];
+}
+
+
+//----------------------------------------------------------------------------------------
+
 NSString*
 SvnRevNumToString (SvnRevNum rev)
 {
@@ -275,6 +289,7 @@ SvnAuth_ssl_server_trust_prompt (svn_auth_cred_ssl_server_trust_t** cred_p,
 								 SvnBool may_save,
 								 SvnPool pool)
 {
+	#pragma unused(baton)
 //	const id delegate = (id) baton;
 	NSMutableString* msg = [NSMutableString string];
 	if (failures & SVN_AUTH_SSL_UNKNOWNCA)

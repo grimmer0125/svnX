@@ -26,6 +26,8 @@
 	FN(svn_config_ensure)
 	FN(svn_config_get_config)
 	FN(svn_handle_error2)
+	FN(svn_error__locate)
+	FN(svn_error_create)
 	FN(svn_error_clear)
 	FN(svn_auth_get_keychain_simple_provider)
 	FN(svn_auth_get_simple_provider)

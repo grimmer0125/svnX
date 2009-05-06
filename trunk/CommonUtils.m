@@ -4,11 +4,31 @@
 //	Copyright © Chris, 2003 - 2009.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
-#include <Cocoa/Cocoa.h>
-#include "CommonUtils.h"
-#include "DbgUtils.h"
-#include "MySVN.h"
-#include "Tasks.h"
+#import <Cocoa/Cocoa.h>
+#import "CommonUtils.h"
+#import "MySVN.h"
+#import "Tasks.h"
+
+
+//----------------------------------------------------------------------------------------
+
+NSUserDefaults*
+Preferences ()
+{
+	static id prefs = nil;
+	if (prefs == nil)
+		prefs = [NSUserDefaults standardUserDefaults];
+	return prefs;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+BOOL
+SyncPreference ()
+{
+	return [Preferences() synchronize];
+}
 
 
 //----------------------------------------------------------------------------------------
@@ -16,7 +36,7 @@
 id
 GetPreference (NSString* prefKey)
 {
-	return [[[NSUserDefaultsController sharedUserDefaultsController] values] valueForKey: prefKey];
+	return [Preferences() objectForKey: prefKey];
 }
 
 
@@ -25,7 +45,7 @@ GetPreference (NSString* prefKey)
 BOOL
 GetPreferenceBool (NSString* prefKey)
 {
-	return [GetPreference(prefKey) boolValue];
+	return [Preferences() boolForKey: prefKey];
 }
 
 
@@ -34,7 +54,7 @@ GetPreferenceBool (NSString* prefKey)
 int
 GetPreferenceInt (NSString* prefKey)
 {
-	return [GetPreference(prefKey) intValue];
+	return [Preferences() integerForKey: prefKey];
 }
 
 
@@ -43,10 +63,30 @@ GetPreferenceInt (NSString* prefKey)
 void
 SetPreference (NSString* prefKey, id prefValue)
 {
-	[[NSUserDefaults standardUserDefaults] setObject: prefValue forKey: prefKey];
+	[Preferences() setObject: prefValue forKey: prefKey];
 }
 
 
+//----------------------------------------------------------------------------------------
+
+void
+SetPreferenceBool (NSString* prefKey, BOOL prefValue)
+{
+	[Preferences() setBool: prefValue forKey: prefKey];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+SetPreferenceInt (NSString* prefKey, int prefValue)
+{
+	[Preferences() setInteger: prefValue forKey: prefKey];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
 //----------------------------------------------------------------------------------------
 
 NSInvocation*
@@ -79,6 +119,21 @@ AltOrShiftPressed ()
 
 
 //----------------------------------------------------------------------------------------
+#pragma mark	-
+//----------------------------------------------------------------------------------------
+// Parse date & time strings of the format: date="YYYY-MM-DD" & time="HH:MM:SS"
+
+UTCTime
+ParseDateTime (NSString* date, NSString* time)
+{
+	return [[NSDate dateWithString: [NSString stringWithFormat: @"%@ %@ +0000", date, time]]
+				timeIntervalSinceReferenceDate];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+//----------------------------------------------------------------------------------------
 // Open one or more files using open.sh given their full paths.
 
 void
@@ -90,8 +145,79 @@ OpenFiles (id fileOrFiles)
 	else
 		[arguments addObject: fileOrFiles];
 
-	[[[Task alloc] initWithDelegate: nil object: nil]
-			launch: ShellScriptPath(@"open") arguments: arguments];
+	[[Task task] launch: ShellScriptPath(@"open") arguments: arguments];
+}
+
+
+//----------------------------------------------------------------------------------------
+// kOnAppropriateDisk, kTemporaryFolderType => /tmp
+// kOnAppropriateDisk, kChewableItemsFolderType => /private/var/tmp/folders.#/Cleanup At Startup/
+// kUserDomain, kChewableItemsFolderType => ~/Library/Caches/Cleanup At Startup/
+// kUserDomain, kMagicTemporaryItemsFolderType => fnfErr
+// kUserDomain, kTemporaryItemsInUserDomainFolderType => fnfErr
+// kUserDomain, kTemporaryFolderType => ~/Library/Caches/TemporaryItems/
+// kUserDomain, kUserSpecificTmpFolderType => ~/Library/Caches/
+
+FSRef*
+Folder_Find (OSType folderType, FSRef* fsRef)
+{
+	return (WarnIf(FSFindFolder(kUserDomain, folderType,
+								kCreateFolder, fsRef)) == noErr) ? fsRef : NULL;
+}
+
+
+//----------------------------------------------------------------------------------------
+// ~/Library/Caches/TemporaryItems/
+
+FSRef*
+Folder_TemporaryItems (FSRef* fsRef)
+{
+	return Folder_Find(kTemporaryFolderType, fsRef);
+}
+
+
+//----------------------------------------------------------------------------------------
+// ~/Library/Caches/Cleanup At Startup/
+
+FSRef*
+Folder_ChewableItems (FSRef* fsRef)
+{
+	return Folder_Find(kChewableItemsFolderType, fsRef);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+BOOL
+Folder_IsEqual (OSType folderType, NSURL* url)
+{
+	FSRef tempFolder;
+	if (url && Folder_Find(folderType, &tempFolder))
+	{
+		FSRef fsRef;
+		return CFURLGetFSRef((CFURLRef) url, &fsRef) &&
+			   FSCompareFSRefs(&tempFolder, &fsRef) == noErr;
+	}
+
+	return FALSE;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+BOOL
+Folder_IsTemporaryItems (NSURL* url)
+{
+	return Folder_IsEqual(kTemporaryFolderType, url);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+BOOL
+Folder_IsChewableItems (NSURL* url)
+{
+	return Folder_IsEqual(kChewableItemsFolderType, url);
 }
 
 

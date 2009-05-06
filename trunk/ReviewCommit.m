@@ -1,23 +1,24 @@
+//----------------------------------------------------------------------------------------
+//	ReviewCommit.m - Review and edit a commit
 //
-// ReviewCommit.m - Review and edit a commit
-//
+//	Copyright © Chris, 2008 - 2009.  All rights reserved.
+//----------------------------------------------------------------------------------------
 
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <WebKit/WebKit.h>
-#include "ReviewCommit.h"
-#include "MySvnLogParser.h"
-#include "MyWorkingCopy.h"
-#include "MyWorkingCopyController.h"
-#include "MySvn.h"
-#include "SvnDateTransformer.h"
-#include "TableViewDelegate.h"
-#include "Tasks.h"
-#include "CommonUtils.h"
-#include "DbgUtils.h"
-#include "ViewUtils.h"
-#include "NSString+MyAdditions.h"
+#import <fcntl.h>
+#import <sys/stat.h>
+#import <unistd.h>
+#import <WebKit/WebKit.h>
+#import "ReviewCommit.h"
+#import "MySvnLogParser.h"
+#import "MyWorkingCopy.h"
+#import "MyWorkingCopyController.h"
+#import "MySvn.h"
+#import "SvnDateTransformer.h"
+#import "TableViewDelegate.h"
+#import "Tasks.h"
+#import "CommonUtils.h"
+#import "ViewUtils.h"
+#import "NSString+MyAdditions.h"
 
 
 //----------------------------------------------------------------------------------------
@@ -57,11 +58,13 @@
 #pragma mark	-
 //----------------------------------------------------------------------------------------
 
+static const unsigned kCompareOptions = NSCaseInsensitiveSearch | NSNumericSearch;
+
 static int
 compareNames (id obj1, id obj2, void* context)
 {
 	#pragma unused(context)
-	return [[obj1 name] caseInsensitiveCompare: [obj2 name]];
+	return [[obj1 name] compare: [obj2 name] options: kCompareOptions];
 }
 
 
@@ -71,7 +74,8 @@ static int
 compareTemplateNames (id obj1, id obj2, void* context)
 {
 	#pragma unused(context)
-	return [[obj1 objectForKey: @"name"] caseInsensitiveCompare: [obj2 objectForKey: @"name"]];
+	return [[obj1 objectForKey: @"name"] compare: [obj2 objectForKey: @"name"]
+										 options: kCompareOptions];
 }
 
 
@@ -204,6 +208,7 @@ enum {
 //	[[fDocument controller] release];
 	[fTemplates release];
 	[fDocument release];
+	[fFileDiffTask release];
 	[super dealloc];
 }
 
@@ -334,11 +339,9 @@ enum {
 
 - (void) recentCallback: (id) taskObj
 {
-	if ([fWindow isVisible] &&
-		[[taskObj valueForKey: @"status"] isEqualToString: @"completed"] &&
-		[[taskObj valueForKey: @"stderr"] length] == 0)
+	if ([fWindow isVisible] && isCompleted(taskObj) && stdErr(taskObj) == nil)
 	{
-		NSData* data = [taskObj valueForKey: @"stdoutData"];
+		NSData* data = stdOutData(taskObj);
 		if (data != nil && [data length] != 0)
 		{
 			NSArray* const array = [MySvnLogParser parseData: data];
@@ -508,8 +511,7 @@ enum {
 - (BOOL) svnError: (id) taskObj
 {
 	NSString* errMsg = nil;
-	const BOOL isErr = (![[taskObj valueForKey: @"status"] isEqualToString: @"completed"] &&
-					  [(errMsg = [taskObj valueForKey: @"stderr"]) length] > 0);
+	const BOOL isErr = (!isCompleted(taskObj) && (errMsg = stdErr(taskObj)) != nil);
 	if (isErr)
 	{
 		if ([fWindow attachedSheet])
@@ -619,6 +621,7 @@ enum {
 
 - (IBAction) commitFiles: (id) sender
 {
+	#pragma unused(sender)
 	if (AltOrShiftPressed())
 		[self doCommitFiles];
 	else
@@ -645,6 +648,7 @@ enum {
 
 - (IBAction) toggleSelectedFile: (id) sender
 {
+	#pragma unused(sender)
 	ReviewFile* item = [self selectedItemOrNil];
 	if (item)
 	{
@@ -661,6 +665,7 @@ enum {
 
 - (IBAction) revealSelectedFile: (id) sender
 {
+	#pragma unused(sender)
 	ReviewFile* item = [self selectedItemOrNil];
 	if (item)
 	{
@@ -682,10 +687,27 @@ enum {
 
 - (void) taskCompleted: (Task*) task object: (id) tmpHtmlPath
 {
-	#pragma unused(task)
+	if (task != fFileDiffTask && fFileDiffTask != nil)
+		return;
+	if (task == fFileDiffTask)
+	{
+		fFileDiffTask = nil;
+		[task release];
+	}
 	if ([fWindow isVisible])
 		[[fDiffView mainFrame] loadRequest: [NSURLRequest requestWithURL:
 												[NSURL fileURLWithPath: tmpHtmlPath]]];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Private:
+
+- (NSString*) tmpHtmlPath
+{
+	static unsigned int fileIndex = 0;
+	return [NSString stringWithFormat: @"/tmp/svnx-review-%X%c.html",
+											self, 'z' - (++fileIndex & 3)];
 }
 
 
@@ -696,8 +718,16 @@ enum {
 //	dprintf("item=%@ '%@'", item, [item name]);
 	if (item)
 	{
+		Task* task = fFileDiffTask;
+		if (task)	// Kill old task
+		{
+			fFileDiffTask = nil;
+			[[task task] interrupt];
+			[task release];
+		}
+
 	//	NSString* options = [NSString stringWithFormat: @"-r%@:1", fRevision];
-		NSString* tmpHtmlPath = [NSString stringWithFormat: @"/tmp/svnx-review-%X.html", self];
+		NSString* tmpHtmlPath = [self tmpHtmlPath];
 
 		// review.sh <svn-tool> <options> <ctx-lines> <show-func> <show-chars> <dest-html> <paths...>
 		NSArray* arguments = [NSArray arrayWithObjects:
@@ -710,8 +740,9 @@ enum {
 			[item fullPath],										// path
 			nil];
 
-		[[[Task alloc] initWithDelegate: self object: tmpHtmlPath]
-				launch: ShellScriptPath(@"review") arguments: arguments];
+		task = [Task taskWithDelegate: self object: tmpHtmlPath];
+		fFileDiffTask = [task retain];
+		[task launch: ShellScriptPath(@"review") arguments: arguments];
 	}
 }
 
@@ -781,6 +812,7 @@ enum {
 
 - (IBAction) changeEditView: (id) sender
 {
+	#pragma unused(sender)
 //	NSLog(@"changeEditView: %d", [sender selectedSegment]);
 //	[self setEditPane: [sender selectedSegment]];
 }
@@ -797,11 +829,11 @@ enum {
 
 //----------------------------------------------------------------------------------------
 
-- (void) setHideMessage: (BOOL) state	{}
+- (void) setHideMessage:   (BOOL) state	{ _Pragma("unused(state)") }
 
-- (void) setHideRecent: (BOOL) state	{}
+- (void) setHideRecent:    (BOOL) state	{ _Pragma("unused(state)") }
 
-- (void) setHideTemplates: (BOOL) state	{}
+- (void) setHideTemplates: (BOOL) state	{ _Pragma("unused(state)") }
 
 
 //----------------------------------------------------------------------------------------
@@ -842,6 +874,7 @@ enum {
 
 - (void) textDidChange: (NSNotification*) aNotification
 {
+	#pragma unused(aNotification)
 	[self setCanCommit: nil];
 }
 
@@ -850,6 +883,7 @@ enum {
 
 - (void) insertRecent: (id) sender
 {
+	#pragma unused(sender)
 	int rowIndex = [fRecentView selectedRow];
 	if (rowIndex >= 0)
 	{
@@ -887,15 +921,14 @@ enum {
 
 	NSString* result = @"[SCRIPT: Couldn't run]";
 	static unsigned int uid = 0;
-	++uid;
-	NSString* const path = [NSString stringWithFormat: @"/tmp/svnx%u-script%u.sh", getpid(), uid];
-	char cpath[40];
+	NSString* const path = [NSString stringWithFormat: @"/tmp/svnx%u-script%u.sh", getpid(), ++uid];
+	char cpath[64];
 	if ([[script normalizeEOLs] writeToFile: path atomically: NO encoding: kEncoding error: nil] &&
 		[path getCString: cpath maxLength: sizeof(cpath) encoding: kEncoding] &&
 		chmod(cpath, S_IRWXU) == 0)
 	{
 		NSPipe* const pipe = [NSPipe pipe];
-		Task* const task = [[Task alloc] initWithDelegate: nil object: nil];
+		Task* const task = [Task task];
 		[task setStandardOutput: pipe];
 		[task launch: path arguments: args];
 
@@ -930,6 +963,7 @@ enum {
 
 - (void) insertTemplate: (id) sender
 {
+	#pragma unused(sender)
 	int rowIndex = [fTemplatesView selectedRow];
 	if (rowIndex >= 0)
 	{
@@ -1064,7 +1098,7 @@ enum {
 
 //----------------------------------------------------------------------------------------
 
-- (void) windowDidResignKey: (NSNotification*) notification
+- (void) windowDidResignKey: (NSNotification*) aNotification
 {
 	#pragma unused(aNotification)
 //	NSLog(@"windowDidResignKey ReviewController: refs=%d", [self retainCount]);
@@ -1086,6 +1120,15 @@ enum {
 	[self saveTemplates];
 	[fWindow setDelegate: nil];		// prevents windowDidResignKey message
 	[self unload];
+
+	// Delete temp HTML files
+	const NSStringEncoding kEncoding = NSUTF8StringEncoding;
+	for (int i = 0; i < 4; ++i)
+	{
+		char cpath[64];
+		if ([[self tmpHtmlPath] getCString: cpath maxLength: sizeof(cpath) encoding: kEncoding])
+			(void) unlink(cpath);
+	}
 }
 
 
@@ -1142,6 +1185,7 @@ enum {
 
 - (void) tableViewSelectionDidChange: (NSNotification*) aNotification
 {
+	#pragma unused(aNotification)
 	[self displaySelectedFileDiff];
 }
 
@@ -1173,6 +1217,7 @@ enum {
 		 writeRowsWithIndexes: (NSIndexSet*)   rowIndexes
 		 toPasteboard:         (NSPasteboard*) pboard
 {
+	#pragma unused(aTableView)
 	ReviewFile* item = [fFiles objectAtIndex: [rowIndexes firstIndex]];
 	NSArray* filePaths = [NSArray arrayWithObject: [item fullPath]];
 
@@ -1258,6 +1303,7 @@ enum {
 
 - (int) numberOfRowsInTableView: (NSTableView*) aTableView
 {
+	#pragma unused(aTableView)
 	return [fFiles count];
 }
 

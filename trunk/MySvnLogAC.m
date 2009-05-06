@@ -1,5 +1,5 @@
 #import "MySvnLogAC.h"
-#include "CommonUtils.h"
+#import "CommonUtils.h"
 
 
 @implementation MySvnLogAC
@@ -26,6 +26,7 @@
 
 - (void) rearrange: (id) sender
 {
+	#pragma unused(sender)
 	[self rearrangeObjects];
 }
 

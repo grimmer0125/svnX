@@ -1,7 +1,7 @@
 #import "MySVN.h"
 #import "MyApp.h"
-#include "CommonUtils.h"
-#include <unistd.h>
+#import "CommonUtils.h"
+#import <unistd.h>
 
 
 //----------------------------------------------------------------------------------------
@@ -65,8 +65,8 @@ shellScriptPath (NSString* script)
 
 //----------------------------------------------------------------------------------------
 
-static NSString*
-svnPath ()
+NSString*
+SvnPath ()
 {
 	return GetPreference(@"svnBinariesFolder");
 }
@@ -77,7 +77,7 @@ svnPath ()
 NSString*
 SvnCmdPath ()
 {
-	return [svnPath() stringByAppendingPathComponent: @"svn"];
+	return [SvnPath() stringByAppendingPathComponent: @"svn"];
 }
 
 

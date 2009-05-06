@@ -27,6 +27,7 @@
 	int						fEditState;
 	BOOL					fIsBusy;
 	BOOL					fSuppressAutoRefresh;
+	Task*					fFileDiffTask;
 }
 
 + (void) openForDocument: (MyWorkingCopy*) document;

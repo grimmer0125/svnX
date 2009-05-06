@@ -2,6 +2,14 @@
 
 #import <Cocoa/Cocoa.h>
 
+BOOL		isCompleted	(NSDictionary* taskObj);
+NSString*	stdErr		(NSDictionary* taskObj);
+NSString*	stdOut		(NSDictionary* taskObj);
+NSData*		stdOutData	(NSDictionary* taskObj);
+
+
+//----------------------------------------------------------------------------------------
+
 @interface Tasks : NSObject
 {
     IBOutlet NSArrayController *tasksAC;
@@ -37,6 +45,8 @@
 	id					fObject;	// callback argument
 }
 
++ (id) task;
++ (id) taskWithDelegate: (id<TaskDelegate>) target object: (id) object;
 - (id) initWithDelegate: (id<TaskDelegate>) target object: (id) object;
 - (NSTask*) task;
 - (void) launch:    (NSString*) path

@@ -68,7 +68,7 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>SUFeedURL</key>
-	<string>http://www.lachoseinteractive.net/en/community/subversion/svnx/history/rss/</string>
+	<string>http://code.google.com/p/svnx/wiki/rss</string>
 	<key>CFBundleName</key>
 	<string>svnX</string>
 	<key>CFBundleShortVersionString</key>
@@ -76,5 +76,10 @@
 	<key>CFBundleGetInfoString</key>
 	<string>1.1b0, © 2004-2008 La Chose
 © 2008-2009 Chris</string>
+	<key>LSEnvironment</key>
+	<dict>
+		<key>DYLD_LIBRARY_PATH</key>
+		<string>/opt/subversion/lib</string>
+	</dict>
 </dict>
 </plist>

@@ -138,7 +138,11 @@ SvnInitialize ()
 						{ NULL, NULL }
 					};
 
-					SVN_VERSION_DEFINE(my_version);
+				//	SVN_VERSION_DEFINE(my_version);
+					const UInt32 version = [[NSApp delegate] svnVersionNum];
+					const svn_version_t my_version = {
+						version / 1000000, (version / 1000) % 1000, version % 1000, ""
+					};
 
 					SvnError err = svn_ver_check_list(&my_version, checklist);
 					exists = (err == NULL);

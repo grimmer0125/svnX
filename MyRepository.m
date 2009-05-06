@@ -60,6 +60,8 @@ TrimSlashes (id obj)
 	- (void) setUrl:              (NSURL*)    anUrl;
 	- (void) checkRepositoryURL;
 	- (void) setDisplayedTaskObj: (NSMutableDictionary*) aDisplayedTaskObj;
+	- (NSInvocation*) makeSvnOptionInvocation;
+	- (NSInvocation*) makeCallbackInvocationOfKind: (int) callbackKind;
 
 @end
 
@@ -1279,6 +1281,11 @@ svnInfoReceiver (void*       baton,
 	displayedTaskObj = [aDisplayedTaskObj retain];
 	[old release];
 }
+
+
+//----------------------------------------------------------------------------------------
+
+- (NSURL*) rootURL { return fRootURL; }
 
 
 //----------------------------------------------------------------------------------------

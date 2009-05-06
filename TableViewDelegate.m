@@ -170,6 +170,7 @@ helpTagForWCFile (NSDictionary* wcFileInfo)
 - (BOOL) control:              (NSControl*) control
 		 textShouldEndEditing: (NSText*)    fieldEditor
 {
+	#pragma unused(control)
 	[[document controller] requestSvnRenameSelectedItemTo:
 		[ [[document workingCopyPath] stringByAppendingPathComponent:[document outlineSelectedPath]]
 								stringByAppendingPathComponent:[fieldEditor string]]];

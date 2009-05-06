@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+					   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>Classes</key>
@@ -23,12 +24,45 @@
 			<string>applications</string>
 		</dict>
 	</dict>
+
 	<key>Commands</key>
 	<dict>
-		<key>fileHistoryOpenSheetForItem</key>
+		<key>displayHistory</key>
 		<dict>
-			<key>Name</key>
-			<string>displayHistory</string>
+			<key>Name</key>			<string>displayHistory</string>
+			<key>Description</key>
+				<string>compare a single file in a svnX window</string>
+		</dict>
+
+		<key>openWorkingCopy</key>
+		<dict>
+			<key>Name</key>			<string>openWorkingCopy</string>
+			<key>Description</key>
+				<string>open a working copy window</string>
+		</dict>
+
+		<key>openRepository</key>
+		<dict>
+			<key>Name</key>			<string>openRepository</string>
+			<key>Description</key>
+				<string>open a repository window</string>
+		</dict>
+
+		<key>openFiles</key>
+		<dict>
+			<key>Name</key>			<string>openFiles</string>
+			<key>Description</key>
+				<string>open one or more files in appropriate applications</string>
+			<key>Arguments</key>
+			<dict>
+				<key>directParameter</key>
+				<dict>
+					<key>Name</key>				<string>path</string>
+					<key>Description</key>
+						<string>a file path or an array of file paths</string>
+					<key>Number</key>			<string>plural</string>
+				</dict>
+			</dict>
 		</dict>
 	</dict>
 	<key>Name</key>

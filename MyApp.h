@@ -7,28 +7,37 @@
 /* " Application's main controller." */
 @interface MyApp : NSObject
 {
-    IBOutlet id preferencesWindow;
-	IBOutlet id favoriteWorkingCopiesWindow;	// Unused
-	IBOutlet id tasksManager;
-	IBOutlet RepositoriesController *repositoriesController;
-	IBOutlet FavoriteWorkingCopies *favoriteWorkingCopies;
+    IBOutlet id							preferencesWindow;
+	IBOutlet id							favoriteWorkingCopiesWindow;	// Unused
+	IBOutlet id							tasksManager;
+	IBOutlet RepositoriesController*	repositoriesController;
+	IBOutlet FavoriteWorkingCopies*		favoriteWorkingCopies;
+	UInt32								fSvnVersion;
 }
 
 
 + (MyApp*) myApp;
 
-- (void) fileHistoryOpenSheetForItem: (NSString*) path;
-	// Compare a single file in a svnX window. Invoked from Applescript.
+// AppleScript Handlers
+- (void) displayHistory:  (NSString*) path;	// Compare a single file in a svnX window.
+- (void) openWorkingCopy: (NSString*) path;	// Open a working copy window.
+- (void) openRepository:  (NSString*) url;	// Open a repository window.
+- (void) openFiles:       (id) fileOrFiles;	// Open files in appropriate applications.
 
-- (IBAction) openPreferences:  (id) sender;
-- (IBAction) closePreferences: (id) sender;
+- (IBAction)  openPreferences:  (id) sender;
+- (IBAction)  closePreferences: (id) sender;
+- (BOOL)      svnHasLibs;
+- (void)      setSvnHasLibs:    (id) ignore;
+- (UInt32)    svnVersionNum;
+- (NSString*) svnVersion;
+- (void)      setSvnVersion:    (NSData*) version;
 
-- (void) openRepository: (NSURL*)    url
-		 user:           (NSString*) user
-		 pass:           (NSString*) pass;
+- (void)      openRepository:   (NSURL*)    url
+			  user:             (NSString*) user
+			  pass:             (NSString*) pass;
 
-- (bool) checkSVNExistence: (bool) warn;
-- (void) newTaskWithDictionary: (NSMutableDictionary*) taskObj;
+- (bool)      checkSVNExistence:     (bool) warn;
+- (void)      newTaskWithDictionary: (NSMutableDictionary*) taskObj;
 - (NSString*) getMACAddress;
 
 @end

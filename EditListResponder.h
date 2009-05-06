@@ -4,25 +4,36 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class MyDragSupportArrayController;
+typedef struct EditListPrefKeys
+	{ NSString* data, *editShown, *panelFrame, *dragType; } EditListPrefKeys;
+
 // Superclass for FavoriteWorkingCopies & RepositoriesController
 
 @interface EditListResponder : NSResponder
 {
-    IBOutlet NSWindow*		window;
-    IBOutlet NSTableView*	tableView;
-	IBOutlet NSBox*			editBox;
-	NSString*				keyPrefix;	// prefs prefix
+    IBOutlet NSWindow*						fWindow;
+    IBOutlet NSTableView*					fTableView;
+	IBOutlet NSBox*							fEditBox;
+	IBOutlet MyDragSupportArrayController*	fAC;
+	NSMutableArray*							fDataArray;
+	const EditListPrefKeys*					fPrefKeys;
 }
 
-- (id)        init:          (NSString*) prefsPrefix;
+- (id)        init:          (const EditListPrefKeys*) prefsKeys;
+- (id)        newObject:     (NSPasteboard*) pboard;
+- (void)      savePreferences;
 - (void)      awakeFromNib;
-- (NSButton*) disclosureView;
-- (void)      toggleEdit:    (id) sender;
-- (void)      keyDown:       (NSEvent*) theEvent;
 - (void)      showWindow;
-- (NSArray*)  dataArray;					// subclass to implement
-- (void)      savePreferences;				// subclass to implement
+- (NSButton*) disclosureView;
+- (NSTextField*) nameTextField;
+- (void)      keyDown:       (NSEvent*) theEvent;
 - (void)      onDoubleClick: (id) sender;	// subclass to implement
+- (IBAction)  toggleEdit:    (id) sender;
+- (IBAction)  newItem:       (id) sender;	// subclass to implement
+- (IBAction)  removeItem:    (id) sender;	// subclass to implement
+- (IBAction)  openPath:      (id) sender;	// subclass to implement
+- (IBAction)  onValidate:    (id) sender;
 
 @end
 

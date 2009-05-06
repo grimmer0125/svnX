@@ -3,33 +3,19 @@
 #import <Cocoa/Cocoa.h>
 #import "EditListResponder.h"
 
-@class MyDragSupportArrayController;
-
 /* "Implements BOTH the model and the controller of the favorite working copies panel. "*/
 @interface FavoriteWorkingCopies : EditListResponder
 {
-	NSMutableArray *favoriteWorkingCopies;
-	IBOutlet MyDragSupportArrayController *favoriteWorkingCopiesAC;
-
-	IBOutlet id nameTextField;
-	IBOutlet id pathTextField;
-	IBOutlet id workingCopiesTableView;
-
-	IBOutlet id application;
 }
 
-- (IBAction)newWorkingCopyItem:(id)sender;
-
-- (IBAction)openPath:(id)sender;
-- (IBAction)onValidate:(id)sender;
-
-- (NSArray*) dataArray;
-- (void)saveFavoriteWorkingCopiesPrefs;
-
-- (void)onDoubleClick:(id)sender;
-
 // Adds a new working copy with the given path.
-- (void)newWorkingCopyItemWithPath:(NSString *)workingCopyPath;
+- (void) newWorkingCopyItemWithPath: (NSString*) workingCopyPath;
+
+// Open a working copy window. Invoked from Applescript.
+- (void) openWorkingCopy: (NSString*) aPath;
+
+// Open a compare revisions sheet for <aPath> on an appropriate Working Copy window.
+- (void) fileHistoryOpenSheetForItem: (NSString*) aPath;
 
 @end
 

@@ -58,6 +58,7 @@
 
 - (NSString*) revision;
 - (NSString*) windowTitle;
+- (NSURL*)    rootURL;
 - (NSURL*)    url;
 - (NSString*) browsePath;
 - (struct svn_client_ctx_t*) svnClient;
@@ -65,8 +66,6 @@
 - (void) dragOutFilesFromRepository: (NSArray*) filesDicts toURL: (NSURL*) destinationURL;
 - (void) dragExternalFiles: (NSArray*) files ToRepositoryAt: (NSDictionary*) representedObject;
 
-- (NSInvocation*) makeSvnOptionInvocation;
-- (NSInvocation*) makeCallbackInvocationOfKind: (int) callbackKind;
 - (NSInvocation*) svnOptionsInvocation;
 
 @end

@@ -2,9 +2,11 @@
 
 @implementation MyDragSupportTableView
 
-- (unsigned int)draggingSourceOperationMaskForLocal:(BOOL)isLocal
+- (unsigned int) draggingSourceOperationMaskForLocal: (BOOL) isLocal
 {
-	return  NSDragOperationCopy | NSDragOperationMove ;
+	#pragma unused(isLocal)
+	return  NSDragOperationCopy | NSDragOperationMove;
 }
 
 @end
+

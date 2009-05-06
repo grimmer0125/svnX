@@ -1,11 +1,16 @@
+//
+// RepositoriesController.m - Manage Repositories list window
+//
+
 #import "RepositoriesController.h"
-#import "MyDragSupportArrayController.h"
 #import "MyRepository.h"
 #import "NSString+MyAdditions.h"
-#include "CommonUtils.h"
+#import "CommonUtils.h"
 
 
-#define preferences [NSUserDefaults standardUserDefaults]
+static NSString* const kDocType = @"repository";
+static /*const*/ EditListPrefKeys kPrefKeys = 
+	{ @"repositories", @"repEditShown", @"repPanelFrame"/*, NSURLPboardType*/ };
 
 
 //----------------------------------------------------------------------------------------
@@ -66,86 +71,73 @@ StringToURL (NSString* urlString)
 
 - (id) init
 {
-	self = [super init: @"rep"];
-	if (self)
+	kPrefKeys.dragType = NSURLPboardType;
+	if (self = [super init: &kPrefKeys])
 	{
-		NSMutableArray* reposArray = [NSMutableArray array];
-
-		NSData* dataPrefs = [preferences objectForKey: @"repositories"];
-		if (dataPrefs != nil)
-		{
-			id repositoriesFromPrefs = [NSUnarchiver unarchiveObjectWithData: dataPrefs];
-
-			if (repositoriesFromPrefs != nil)
-			{
-				[reposArray setArray: repositoriesFromPrefs];
-			}
-		}
-		[self setRepositories: reposArray];
 	}
 
 	return self;
 }
 
 
-- (void) dealloc
-{
-//	[self removeObserver:self forKeyPath:@"repositories"];
-	[self setRepositories: nil];
+//----------------------------------------------------------------------------------------
 
-	[super dealloc];
+- (id) newObject: (NSPasteboard*) pboard
+{
+	id obj = nil;	
+	NSURL* url = nil;
+	NSString* str = [pboard stringForType: @"public.url"];	// <= *.webloc file
+	if (str != nil && (url = [NSURL URLWithString: str]) != nil)
+	{
+		// Name of file without extension
+		str = [[[[NSURL URLFromPasteboard: pboard] path]
+					lastPathComponent] stringByDeletingPathExtension];
+	}
+	if (url == nil)
+		url = [NSURL URLFromPasteboard: pboard];
+	if (url)
+	{
+		if (str == nil)
+			str = [[url path] lastPathComponent];
+		obj = [fAC newObject];	
+		[obj setValue: url forKey: @"url"];
+		[obj setValue: str forKey: @"name"];
+	}
+	return obj;		
 }
 
 
-- (void) savePreferences
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+//----------------------------------------------------------------------------------------
+
+- (IBAction) newItem: (id) sender
 {
-	[self saveRepositoriesPrefs];
-}
-
-
-- (NSArray*) dataArray
-{
-	return repositories;
-}
-
-
-- (void) awakeFromNib
-{
-	[repositoriesAC bind:@"contentArray" toObject:self  withKeyPath:@"repositories" options:nil];
-
-	[tableView registerForDraggedTypes:
-				[NSArray arrayWithObjects:	@"COPIED_ROWS_TYPE", @"MOVED_ROWS_TYPE", NSURLPboardType, nil]];
-
-	[super awakeFromNib];
-}
-
-
-- (IBAction) newRepositoryItem: (id) sender
-{
-	[repositoriesAC addObject:
-		[NSMutableDictionary dictionaryWithObjectsAndKeys: @"My Repository", @"name",
-														   @"svn://", @"url",
-														   @"", @"user",
-														   @"", @"pass",
+	#pragma unused(sender)
+	[fAC addObject:
+		[NSMutableDictionary dictionaryWithObjectsAndKeys: @"My Repository",	@"name",
+														   @"svn://",			@"url",
+														   @"",					@"user",
+														   @"",					@"pass",
 														   nil]];
-	[repositoriesAC setSelectionIndex:([[repositoriesAC arrangedObjects] count]-1)];
-	
-	[window makeFirstResponder:nameTextField];	
+	[super newItem: self];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (BOOL) showExtantWindow: (NSString*) name
 		 url:              (NSString*) urlString
 {
-	NSURL* url = StringToURL(urlString);
+	NSURL* const url = StringToURL(urlString);
 
-	for_each(enumerator, obj, [[NSDocumentController sharedDocumentController] documents])
+	for_each(en, doc, [[NSDocumentController sharedDocumentController] documents])
 	{
-		if ([[obj fileType] isEqualToString: @"repository"] &&
-			[[obj windowTitle] isEqualToString: name] &&
-			[[obj url] isEqual: url])
+		if ([[doc fileType] isEqualToString: kDocType] &&
+			[[doc windowTitle] isEqualToString: name] &&
+			[[doc url] isEqual: url])
 		{
-			[[[[obj windowControllers] objectAtIndex: 0] window] makeKeyAndOrderFront: self];
+			[doc showWindows];
 			return TRUE;
 		}
 	}
@@ -154,26 +146,40 @@ StringToURL (NSString* urlString)
 }
 
 
-- (void) onDoubleClick: (id) sender
-{
-	NSArray* selectedObjects = [repositoriesAC selectedObjects];
-	NSDictionary* selection;
-	if ([selectedObjects count] != 0 && (selection = [selectedObjects objectAtIndex: 0]) != nil)
-	{
-		NSString* const name = [selection objectForKey: @"name"];
-		NSString* const url  = [selection objectForKey: @"url"];
+//----------------------------------------------------------------------------------------
 
-		// If no option-key then look for & try to activate extant Repository window.
-		if (([[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask) ||
-			![self showExtantWindow: name url: url])
-		{
-			[self openRepositoryBrowser: url title: name
-					user: [selection objectForKey: @"user"]
-					pass: [selection objectForKey: @"pass"]];
-		}
+- (void) showRepositoryBrowser: (NSDictionary*) repo
+		 alwaysOpenNew:         (BOOL)          alwaysOpenNew
+{
+	Assert(repo != nil);
+	NSString* const name = [repo objectForKey: @"name"];
+	NSString* const url  = [repo objectForKey: @"url"];
+
+	if (alwaysOpenNew || ![self showExtantWindow: name url: url])
+	{
+		[self openRepositoryBrowser: url title: name
+							   user: [repo objectForKey: @"user"]
+							   pass: [repo objectForKey: @"pass"]];
 	}
 }
 
+
+//----------------------------------------------------------------------------------------
+
+- (void) onDoubleClick: (id) sender
+{
+	#pragma unused(sender)
+	NSArray* selectedObjects = [fAC selectedObjects];
+	NSDictionary* selection;
+	if ([selectedObjects count] != 0 && (selection = [selectedObjects objectAtIndex: 0]) != nil)
+	{
+		// If no option-key then look for & try to activate extant Repository window.
+		[self showRepositoryBrowser: selection alwaysOpenNew: AltOrShiftPressed()];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
 
 - (void) openRepositoryBrowser: (NSString*) url
 		 title:                 (NSString*) title
@@ -182,7 +188,7 @@ StringToURL (NSString* urlString)
 {
 	const id docController = [NSDocumentController sharedDocumentController];
 
-	MyRepository *newDoc = [docController makeUntitledDocumentOfType:@"repository"];	
+	MyRepository* newDoc = [docController makeUntitledDocumentOfType: kDocType];
 	[newDoc setupTitle: title username: user password: pass url: StringToURL(url)];
 
 	[docController addDocument: newDoc];
@@ -192,263 +198,74 @@ StringToURL (NSString* urlString)
 }
 
 
-- (IBAction) openPath: (id) sender
+//----------------------------------------------------------------------------------------
+// Invoked from AppleScript.
+
+- (void) openRepository: (NSString*) url
 {
-	NSOpenPanel *oPanel = [NSOpenPanel openPanel];
-	NSString *selectionPath = nil;
-	
-	if (selectionPath == nil)
+	// Find among the open repositories one that has a matching url
+	for_each(en1, it, [[NSDocumentController sharedDocumentController] documents])
 	{
-		selectionPath = NSHomeDirectory();
+		if ([[it fileType] isEqualToString: kDocType] &&
+			[url rangeOfString: [[it rootURL] absoluteString]
+					   options: NSLiteralSearch | NSAnchoredSearch].location == 0)
+		{
+			[it showWindows];
+			return;
+		}
 	}
-	
-	[oPanel setAllowsMultipleSelection:NO];
-	[oPanel setCanChooseDirectories:YES];
-	[oPanel setCanChooseFiles:NO];
-	
-	[oPanel beginSheetForDirectory:selectionPath file:nil types:nil modalForWindow:window
-				modalDelegate: self
-				didEndSelector:@selector(openPathDidEnd:returnCode:contextInfo:)
-				contextInfo:nil
-		];
+
+	// Find among the known repositories one that has a matching url
+	for_each(en2, it, [fAC arrangedObjects])
+	{
+		if ([url rangeOfString: [it objectForKey: @"url"]
+					   options: NSLiteralSearch | NSAnchoredSearch].location == 0)
+		{
+			[self showRepositoryBrowser: it alwaysOpenNew: NO];
+			return;
+		}
+	}
+
+	[self openRepositoryBrowser: url title: [UnEscapeURL(url) lastPathComponent] user: @"" pass: @""];
 }
 
+
+//----------------------------------------------------------------------------------------
+
+- (IBAction) openPath: (id) sender
+{
+	#pragma unused(sender)
+	NSString* selectionPath = NSHomeDirectory();
+	NSOpenPanel* const oPanel = [NSOpenPanel openPanel];
+	[oPanel setAllowsMultipleSelection: NO];
+	[oPanel setCanChooseDirectories:    YES];
+	[oPanel setCanChooseFiles:          NO];
+
+	[oPanel beginSheetForDirectory: selectionPath file: nil types: nil modalForWindow: fWindow
+					 modalDelegate: self
+					didEndSelector: @selector(openPathDidEnd:returnCode:contextInfo:)
+					   contextInfo: nil];
+}
+
+
+//----------------------------------------------------------------------------------------
 
 - (void) openPathDidEnd: (NSOpenPanel*) sheet
 		 returnCode:     (int)          returnCode
 		 contextInfo:    (void*)        contextInfo
 {
+	#pragma unused(contextInfo)
 	if (returnCode == NSOKButton)
 	{
 		NSString* pathToFile = [[sheet filenames] objectAtIndex: 0];
-		[repositoriesAC setValue:   [NSString stringWithFormat: @"file://%@", pathToFile]
-						forKeyPath: @"selection.url"];
-		[self saveRepositoriesPrefs];
+		[fAC setValue:   [NSString stringWithFormat: @"file://%@", pathToFile]
+			 forKeyPath: @"selection.url"];
+		[self savePreferences];
 	}
-}
-
-
-//----------------------------------------------------------------------------------------
-#pragma mark	-
-#pragma mark	Drag & drop
-
-- (BOOL) tableView:    (NSTableView*)  tv
-		 writeRows:    (NSArray*)      rows
-		 toPasteboard: (NSPasteboard*) pboard
-{
-	// declare our own pasteboard types
-	NSArray *typesArray = [NSArray arrayWithObjects:@"COPIED_ROWS_TYPE", @"MOVED_ROWS_TYPE", nil];
-
-	/*
-	 If the number of rows is not 1, then we only support our own types.
-	 If there is just one row, then try to create an NSURL from the url
-	 value in that row.  If that's possible, add NSURLPboardType to the
-	 list of supported types, and add the NSURL to the pasteboard.
-	 */
-	if ([rows count] != 1)
-	{
-		[pboard declareTypes:typesArray owner:self];
-	}
-	else
-	{
-		// Try to create an URL
-		// If we can, add NSURLPboardType to the declared types and write
-		//the URL to the pasteboard; otherwise declare existing types
-		int row = [[rows objectAtIndex:0] intValue];
-		NSString *urlString = [[[repositoriesAC arrangedObjects] objectAtIndex:row] valueForKey:@"url"];
-		NSURL *url;
-		if (urlString && (url = [NSURL URLWithString:urlString]))
-		{
-			typesArray = [typesArray arrayByAddingObject:NSURLPboardType];	
-			[pboard declareTypes:typesArray owner:self];
-			[url writeToPasteboard:pboard];	
-		}
-		else
-		{
-			[pboard declareTypes:typesArray owner:self];
-		}
-	}
-	
-	// add rows array for local move
-	[pboard setPropertyList:rows forType:@"MOVED_ROWS_TYPE"];
-	
-	// create new array of selected rows for remote drop
-	// could do deferred provision, but keep it direct for clarity
-	NSMutableArray *rowCopies = [NSMutableArray arrayWithCapacity:[rows count]];
-	NSEnumerator *rowEnumerator = [rows objectEnumerator];
-	NSNumber *idx;
-	while (idx = [rowEnumerator nextObject])
-	{
-		[rowCopies addObject:[[repositoriesAC arrangedObjects] objectAtIndex:[idx intValue]]];
-	}
-	// setPropertyList works here because we're using dictionaries, strings,
-	// and dates; otherwise, archive collection to NSData...
-	[pboard setPropertyList:rowCopies forType:@"COPIED_ROWS_TYPE"];
-	
-	return YES;
-}
-
-
-- (NSDragOperation) tableView:             (NSTableView*)             tv
-					validateDrop:          (id<NSDraggingInfo>)       info
-					proposedRow:           (int)                      row
-					proposedDropOperation: (NSTableViewDropOperation) op
-{
-//	NSDragOperation dragOp = NSDragOperationCopy;
-	NSPasteboard *pboard = pboard;
-	NSDragOperation sourceMask = [info draggingSourceOperationMask];
-
-	// we want to put the object at, not over,
-	// the current row (contrast NSTableViewDropOn) 
-	[tv setDropRow:row dropOperation:NSTableViewDropAbove];
-
-	if ( sourceMask & NSDragOperationMove ) return NSDragOperationMove;
-	if ( sourceMask & NSDragOperationCopy ) return NSDragOperationCopy;
-
-	// default
-	return NSDragOperationNone;
-}
-
-
-- (BOOL) tableView:     (NSTableView*)             tv
-		 acceptDrop:    (id<NSDraggingInfo>)       info
-		 row:           (int)                      row
-		 dropOperation: (NSTableViewDropOperation) op
-{
-	NSPasteboard *pboard = [info draggingPasteboard];
-	NSDragOperation sourceMask = [info draggingSourceOperationMask];
-
-	if (row < 0)
-	{
-		row = 0;
-	}
-
-	// if drag source is self, it's a move
-	if ( sourceMask & NSDragOperationMove )
-	{
-//	if ([info draggingSource] == tableView)
-//	{
-		NSArray *rows = [pboard propertyListForType:@"MOVED_ROWS_TYPE"];
-		NSIndexSet  *indexSet = [repositoriesAC indexSetFromRows:rows];
-		
-		[repositoriesAC moveObjectsInArrangedObjectsFromIndexes:indexSet toIndex:row];
-		
-		// set selected rows to those that were just moved
-		// Need to work out what moved where to determine proper selection...
-		int rowsAbove = [repositoriesAC rowsAboveRow:row inIndexSet:indexSet];
-		
-		NSRange range = NSMakeRange(row - rowsAbove, [indexSet count]);
-		indexSet = [NSIndexSet indexSetWithIndexesInRange:range];
-		[repositoriesAC setSelectionIndexes:indexSet];
-
-		[self saveRepositoriesPrefs];
-
-		return YES;
-	}
-	else if ( sourceMask & NSDragOperationCopy )
-	{
-		// Can we get rows from another document?  If so, add them, then return.
-		NSArray *newRows = [pboard propertyListForType:@"COPIED_ROWS_TYPE"];
-		if (newRows)
-		{
-			NSRange range = NSMakeRange(row, [newRows count]);
-			NSIndexSet *indexSet = [NSIndexSet indexSetWithIndexesInRange:range];
-			
-			[repositoriesAC insertObjects:newRows atArrangedObjectIndexes:indexSet];
-			// set selected rows to those that were just copied
-			[repositoriesAC setSelectionIndexes:indexSet];
-
-			[self saveRepositoriesPrefs];
-			
-			return YES;
-		}
-	} 
-
-	// Can we get an URL?  If so, add a new row, configure it, then return.
-	NSURL *url = [NSURL URLFromPasteboard:pboard];
-	if (url)
-	{
-		id newObject = [repositoriesAC newObject];	
-		[repositoriesAC insertObject:newObject atArrangedObjectIndex:row];
-		// "new" -- returned with retain count of 1
-		[newObject release];
-		[newObject takeValue:[url absoluteString] forKey:@"url"];
-		[newObject takeValue:[NSCalendarDate date] forKey:@"date"];
-		// set selected rows to those that were just copied
-		[repositoriesAC setSelectionIndex:row];
-
-		[self saveRepositoriesPrefs];
-		
-		return YES;		
-	}
-
-	return NO;
-}
-
-
-//----------------------------------------------------------------------------------------
-#pragma mark	-
-#pragma mark	Prefs Saving
-
-// see Interface builder's text fields
-
-- (IBAction) onValidate: (id) sender
-{
-	[self saveRepositoriesPrefs];
-}
-
-
-- (void) saveRepositoriesPrefs
-{
-	NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
-	[prefs setObject:[NSArchiver archivedDataWithRootObject:[self repositories]] forKey:@"repositories"];
-	[prefs setObject: NSBool([[self disclosureView] state]) forKey: @"repEditShown"];
-	[prefs synchronize];
-}
-
-
-//----------------------------------------------------------------------------------------
-#pragma mark	-
-#pragma mark	Accessors
-
-- (void) insertObject:          (id)           anObject
-		 inRepositoriesAtIndex: (unsigned int) index
-{
-	[repositories insertObject: anObject atIndex: index];
-	[self saveRepositoriesPrefs];
-}
-
-
-- (void) removeObjectFromRepositoriesAtIndex: (unsigned int) index
-{
-	[repositories removeObjectAtIndex: index];
-	[self saveRepositoriesPrefs];
-}
-
-
-- (void) replaceObjectInRepositoriesAtIndex: (unsigned int) index
-		 withObject:                         (id)           anObject
-{
-	[repositories replaceObjectAtIndex: index withObject: anObject];
-	[self saveRepositoriesPrefs];	
-}
-
-
-// - repositories:
-- (NSMutableArray*) repositories
-{
-	return repositories; 
-}
-
-
-// - setRepositories:
-- (void) setRepositories: (NSMutableArray*) aRepositories
-{
-	id old = repositories;
-	repositories = [aRepositories retain];
-	[old release];
 }
 
 
 @end
 
+//----------------------------------------------------------------------------------------
+// End of RepositoriesController.m

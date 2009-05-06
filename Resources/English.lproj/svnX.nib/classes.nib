@@ -2,24 +2,27 @@
     IBClasses = (
         {
             ACTIONS = {
-                newWorkingCopyItem = id; 
+                newItem = id; 
+                onDoubleClick = id; 
                 onValidate = id; 
                 openPath = id; 
-                showEdit = id; 
+                removeItem = id; 
                 toggleEdit = id; 
             }; 
-            CLASS = FavoriteWorkingCopies; 
+            CLASS = EditListResponder; 
             LANGUAGE = ObjC; 
             OUTLETS = {
-                application = id; 
-                editBox = NSBox; 
-                favoriteWorkingCopiesAC = id; 
-                nameTextField = id; 
-                pathTextField = id; 
-                window = id; 
-                workingCopiesTableView = id; 
+                fAC = MyDragSupportArrayController; 
+                fEditBox = NSBox; 
+                fTableView = NSTableView; 
+                fWindow = NSWindow; 
             }; 
-            SUPERCLASS = NSObject; 
+            SUPERCLASS = NSResponder; 
+        }, 
+        {
+            CLASS = FavoriteWorkingCopies; 
+            LANGUAGE = ObjC; 
+            SUPERCLASS = EditListResponder; 
         }, 
         {
             ACTIONS = {"" = id; }; 
@@ -27,8 +30,15 @@
             LANGUAGE = ObjC; 
             SUPERCLASS = NSObject; 
         }, 
+        {CLASS = HelpDocView; LANGUAGE = ObjC; SUPERCLASS = NSTextView; }, 
         {
-            ACTIONS = {openFavorite = id; openPreferences = id; stopSvnOperation = id; test = id; }; 
+            ACTIONS = {
+                openFavorite = id; 
+                openPreferences = id; 
+                stopSvnOperation = id; 
+                svnCmdPathChanged = id; 
+                test = id; 
+            }; 
             CLASS = MyApp; 
             LANGUAGE = ObjC; 
             OUTLETS = {
@@ -40,7 +50,6 @@
             }; 
             SUPERCLASS = NSObject; 
         }, 
-        {CLASS = MyDocumentationWindow; LANGUAGE = ObjC; SUPERCLASS = NSWindow; }, 
         {
             CLASS = MyDragSupportArrayController; 
             LANGUAGE = ObjC; 
@@ -50,17 +59,9 @@
         {CLASS = NSDatePicker; LANGUAGE = ObjC; SUPERCLASS = NSControl; }, 
         {CLASS = NSObject; LANGUAGE = ObjC; }, 
         {
-            ACTIONS = {newRepositoryItem = id; onValidate = id; openPath = id; toggleEdit = id; }; 
             CLASS = RepositoriesController; 
             LANGUAGE = ObjC; 
-            OUTLETS = {
-                editBox = NSBox; 
-                nameTextField = id; 
-                repositoriesAC = NSArrayController; 
-                tableView = NSTableView; 
-                window = id; 
-            }; 
-            SUPERCLASS = NSObject; 
+            SUPERCLASS = EditListResponder; 
         }, 
         {
             ACTIONS = {checkForUpdates = id; closeProfileInfoSheet = id; }; 

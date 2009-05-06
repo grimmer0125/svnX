@@ -1,8 +1,18 @@
+//
+// MyDragSupportMatrix.m - Repository NSMatrix subclass
+//
+
 #import "MyDragSupportMatrix.h"
 #import "MyDragSupportWindow.h"
 #import "MyRepository.h"
 #import "MySvnRepositoryBrowserView.h"
-#include "ViewUtils.h"
+#import "ViewUtils.h"
+
+
+extern NSImage* GenericFolderImage32 (void);
+
+
+//----------------------------------------------------------------------------------------
 
 @implementation MyDragSupportMatrix
 
@@ -151,6 +161,8 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) dragImage:  (NSImage*)      anImage
 		 at:         (NSPoint)       imageLoc
 		 offset:     (NSSize)        mouseOffset
@@ -159,22 +171,23 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 		 source:     (id)            sourceObject
 		 slideBack:  (BOOL)          slideBack
 {
-	// if we're dragging exactly one cell
-	if ( [[self selectedCells] count] == 1 ) 
+	// if we're dragging exactly one cell then implement drag to working copy (svn merge or switch)
+	const id cells = [self selectedCells];
+	if ([cells count] == 1)
 	{
-		NSCell *selectedCell = [[self selectedCells] objectAtIndex:0];
-		
-		// ... and the cell is a directory... then implement drag to working copy (svn switch)
-		if ( [[selectedCell valueForKeyPath:@"representedObject.isDir"] boolValue] )
-		{
-			[pboard addTypes:[NSArray arrayWithObject: kTypeRepositoryPathAndRevision] owner: self];
-			[pboard setData: [NSArchiver archivedDataWithRootObject:[selectedCell valueForKey:@"representedObject"]]
-					forType: kTypeRepositoryPathAndRevision];
-			anImage = [NSImage imageNamed: @"Repository"];
+		id fileObj = [[cells lastObject] representedObject];
+		[pboard addTypes: [NSArray arrayWithObjects: kTypeRepositoryPathAndRevision, NSURLPboardType, nil]
+				owner:    self];
+		[pboard setData: [NSArchiver archivedDataWithRootObject: fileObj]
+				forType: kTypeRepositoryPathAndRevision];
+		[[fileObj objectForKey: @"url"] writeToPasteboard: pboard];
 
-			sourceObject = self;
-			slideBack = NO;
-		}
+		if ([[fileObj objectForKey: @"isRoot"] boolValue])
+			anImage = [NSImage imageNamed: @"Repository"];
+		else if ([[fileObj objectForKey: @"isDir"] boolValue])
+			anImage = GenericFolderImage32();
+
+		sourceObject = self;
 	}
 
 	[anImage setSize: gDragImageSize];
@@ -193,11 +206,16 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (unsigned int) draggingSourceOperationMaskForLocal: (BOOL) isLocal
 {
+	#pragma unused(isLocal)
 	return isSubBrowser ? NSDragOperationNone : NSDragOperationCopy | NSDragOperationPrivate;
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (id) document
 {
@@ -205,6 +223,8 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 	return [(id) [self window] document];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (NSArray*) namesOfPromisedFilesDroppedAtDestination: (NSURL*) dropDestination
 {
@@ -216,13 +236,16 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) draggedImage: (NSImage*)        anImage
 		 endedAt:      (NSPoint)         aPoint
 		 operation:    (NSDragOperation) operation
 {
+	#pragma unused(anImage, aPoint, operation)
 	// Panther bug workaround (http://www.cocoabuilder.com/archive/message/cocoa/2005/1/31/127154
 	// and http://www.cocoabuilder.com/archive/message/2004/10/5/118857)
-	[[NSPasteboard pasteboardWithName:NSDragPboard] declareTypes:nil owner:nil];
+	[[NSPasteboard pasteboardWithName: NSDragPboard] declareTypes: nil owner: nil];
 }
 
 
@@ -235,27 +258,27 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 	if (isSubBrowser || [sender draggingSource] == self)
 		return NSDragOperationNone;
 
-	NSArray *files = [[sender draggingPasteboard] propertyListForType:NSFilenamesPboardType];
+	NSArray* files = [[sender draggingPasteboard] propertyListForType: NSFilenamesPboardType];
 
-	if ( [files count] != 1 ) return NSDragOperationNone;
+	if ([files count] != 1) return NSDragOperationNone;
 
 	int row, column;
-	if ( [self getRow: &row column: &column forPoint:[self convertPoint:[sender draggingLocation] fromView: nil]] )
+	if ([self getRow: &row column: &column forPoint: [self convertPoint: [sender draggingLocation] fromView: nil]])
 	{
-		NSCell *cell = [self cellAtRow:row column:column];
-		NSDictionary *obj = [cell representedObject];
+		NSCell* cell = [self cellAtRow: row column: column];
+		NSDictionary* obj = [cell representedObject];
 
-		if ( ![[obj objectForKey:@"isDir"] boolValue] )
+		if (![[obj objectForKey: @"isDir"] boolValue])
 		{
 			shouldDraw = NO;
 			newDrawRect = NSZeroRect;
 			oldDrawRect = NSZeroRect;
-			[self setNeedsDisplay:TRUE];
+			[self setNeedsDisplay: TRUE];
 			return NSDragOperationNone;
 		}
 
 		[self setDestinationCell: cell];
-		NSRect drawRect = [self cellFrameAtRow:row column:column];
+		NSRect drawRect = [self cellFrameAtRow: row column: column];
 
 		shouldDraw = TRUE;
 
@@ -263,7 +286,7 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 		if (!NSEqualRects(drawRect, oldDrawRect))
 		{
 			newDrawRect = drawRect;
-			[self setNeedsDisplay:TRUE];
+			[self setNeedsDisplay: TRUE];
 		}
 
 		return NSDragOperationAll;
@@ -271,7 +294,7 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 	else
 	{
 		shouldDraw = NO;
-		[self setNeedsDisplay:TRUE];
+		[self setNeedsDisplay: TRUE];
 		return NSDragOperationNone;
 	}
 }
@@ -279,10 +302,11 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 
 - (void) draggingExited: (id<NSDraggingInfo>) sender
 {
+	#pragma unused(sender)
 	shouldDraw = NO;
 	newDrawRect = NSZeroRect;
 	oldDrawRect = NSZeroRect;
-	[self setNeedsDisplay:TRUE];
+	[self setNeedsDisplay: TRUE];
 }
 
 
@@ -294,7 +318,7 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 	shouldDraw = NO;
 	newDrawRect = NSZeroRect;
 	oldDrawRect = NSZeroRect;
-	[self setNeedsDisplay:TRUE];
+	[self setNeedsDisplay: TRUE];
 
 	NSPasteboard* pboard = [sender draggingPasteboard];
 	NSArray *files = [pboard propertyListForType:NSFilenamesPboardType];

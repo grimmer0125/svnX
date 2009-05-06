@@ -2,40 +2,51 @@
 #import "DrawerLogView.h"
 #import "MySvn.h"
 #import "NSString+MyAdditions.h"
+#import "CommonUtils.h"
 
 
 @implementation DrawerLogView
 
-- (id)initWithFrame:(NSRect)frame
+- (id) initWithFrame: (NSRect) frame
 {
-    self = [super initWithFrame:frame];
-    if (self)
+	if (self = [super initWithFrame: frame])
 	{
-		if ([NSBundle loadNibNamed:@"DrawerLogView" owner:self])
+		if ([NSBundle loadNibNamed: @"DrawerLogView" owner: self])
 		{
-		  [_view setFrame:[self bounds]];
-		  [self addSubview:_view];
+			[_view setFrame: [self bounds]];
+			[self addSubview: _view];
 		}
-    }
-    return self;
+	}
+	return self;
 }
 
-- (void)dealloc
+
+//----------------------------------------------------------------------------------------
+
+- (void) dealloc
 {
-    [self setDocument: nil];
+	[self setDocument: nil];
 	[super dealloc];
 }
 
--(void)setUp
+
+//----------------------------------------------------------------------------------------
+
+- (void) setUp
 {
-	[document addObserver:self forKeyPath:@"displayedTaskObj.newStdout" options:(NSKeyValueObservingOptionNew) context:nil];
-	[document addObserver:self forKeyPath:@"displayedTaskObj.newStderr" options:(NSKeyValueObservingOptionNew) context:nil];
+	[document addObserver: self forKeyPath: @"displayedTaskObj.newStdout"
+			  options: (NSKeyValueObservingOptionNew) context: nil];
+	[document addObserver: self forKeyPath: @"displayedTaskObj.newStderr"
+			  options: (NSKeyValueObservingOptionNew) context: nil];
 }
 
--(void)unload
+
+//----------------------------------------------------------------------------------------
+
+- (void) unload
 {
-	[document removeObserver:self forKeyPath:@"displayedTaskObj.newStdout"];
-	[document removeObserver:self forKeyPath:@"displayedTaskObj.newStderr"];
+	[document removeObserver: self forKeyPath: @"displayedTaskObj.newStdout"];
+	[document removeObserver: self forKeyPath: @"displayedTaskObj.newStderr"];
 
 	const id docProxy = documentProxy;
 	documentProxy = nil;
@@ -44,70 +55,80 @@
 
 	// objects that are bound to the file owner retain it
 	// we need to unbind them 
-	[docProxy unbind:@"contentObject"];
+	[docProxy unbind: @"contentObject"];
 
 	// the owner has to release its top level nib objects 
 	[docProxy release];
 	[view release];
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+
+//----------------------------------------------------------------------------------------
+
+- (void) observeValueForKeyPath: (NSString*)     keyPath
+		 ofObject:               (id)            object
+		 change:                 (NSDictionary*) change
+		 context:                (void*)         context
 {
-	NSDictionary *taskObj = [document valueForKey:@"displayedTaskObj"];
+	#pragma unused(object, change, context)
+	NSDictionary *taskObj = [document valueForKey: @"displayedTaskObj"];
 
 	if ( taskObj != nil )
 	{
 		if ( taskObj != currentTaskObj )
 		{
-			[[logTextView textStorage] setAttributedString:[taskObj valueForKey:@"combinedLog"]];
+			[[logTextView textStorage] setAttributedString: [taskObj objectForKey: @"combinedLog"]];
 			currentTaskObj = taskObj;
 		}
 
-		if ( [keyPath isEqualToString:@"displayedTaskObj.newStdout"] )
+		if ( [keyPath isEqualToString: @"displayedTaskObj.newStdout"] )
 		{
-			[logTextView appendString:[taskObj objectForKey:@"newStdout"] isErrorStyle:NO];
-		
-		} else
-		{
-			[logTextView appendString:[taskObj objectForKey:@"newStderr"] isErrorStyle:YES];
+			[logTextView appendString: [taskObj objectForKey: @"newStdout"] isErrorStyle: NO];
 		}
-	
-	} else [logTextView setString:@""];
-	
+		else
+		{
+			[logTextView appendString: [taskObj objectForKey: @"newStderr"] isErrorStyle: YES];
+		}
+	}
+	else
+		[logTextView setString: @""];
 }
 
 
-#pragma mark -
-#pragma mark stop displayed task
+//----------------------------------------------------------------------------------------
 
-- (IBAction)stopDisplayedTask:(id)sender
+- (IBAction) stopDisplayedTask: (id) sender
 {
-	id taskObj = [document valueForKey:@"displayedTaskObj"];
+	#pragma unused(sender)
+	id taskObj = [document valueForKey: @"displayedTaskObj"];
 	
 	if ( taskObj == nil ) return;
 	
-	if ( [[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask )
+	if (AltOrShiftPressed())
 	{
-		[MySvn killProcess: [[taskObj valueForKey: @"pid"] intValue]];
+		[MySvn killProcess: [[taskObj objectForKey: @"pid"] intValue]];
 	}
 	else
 	{
-		[[taskObj valueForKey:@"task"] terminate];
+		[[taskObj objectForKey: @"task"] terminate];
 	}	
 }
 
 
-#pragma mark -
-#pragma mark Accessors
-
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	Accessors
+//----------------------------------------------------------------------------------------
 // - document : A MyRepository or a MyWorkingCopy instance
-- (id)document { return document; }
 
-- (void)setDocument:(id)aDocument
+- (id) document { return document; }
+
+
+- (void) setDocument: (id) aDocument
 {
-    id old = document;
-    document = [aDocument retain];
-    [old release];
+	id old = document;
+	document = [aDocument retain];
+	[old release];
 }
 
 

@@ -3,9 +3,8 @@
 #import "MySvnLogParser.h"
 #import "MyRepository.h"
 #import "MyApp.h"
-#include "NSString+MyAdditions.h"
-#include "CommonUtils.h"
-#include "DbgUtils.h"
+#import "NSString+MyAdditions.h"
+#import "CommonUtils.h"
 
 
 //----------------------------------------------------------------------------------------
@@ -214,6 +213,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 - (void) splitView:                 (NSSplitView*) sender
 		 resizeSubviewsWithOldSize: (NSSize)       oldSize
 {
+	#pragma unused(oldSize)
 	if (!fIsAdvanced)
 	{
 		const NSSize newSize = [sender bounds].size;
@@ -373,6 +373,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 	   objectValueForTableColumn: (NSTableColumn*) aTableColumn
 	   row:                       (int)            rowIndex
 {
+	#pragma unused(aTableView)
 	if ([[aTableColumn identifier] isEqualToString: @"currentRevision"])	// should be always the case
 	{
 		return NSBool([getRevisionAtIndex([logsAC arrangedObjects], rowIndex) isEqualToString: currentRevision]);
@@ -387,6 +388,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 		 forTableColumn: (NSTableColumn*) aTableColumn
 		 row:            (int)            rowIndex
 {
+	#pragma unused(anObject)
 	// The tableview is driven by the bindings, except for the first column !
 	if ([[aTableColumn identifier] isEqualToString: @"currentRevision"])	// should be always the case
 	{
@@ -405,6 +407,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 
 - (int) numberOfRowsInTableView: (NSTableView*) aTableView
 {
+	#pragma unused(aTableView)
 	return [[logsAC arrangedObjects] count];
 }
 

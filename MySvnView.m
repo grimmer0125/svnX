@@ -5,8 +5,7 @@
 #import "MySvnView.h"
 #import "MyRepository.h"
 #import "Tasks.h"
-#include "CommonUtils.h"
-#include "DbgUtils.h"
+#import "CommonUtils.h"
 
 
 @implementation MySvnView
@@ -36,6 +35,7 @@
 
 - (void) unload
 {
+//	dprintf("0x%X", self);
 	// tell the task center to cancel pending callbacks to prevent crash
 	[[Tasks sharedInstance] cancelCallbacksOnTarget:self];
 
@@ -89,16 +89,16 @@
 
 - (void) svnCommandComplete: (id) taskObj
 {
-//	NSLog(@"hom %@", [taskObj valueForKey:@"stdout"]);
-	if ( [[taskObj valueForKey:@"status"] isEqualToString:@"completed"] )
+//	NSLog(@"hom %@", stdOut(taskObj));
+	if (isCompleted(taskObj))
 	{
 		[self performSelectorOnMainThread: @selector(fetchSvnReceiveDataFinished:)
 			  withObject:                  taskObj
 			  waitUntilDone:               YES];
 //		[self fetchSvnReceiveDataFinished:taskObj];
 	}
-	else if ( [[taskObj valueForKey:@"stderr"] length] > 0 )
-		[self svnError:[taskObj valueForKey:@"stderr"]];
+	else if (taskObj = stdErr(taskObj))
+		[self svnError: taskObj];
 }
 
 
@@ -130,6 +130,7 @@
 
 - (void) fetchSvnReceiveDataFinished: (id) taskObj
 {
+	#pragma unused(taskObj)
 	[self setIsFetching:FALSE];
 }
 
@@ -140,6 +141,7 @@
 
 - (NSInvocation*) makeCallbackInvocationOfKind: (int) callbackKind
 {
+	#pragma unused(callbackKind)
 	// only one kind of invocation for now, but more complex callbacks will be possible in the future
 
 	return MakeCallbackInvocation(self, @selector(svnCommandComplete:));
@@ -206,8 +208,16 @@
 
 - (MyRepository*) repository
 {
-	NSDocument* document = [[[self window] windowController] document];
-	return [document isKindOfClass: [MyRepository class]] ? (MyRepository*) document : nil;
+	return fRepository;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) setRepository: (MyRepository*) repository
+{
+	Assert(fRepository == nil);
+	fRepository = repository;
 }
 
 
@@ -216,9 +226,8 @@
 - (NSDictionary*) documentNameDict
 {
 	id itsTitle = nil;
-	MyRepository* itsRepository = [self repository];
-	if (itsRepository)
-		itsTitle = [itsRepository windowTitle];
+	if (fRepository)
+		itsTitle = [fRepository windowTitle];
 
 	if (itsTitle == nil)
 		itsTitle = [[self window] title];

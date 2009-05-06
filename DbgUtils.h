@@ -6,7 +6,10 @@
 
 #pragma once
 
-#include "CommonUtils.h"
+#ifndef qConstCStr
+	typedef const char*		ConstCStr;
+	#define	qConstCStr
+#endif
 
 #ifndef qDebug
 	#define qDebug		1

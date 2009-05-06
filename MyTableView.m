@@ -6,20 +6,22 @@
 
 // It's mandatory to subclass MyTableView to implement this method.
 
-- (unsigned int)draggingSourceOperationMaskForLocal:(BOOL)isLocal
+- (unsigned int) draggingSourceOperationMaskForLocal: (BOOL) isLocal
 {
-	return  NSDragOperationCopy | NSDragOperationMove ;
+	#pragma unused(isLocal)
+	return  NSDragOperationCopy | NSDragOperationMove;
 }
 
-- (void)awakeFromNib
+
+- (void) awakeFromNib
 {
-	[self setDoubleAction:@selector(onDoubleClick:)];	
+	[self setDoubleAction: @selector(onDoubleClick:)];
 }
 
-- (void)onDoubleClick:(id)sender
-{
-	[[[[self delegate] document] controller] doubleClickInTableView:sender];
 
+- (void) onDoubleClick: (id) sender
+{
+	[[[[self delegate] document] controller] doubleClickInTableView: sender];
 }
 
 
@@ -28,6 +30,7 @@
 
 - (void) keyDown: (NSEvent*) theEvent
 {
+//	NSLog(@"keyCode=0x%X", [theEvent keyCode]);
 	switch ([theEvent keyCode])
 	{
 		case 0x7E:	// Up
@@ -42,3 +45,4 @@
 }
 
 @end
+

@@ -893,17 +893,14 @@
 		834DE4110D9C317100E6F26B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = svnX_Prefix.pch;
 				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = "$(HOME)/Applications";
-				PRODUCT_NAME = svnX;
 			};
 			name = Release;
 		};
 		834DE4120D9C317100E6F26B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APP_NAME = "kAppName=\\\"svnX\\\"";
 				APR_SVN = $SRCROOT/apr_svn;
 				ARCHS = (
 					ppc,
@@ -919,15 +916,14 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = svnX_Prefix.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
+					$APP_NAME,
 					"qDebug=0",
 					NDEBUG,
 				);
-				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
-					"SVN_LIBS=$SVN_LIBS",
-					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS_QUOTED_FOR_PROJECT_1)",
-				);
-				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS_QUOTED_FOR_PROJECT_1 = "kAppName=\\\"svnX\\\"";
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = "SVN_LIBS=$SVN_LIBS";
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
@@ -939,6 +935,7 @@
 					$APR_SVN/apr,
 					"$(inherited)",
 				);
+				INSTALL_PATH = "$(HOME)/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_LDFLAGS = (
 					"-weak_library",
@@ -951,6 +948,7 @@
 					$APR_SVN/libapr.dylib,
 				);
 				PREBINDING = NO;
+				PRODUCT_NAME = svnX;
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				SPARKLE_BUILD = $SRCROOT/sparkle/build/Release;
 				SVN_LIBS = /opt/subversion/lib;
@@ -961,29 +959,39 @@
 		F2EF3C3B0CD296C6000FBD9D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APP_NAME = "kAppName=\\\"svnX\\\"";
 				APR_SVN = $SRCROOT/apr_svn;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = $SPARKLE_BUILD;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_FAST_OBJC_DISPATCH = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_MODEL_TUNING = "";
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "qDebug=1";
-				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
-					"SVN_LIBS=$SVN_LIBS",
-					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS_QUOTED_FOR_PROJECT_1)",
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = svnX_Prefix.pch;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					$APP_NAME,
+					"qDebug=1",
 				);
-				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS_QUOTED_FOR_PROJECT_1 = "kAppName=\\\"svnX\\\"";
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = "SVN_LIBS=$SVN_LIBS";
+				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = NO;
 				GCC_WARN_UNKNOWN_PRAGMAS = YES;
 				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					$APR_SVN/apr,
 					"$(inherited)",
 				);
+				INSTALL_PATH = "$(HOME)/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_LDFLAGS = (
 					"-weak_library",
@@ -996,6 +1004,7 @@
 					$APR_SVN/libapr.dylib,
 				);
 				PREBINDING = NO;
+				PRODUCT_NAME = svnX;
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				SPARKLE_BUILD = $SRCROOT/sparkle/build/Release;
 				STRIP_INSTALLED_PRODUCT = NO;
@@ -1007,11 +1016,7 @@
 		F2EF3C3C0CD296C6000FBD9D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = svnX_Prefix.pch;
 				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = "$(HOME)/Applications";
-				PRODUCT_NAME = svnX;
 			};
 			name = Debug;
 		};

@@ -1,6 +1,6 @@
 #import "MyWorkingCopyToolbar.h"
 #import "NSString+MyAdditions.h"
-#include "CommonUtils.h"
+#import "CommonUtils.h"
 
 
 //----------------------------------------------------------------------------------------
@@ -51,7 +51,7 @@
 
 //----------------------------------------------------------------------------------------
 
-- (void)awakeFromNib
+- (void) awakeFromNib
 {
     items = [[NSMutableDictionary alloc] init];
 
@@ -79,25 +79,25 @@
 						   "Alt-click to specify a different revision.")];
 
 	[self createItem: @"openRepository" label: @"Repository" image: @"Repository"
-		  help:       @"Open repository window for this current working."];
+		  help:       @"Open repository window for this working copy."];
 
 	[self createItem: @"toggleSidebar" label: @"Output" image: @"sidebar"
 		  help:       @"Show/Hide output of updates and commits."];
-	
-    NSToolbar* toolbar = [[NSToolbar alloc] initWithIdentifier: @"WorkingCopyToolBar2"];
-    [toolbar setDelegate: self];
-    [toolbar setAllowsUserCustomization: YES];
-    [toolbar setAutosavesConfiguration: YES];
-    [toolbar setDisplayMode: NSToolbarDisplayModeIconAndLabel];
+
+	NSToolbar* toolbar = [[NSToolbar alloc] initWithIdentifier: @"WorkingCopyToolBar2"];
+	[toolbar setDelegate: self];
+	[toolbar setAllowsUserCustomization: YES];
+	[toolbar setAutosavesConfiguration: YES];
+	[toolbar setDisplayMode: NSToolbarDisplayModeIconAndLabel];
 	[toolbar setSizeMode: NSToolbarSizeModeDefault];
-    [window setToolbar: toolbar];
-    [toolbar release];
+	[window setToolbar: toolbar];
+	[toolbar release];
 }
 
-- (void)dealloc
+- (void) dealloc
 {
-    [items release];
-    [super dealloc];
+	[items release];
+	[super dealloc];
 }
 
 
@@ -107,12 +107,14 @@
 				   itemForItemIdentifier:     (NSString*)  itemIdentifier
 				   willBeInsertedIntoToolbar: (BOOL)       flag
 {
-    return [items objectForKey: itemIdentifier];
+	#pragma unused(toolbar, flag)
+	return [items objectForKey: itemIdentifier];
 }
 
-- (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar*)toolbar
+- (NSArray*) toolbarDefaultItemIdentifiers: (NSToolbar*) toolbar
 {
-    return [NSArray arrayWithObjects:
+	#pragma unused(toolbar)
+	return [NSArray arrayWithObjects:
 				@"View",
 				NSToolbarSeparatorItemIdentifier,
 				@"revealInFinder",
@@ -129,9 +131,10 @@
 				nil];
 }
 
-- (NSArray *)toolbarAllowedItemIdentifiers:(NSToolbar*)toolbar
+- (NSArray*) toolbarAllowedItemIdentifiers: (NSToolbar*) toolbar
 {
-    return [NSArray arrayWithObjects:
+	#pragma unused(toolbar)
+	return [NSArray arrayWithObjects:
 				@"View",
 				@"Filter",
 				@"Working Copy Path",

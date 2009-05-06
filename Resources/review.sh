@@ -21,7 +21,7 @@ if ($show_chars ne '') { system('cat', "$0/Review.js"); }
 my ($path, $str);
 foreach $path (@ARGV)
 {
-	$str = `$svn diff $options --non-interactive --diff-cmd /usr/bin/diff -x '$diff' '$path'`;
+	$str = `$svn diff $options --non-interactive --diff-cmd /usr/bin/diff -x '$diff' '$path' 2> /dev/null`;
 	$str =~ s/\\/\\\\/g;
 	$str =~ s/\'/\\\'/g;
 	$str =~ s/\r/\\r/g;

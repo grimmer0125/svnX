@@ -5,7 +5,7 @@
 
 openX=~/.subversion/svnXopen.sh
 if [ -x $openX ]; then
-	if { $openX $@; } then exit; fi
+	if { $openX "$@"; } then exit; fi
 fi
 
 alias Open='/usr/bin/open'

@@ -4,9 +4,8 @@
 //	Copyright © Chris, 2003 - 2008.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
-#include "DbgUtils.h"
-#include "NSString+MyAdditions.h"
-#include "SvnInterface.h"
+#import "NSString+MyAdditions.h"
+#import "SvnInterface.h"
 
 
 #if qDebug
@@ -66,7 +65,7 @@ DbgWarnIf (ConstCStr file, int line, ConstCStr func, OSStatus err)
 {
 	if (err != noErr)
 	{
-		DbgLogF(file, line, func, "WARNING err=%d", err);
+		DbgLogF(file, line, func, "WARNING err=%s=%d", GetMacOSStatusErrorString(err), err);
 	}
 
 	return err;
@@ -80,7 +79,7 @@ DbgWarnIfNot (ConstCStr file, int line, ConstCStr func, OSStatus err, OSStatus e
 {
 	if (err != noErr && err != exclude)
 	{
-		DbgLogF(file, line, func, "WARNING err=%d", err);
+		DbgLogF(file, line, func, "WARNING err=%s=%d", GetMacOSStatusErrorString(err), err);
 	}
 
 	return err;
@@ -160,7 +159,7 @@ DbgLogF2 (ConstCStr fmt, ...)
 static char*
 SvnErrorToString (SvnError err, char buf[], size_t bufSize, ConstCStr prefix)
 {
-	snprintf(buf, bufSize, "%s{[%s:%d] err=%d %s}",
+	snprintf(buf, bufSize, "%s{[%s:%ld] err=%d %s}",
 			 prefix, err->file, err->line, err->apr_err, err->message);
 	return buf;
 }

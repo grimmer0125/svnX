@@ -94,6 +94,7 @@
 				   itemForItemIdentifier:     (NSString*)  itemIdentifier
 				   willBeInsertedIntoToolbar: (BOOL)       flag
 {
+	#pragma unused(toolbar, flag)
 	return [items objectForKey: itemIdentifier];
 }
 
@@ -102,6 +103,7 @@
 
 - (NSArray*) toolbarDefaultItemIdentifiers: (NSToolbar*) toolbar
 {
+	#pragma unused(toolbar)
 	return [NSArray arrayWithObjects:
 					@"svnCopy",
 					@"svnMove",
@@ -124,6 +126,7 @@
 
 - (NSArray*) toolbarAllowedItemIdentifiers: (NSToolbar*) toolbar
 {
+	#pragma unused(toolbar)
 	return [NSArray arrayWithObjects:
 					NSToolbarSeparatorItemIdentifier,
 					NSToolbarSpaceItemIdentifier,

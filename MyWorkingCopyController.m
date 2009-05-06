@@ -1,17 +1,16 @@
 //
 // MyWorkingCopyController.m - Controller of the working copy browser
 //
-#include "MyWorkingCopyController.h"
-#include "MyWorkingCopy.h"
-#include "MyApp.h"
-#include "MyFileMergeController.h"
-#include "DrawerLogView.h"
-#include "NSString+MyAdditions.h"
-#include "ReviewCommit.h"
-#include "SvnInterface.h"
-#include "CommonUtils.h"
-#include "DbgUtils.h"
-#include "ViewUtils.h"
+#import "MyWorkingCopyController.h"
+#import "MyWorkingCopy.h"
+#import "MyApp.h"
+#import "MyFileMergeController.h"
+#import "DrawerLogView.h"
+#import "NSString+MyAdditions.h"
+#import "ReviewCommit.h"
+#import "SvnInterface.h"
+#import "CommonUtils.h"
+#import "ViewUtils.h"
 
 
 enum {

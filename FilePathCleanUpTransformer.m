@@ -5,30 +5,32 @@
 @implementation FilePathCleanUpTransformer
 
 
-+ (Class)transformedValueClass
++ (Class) transformedValueClass
 {
-    return [NSString class];
+	return [NSString class];
 }
 
-+ (BOOL)allowsReverseTransformation
++ (BOOL) allowsReverseTransformation
 {
-    return YES;
+	return YES;
 }
 
-- (id)transformedValue:(id)aString
-{
-	return [aString stringByStandardizingPath];
-}
-
-- (id)reverseTransformedValue:(id)aString
+- (id) transformedValue: (id) aString
 {
 	return [aString stringByStandardizingPath];
 }
 
+- (id) reverseTransformedValue: (id) aString
+{
+	return [aString stringByStandardizingPath];
+}
 
-@end
+
+@end	// FilePathCleanUpTransformer
 
 
+//----------------------------------------------------------------------------------------
+#pragma mark	-
 //----------------------------------------------------------------------------------------
 
 @implementation FilePathAbbreviatedTransformer
@@ -50,9 +52,11 @@
 }
 
 
-@end
+@end	// FilePathAbbreviatedTransformer
 
 
+//----------------------------------------------------------------------------------------
+#pragma mark	-
 //----------------------------------------------------------------------------------------
 
 @implementation FilePathWorkingCopy
@@ -60,8 +64,7 @@
 
 - (id) init
 {
-	self = [super init];
-	if (self)
+	if (self = [super init])
 	{
 		[[NSUserDefaultsController sharedUserDefaultsController]
 								addObserver: self
@@ -69,7 +72,7 @@
 								options:     0
 								context:     NULL];
 
-		fTransform = [GetPreference(@"abbrevWCFilePaths") boolValue];
+		fTransform = GetPreferenceBool(@"abbrevWCFilePaths");
 	}
 
     return self;
@@ -83,7 +86,8 @@
 		 change:                 (NSDictionary*) change
 		 context:                (void*)         context
 {
-	fTransform = [GetPreference(@"abbrevWCFilePaths") boolValue];
+	#pragma unused(keyPath, object, change, context)
+	fTransform = GetPreferenceBool(@"abbrevWCFilePaths");
 }
 
 
@@ -95,5 +99,5 @@
 }
 
 
-@end
+@end	// FilePathWorkingCopy
 

@@ -25,8 +25,8 @@ function diffOldNew(tA, tB)
 	for (var x = 0; x < n; ++x)
 	{
 		d = diffs[x];
-		text = d[1].replace(/&/g, '&amp;').replace(/</g, '&lt;')
-				   .replace(/>/g, '&gt;').replace(/\t/g, "&nbsp; &nbsp; ");
+		text = d[1].replace(/ /g, ' ').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+				   .replace(/>/g, '&gt;').replace(/\t/g, '    ');
 		d = d[0];
 		if (d < 0)
 			sA = sA.concat('<del>', text.replace(/\n/g, '</del>\n<del>'), '</del>');

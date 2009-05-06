@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <Foundation/Foundation.h>
+#import <Foundation/Foundation.h>
 
 
 #define	for_each1(en, it)			for (id it; (it = [en nextObject]) != nil; )
@@ -19,8 +19,11 @@ static inline UInt64 microseconds()
 
 //----------------------------------------------------------------------------------------
 
-
-typedef const char*			ConstCStr;
+typedef CFAbsoluteTime		UTCTime;
+#ifndef qConstCStr
+	typedef const char*		ConstCStr;
+	#define	qConstCStr
+#endif
 #if __LP64__
 	typedef double			GCoord;
 #elif 1
@@ -32,14 +35,26 @@ typedef const char*			ConstCStr;
 #define	NSBool(f)	((f) ? kNSTrue : kNSFalse)
 
 
+NSUserDefaults*	Preferences				(void);
+BOOL			SyncPreference			(void);
 id				GetPreference			(NSString* prefKey);
 BOOL			GetPreferenceBool		(NSString* prefKey);
 int				GetPreferenceInt		(NSString* prefKey);
 void			SetPreference			(NSString* prefKey, id prefValue);
+void			SetPreferenceBool		(NSString* prefKey, BOOL prefValue);
+void			SetPreferenceInt		(NSString* prefKey, int prefValue);
 
 NSInvocation*	MakeCallbackInvocation	(id target, SEL selector);
-bool			AltOrShiftPressed		();
+bool			AltOrShiftPressed		(void);
+UTCTime			ParseDateTime			(NSString* date, NSString* time);
+
 void			OpenFiles				(id fileOrFiles);
+FSRef*			Folder_Find				(OSType folderType, FSRef* fsRef);
+FSRef*			Folder_TemporaryItems	(FSRef* fsRef);
+FSRef*			Folder_ChewableItems	(FSRef* fsRef);
+BOOL			Folder_IsEqual			(OSType folderType, NSURL* url);
+BOOL			Folder_IsTemporaryItems	(NSURL* url);
+BOOL			Folder_IsChewableItems	(NSURL* url);
 
 
 //----------------------------------------------------------------------------------------

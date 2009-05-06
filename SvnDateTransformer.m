@@ -7,7 +7,7 @@
 //
 
 #import "SvnDateTransformer.h"
-#include "CommonUtils.h"
+#import "CommonUtils.h"
 
 
 static NSDateFormatter* gDateFormatter = nil;
@@ -64,6 +64,7 @@ static NSDateFormatter* gDateFormatter = nil;
 		 change:                 (NSDictionary*) change
 		 context:                (void*)         context
 {
+	#pragma unused(keyPath, object, change, context)
 	[gDateFormatter release];
 	gDateFormatter = [[NSDateFormatter alloc]
 							initWithDateFormat: GetPreference(@"dateformat")

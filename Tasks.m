@@ -7,6 +7,48 @@
 
 // This file was patched by Yuichi Fujishige to provide better support for  UTF-16 filenames. (0.9.6)
 
+//----------------------------------------------------------------------------------------
+// Task dictionary object accessors
+
+BOOL
+isCompleted (NSDictionary* taskObj)
+{
+	return [[taskObj objectForKey: @"status"] isEqualToString: @"completed"];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+NSString*
+stdErr (NSDictionary* taskObj)
+{
+	NSString* str = [taskObj objectForKey: @"stderr"];
+	return (str && [str length] != 0) ? str : nil;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+NSString*
+stdOut (NSDictionary* taskObj)
+{
+	return [taskObj objectForKey: @"stdout"];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+NSData*
+stdOutData (NSDictionary* taskObj)
+{
+	return [taskObj objectForKey: @"stdoutData"];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+//----------------------------------------------------------------------------------------
+
 enum {
 	kLogLevelNone	=	0,
 	kLogLevelError	=	1,
@@ -65,6 +107,7 @@ static int gLogLevel = kLogLevelAll;
 		 change:                 (NSDictionary*) change
 		 context:                (void*)         context
 {
+	#pragma unused(object, change, context)
 	// This is an optimized way to display the log output. The incoming data is directly appended to
 	// NSTextView's textstorage (see NSTextView+MyAdditions.m).
 	// With a classical binding, NSTextView would have to redisplay its content each time...
@@ -103,36 +146,32 @@ static int gLogLevel = kLogLevelAll;
 #pragma mark -
 #pragma mark IB actions
 
-- (IBAction)stopTask:(id)sender
+- (IBAction) stopTask: (id) sender
 {
-	NSArray *selectedTasks = [tasksAC selectedObjects];
-	NSEnumerator *e = [selectedTasks objectEnumerator];
-	id taskObj;
-	
-	while ( taskObj = [e nextObject] )
+	#pragma unused(sender)
+	const BOOL altPressed = AltOrShiftPressed();
+	for_each(en, taskObj, [tasksAC arrangedObjects])
 	{
-		if ( [[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask ) // if Alt is pressed, use kill -9 to kill.
+		if (altPressed)		// if Alt is pressed, use kill -9 to kill.
 		{
-			[MySvn killProcess: [[taskObj valueForKey: @"pid"] intValue]];
+			[MySvn killProcess: [[taskObj objectForKey: @"pid"] intValue]];
 		}
 		else
 		{
-			[[taskObj valueForKey:@"task"] terminate];
+			[[taskObj objectForKey: @"task"] terminate];
 		}	
 	}
 }
 
-- (IBAction)clearCompleted:(id)sender
-{
-	NSArray *tasks = [tasksAC arrangedObjects];
-	NSEnumerator *e = [tasks objectEnumerator];
-	id taskObj;
 
-	while ( taskObj = [e nextObject] )
+- (IBAction) clearCompleted: (id) sender
+{
+	#pragma unused(sender)
+	for_each(en, taskObj, [tasksAC arrangedObjects])
 	{
-		if ( [[taskObj valueForKey:@"canBeKilled"] boolValue] == NO ) // tasks that can't be killed are already killed :-)
+		if (![[taskObj objectForKey: @"canBeKilled"] boolValue])	// tasks that can't be killed are already killed :-)
 		{
-			[tasksAC removeObject:taskObj];
+			[tasksAC removeObject: taskObj];
 		}
 	}
 }
@@ -161,7 +200,7 @@ static int gLogLevel = kLogLevelAll;
 			status = @"stopped";
 	}
 
-	if ( [[taskObj objectForKey:@"stderr"] length] > 0 )
+	if (stdErr(taskObj))
 		status = @"error";
 
 	[taskObj setValue: status forKey: @"status"];
@@ -455,8 +494,7 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 	if (found)
 	{
 		int exitCode = [[aNotification object] terminationStatus];
-		id status = [[taskObj objectForKey: @"stderr"] length] ? @"error"
-															   : (exitCode ? @"stopped" : @"completed");
+		id status = stdErr(taskObj) ? @"error" : (exitCode ? @"stopped" : @"completed");
 		[taskObj setValue: status forKey: @"status"];
 		[taskObj setValue: kNSFalse forKey: @"canBeKilled"];
 		[taskObj setValue: [NSNumber numberWithInt: exitCode] forKey: @"exitCode"];
@@ -464,7 +502,7 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 }
 
 
--(void)cancelCallbacksOnTarget:(id)target
+-(void) cancelCallbacksOnTarget: (id) target
 {
 	// This is called from the target, before it's closed, because a callback on a closing target is likely to crash.
 	// The task is not stopped, though.
@@ -491,12 +529,29 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 
 @implementation Task
 
++ (id) task
+{
+	return [self taskWithDelegate: nil object: nil];
+}
+
+
+//----------------------------------------------------------------------------------------
+
++ (id) taskWithDelegate: (id<TaskDelegate>) target
+	   object:           (id)               object
+{
+	return [[Task alloc] initWithDelegate: target object: object];
+}
+
+
+//----------------------------------------------------------------------------------------
+
 - (id) initWithDelegate: (id<TaskDelegate>) target
 	   object:           (id)               object
 {
 	if (self = [super init])
 	{
-		fTask     = [[[NSTask alloc] init] retain];
+		fTask     = [[NSTask alloc] init];
 		fDelegate = [target retain];
 		fObject   = [object retain];
 
@@ -505,10 +560,7 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 	//	[env setObject: @"YES"         forKey: @"NSUnbufferedIO"];
 		[env setObject: @"en_US.UTF-8" forKey: @"LC_ALL"];
 		[fTask setEnvironment: env];
-
-		[[NSNotificationCenter defaultCenter]
-				addObserver: self selector: @selector(completed:)
-				name: NSTaskDidTerminateNotification object: fTask];
+		[env release];
 	}
 
 	return self;
@@ -519,6 +571,8 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 
 - (void) dealloc
 {
+	[[NSNotificationCenter defaultCenter]
+			removeObserver: self name: NSTaskDidTerminateNotification object: fTask];
 	[fObject   release];
 	[fDelegate release];
 	[fTask     release];
@@ -540,10 +594,12 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 - (void) launch:    (NSString*) path
 		 arguments: (NSArray*)  arguments
 {
-
 	[fTask setLaunchPath: path];
 	[fTask setArguments: arguments];
 
+	[[NSNotificationCenter defaultCenter]
+			addObserver: self selector: @selector(completed:)
+			name: NSTaskDidTerminateNotification object: fTask];
 	[fTask launch];
 //	NSLog(@"launch: %@", fTask);
 }
@@ -575,6 +631,7 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 
 - (void) completed: (NSNotification*) aNotification
 {
+	#pragma unused(aNotification)
 	id delegate = fDelegate;
 	if (delegate)
 	{

@@ -5,16 +5,6 @@
 #import "MySvnFilesArrayController.h"
 #import "MyWorkingCopy.h"
 
-//----------------------------------------------------------------------------------------
-// Compare names alphabetically & case insensitively.
-
-static int
-compareNames (id obj1, id obj2, void* context)
-{
-	#pragma unused(context)
-	return [[obj1 objectForKey: @"displayPath"] caseInsensitiveCompare: [obj2 objectForKey: @"displayPath"]];
-}
-
 
 //----------------------------------------------------------------------------------------
 
@@ -98,12 +88,6 @@ compareNames (id obj1, id obj2, void* context)
 	}
 
 	[self setCommittable: isCommittable];
-#if 0
-	if (!treeMode && [matchedObjects count])
-	{
-		[matchedObjects sortUsingFunction: compareNames context: NULL];
-	}
-#endif
 
 	return [super arrangeObjects: matchedObjects];
 }

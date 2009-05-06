@@ -273,6 +273,7 @@ getRecursiveOption (NSString* cmd, bool isRecursive)
 
 - (BOOL) windowShouldClose: (id) sender
 {
+	#pragma unused(sender)
 	const BOOL shouldClose = (*[document reviewCount] == 0);
 	if (!shouldClose)
 		NSBeep();
@@ -834,7 +835,7 @@ static const GCoord kMinFilesHeight    = 96,
 - (BOOL) splitView:          (NSSplitView*) sender
 		 canCollapseSubview: (NSView*)      subview
 {
-	#pragma unused(sender)
+	#pragma unused(sender, subview)
 
 #if 0
 	NSView* leftView = [[splitView subviews] objectAtIndex: 0];
@@ -858,7 +859,7 @@ static const GCoord kMinFilesHeight    = 96,
 		   constrainMaxCoordinate: (GCoord)       proposedMax
 		   ofSubviewAt:            (int)          offset
 {
-	#pragma unused(sender)
+	#pragma unused(sender, offset)
 
 	return proposedMax * kMaxTreeWidthFract;	// max tree width = proposedMax * kMaxTreeWidthFract
 }
@@ -870,7 +871,7 @@ static const GCoord kMinFilesHeight    = 96,
 		   constrainMinCoordinate: (GCoord)       proposedMin
 		   ofSubviewAt:            (int)          offset
 {
-	#pragma unused(sender)
+	#pragma unused(sender, proposedMin, offset)
 
 	return kMinTreeWidth;						// min tree width = kMinTreeWidth
 }

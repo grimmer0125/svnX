@@ -5,8 +5,11 @@
 //	Copyright © Chris, 2008 - 2009.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
+#import <CoreServices/CoreServices.h>
 #import "MyApp.h"
+#import "MySVN.h"
 #import "GetEthernetAddrSample.h"
+#import "FavoriteWorkingCopies.h"
 #import "RepositoriesController.h"
 #import "SvnFileStatusToColourTransformer.h"
 #import "SvnDateTransformer.h"
@@ -14,7 +17,9 @@
 #import "SvnFilePathTransformer.h"
 #import "FilePathCleanUpTransformer.h"
 #import "TrimNewLinesTransformer.h"
+#import "Tasks.h"
 #import "CommonUtils.h"
+#import "SvnInterface.h"
 
 
 // TO_DO: Add file "TaskStatusToColorTransformer.h"
@@ -77,6 +82,8 @@ addTransform (Class itsClass, NSString* itsName)
 	[dictionary setObject: kNSTrue                    forKey: @"cacheSvnQueries"];
 	[dictionary setObject: [NSNumber numberWithInt:0] forKey: @"defaultDiffApplication"];
 	[dictionary setObject: @"%y-%d-%m %H:%M:%S"       forKey: @"dateformat"];
+	[dictionary setObject: kNSFalse                   forKey: @"includeRevisionInName"];
+	[dictionary setObject: kNSTrue                    forKey: @"installSvnxTool"];
 
 	// Working Copy
 	[dictionary setObject: kNSTrue  forKey: @"addWorkingCopyOnCheckout"];
@@ -110,6 +117,7 @@ addTransform (Class itsClass, NSString* itsName)
 	addTransform([SvnFilePathTransformer class], @"lastPathComponent");					// SingleFileInspector
 	addTransform([TrimNewLinesTransformer class], @"TrimNewLines");						// MySvnLogView (to filter author name)
 	addTransform([TaskStatusToColorTransformer class], @"TaskStatusToColor");			// Activity Window in svnX.nib
+	addTransform([OneLineTransformer class], @"ForceOneLine");							// preferencesWindow
 }
 
 
@@ -117,25 +125,42 @@ addTransform (Class itsClass, NSString* itsName)
 
 - (bool) checkSVNExistence: (bool) warn
 {
-	NSString* svnPath = GetPreference(@"svnBinariesFolder");
 	NSFileManager* fm = [NSFileManager defaultManager];
-	NSString* svnFilePath = [svnPath stringByAppendingPathComponent:@"svn"];
-	bool exists = [fm fileExistsAtPath:svnFilePath];
+	BOOL isDir = NO,
+		 exists = [fm fileExistsAtPath: SvnPath() isDirectory: &isDir] && isDir &&
+				  [fm fileExistsAtPath: SvnCmdPath()];
+
+	NSData* version = nil;
+	if (exists)
+	{
+		Task* task = [Task task];
+		NSPipe* pipe = [NSPipe pipe];
+		[task setStandardOutput: pipe];
+		[task launch: SvnCmdPath() arguments: [NSArray arrayWithObjects: @"--version", @"-q", nil]];
+		version = [[pipe fileHandleForReading] readDataToEndOfFile];
+	//	dprintf("version=[%@], pipe=%@", version, pipe);
+	}
+	[self setSvnVersion: version];
 
 	if (!exists && warn)
 	{
-		NSAlert *alert = [NSAlert alertWithMessageText:@"Error: Unable to locate svn binary."
-										 defaultButton:@"Open Preferences"
-									   alternateButton:nil
-										   otherButton:nil
-							 informativeTextWithFormat:@"Make sure the svn binary is present at path:\n%C%@%C.\n\n"
-														"Is a Subversion client installed?"
-														" If so, make sure the path is correctly set in the preferences.",
-														0x201C, svnPath, 0x201D];
-		
-		[alert setAlertStyle:NSCriticalAlertStyle];
-		[alert runModal];							 
-		[preferencesWindow makeKeyAndOrderFront:self];
+		NSBeep();
+		id text = isDir ? @"Make sure the svn binary is present at path:\n%C%@%C.\n\n"
+						   "Is a Subversion client installed?"
+						   " If so, make sure the path is correctly set in the preferences."
+						: @"The 'Path to svn binaries folder' preference is\n%C%@%C.\n\n"
+						   "This directory was not found.";
+		NSAlert* alert = [NSAlert alertWithMessageText: @"Error: Unable to locate svn binary."
+										 defaultButton: @"Open Preferences"
+									   alternateButton: @"Quit"
+										   otherButton: nil
+							 informativeTextWithFormat: text, 0x201C, SvnPath(), 0x201D];
+
+		[alert setAlertStyle: NSCriticalAlertStyle];
+		if ([alert runModal] == NSOKButton)
+			[self performSelector: @selector(openPreferences:) withObject: nil afterDelay: 0];
+		else
+			[NSApp terminate: nil];
 	}
 	return exists;
 }
@@ -143,22 +168,23 @@ addTransform (Class itsClass, NSString* itsName)
 
 //----------------------------------------------------------------------------------------
 
-- (void) initUI: (NSNotification*) note
+- (void) applicationWillFinishLaunching: (NSNotification*) note
 {
 	#pragma unused(note)
+	if (GetPreferenceBool(@"installSvnxTool"))
+	{
+		NSString* target = [NSHomeDirectory() stringByAppendingPathComponent: @"bin/svnx"];
+		if (![[NSFileManager defaultManager] fileExistsAtPath: target])
+		{
+			[[NSFileManager defaultManager]
+				createSymbolicLinkAtPath: target
+							 pathContent: [[NSBundle mainBundle] pathForResource: @"svnx" ofType: nil]];
+		}
+	}
+
+	[self checkSVNExistence: true];
 	[repositoriesController showWindow];
 	[favoriteWorkingCopies showWindow];
-}
-
-
-- (void) awakeFromNib
-{
-	[self checkSVNExistence:true];
-
-	// Show the Repositories & Working Copies windows after ALL awakeFromNib calls
-	[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(initUI:) name: @"initUI" object: self];
-	[[NSNotificationQueue defaultQueue] enqueueNotification: [NSNotification notificationWithName: @"initUI" object: self]
-										postingStyle:        NSPostWhenIdle]; 
 }
 
 
@@ -179,10 +205,37 @@ addTransform (Class itsClass, NSString* itsName)
 //----------------------------------------------------------------------------------------
 // Compare a single file in a svnX window. Invoked from Applescript.
 
-- (void)fileHistoryOpenSheetForItem:(NSString *)path
+- (void) displayHistory: (NSString*) path
 {
 	[[NSApplication sharedApplication] activateIgnoringOtherApps: YES];
 	[favoriteWorkingCopies fileHistoryOpenSheetForItem: path];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Open a working copy window.
+
+- (void) openWorkingCopy: (NSString*) path
+{
+	[favoriteWorkingCopies openWorkingCopy: path];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Open a repository window.
+
+- (void) openRepository: (NSString*) url
+{
+	[repositoriesController openRepository: url];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Open one or more files in appropriate applications.
+
+- (void) openFiles: (id) fileOrFiles
+{
+	OpenFiles(fileOrFiles);
 }
 
 
@@ -193,6 +246,7 @@ addTransform (Class itsClass, NSString* itsName)
 - (IBAction) openPreferences: (id) sender
 {
 	#pragma unused(sender)
+	[preferencesWindow setDelegate: self];
 	[preferencesWindow makeKeyAndOrderFront: self];
 }
 
@@ -203,8 +257,124 @@ addTransform (Class itsClass, NSString* itsName)
 {
 	#pragma unused(sender)
 	[preferencesWindow close];
+	[self checkSVNExistence: true];
 }
 
+
+//----------------------------------------------------------------------------------------
+
+- (BOOL) windowShouldClose: (id) sender
+{
+	if (sender == preferencesWindow)
+	{
+		[sender makeFirstResponder: sender];
+		[self performSelector: @selector(checkSVNExistence:) withObject: kNSTrue afterDelay: 0];
+	}
+	return YES;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (BOOL) useOldParsingMethod
+{
+	return GetPreferenceBool(kUseOldParsingMethod) || ![self svnHasLibs];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) setUseOldParsingMethod: (BOOL) on
+{
+	SetPreferenceBool(kUseOldParsingMethod, on);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (BOOL) svnHasLibs
+{
+	return (fSvnVersion != 0) && SvnInitialize();
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) setSvnHasLibs: (id) ignore
+{
+	#pragma unused(ignore)
+	[self setUseOldParsingMethod: GetPreferenceBool(kUseOldParsingMethod)];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (UInt32) svnVersionNum
+{
+	return fSvnVersion;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (NSString*) svnVersion
+{
+	return fSvnVersion ? [NSString stringWithFormat: @"%u.%u.%u",
+								fSvnVersion / 1000000, (fSvnVersion / 1000) % 1000, fSvnVersion % 1000]
+					   : nil;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) setSvnVersion: (NSData*) data
+{
+	char buf[64];
+	[data getBytes: buf length: sizeof(buf) - 1];
+	buf[([data length] < sizeof(buf)) ? [data length] : sizeof(buf) - 1] = 0;
+
+	// Parse \w[0-9]+.[0-9]+.[0-9]+
+	UInt32 version = 0;
+	int i = 0, n, digit;
+	while (buf[i] <= ' ')
+		++i;
+	for (n = 0; (digit = buf[i] - '0') >= 0 && digit <= 9; ++i)
+		n = n * 10 + digit;
+	version = n * 1000000;
+	if (buf[i++] == '.')
+	{
+		for (n = 0; (digit = buf[i] - '0') >= 0 && digit <= 9; ++i)
+			n = n * 10 + digit;
+		version += n * 1000;
+		if (buf[i++] == '.')
+		{
+			for (n = 0; (digit = buf[i] - '0') >= 0 && digit <= 9; ++i)
+				n = n * 10 + digit;
+			version += n;
+		}
+	}
+
+	fSvnVersion = version;
+//	dprintf("version=%u => '%@'", version, [self svnVersion]);
+	[self setSvnHasLibs: nil];		// Force bindings to update
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (IBAction) svnCmdPathChanged: (id) sender
+{
+	if (![self checkSVNExistence: false])
+	{
+		[[sender window] performSelector: @selector(makeFirstResponder:) withObject: sender afterDelay: 0.125];
+		NSBeep();
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+//----------------------------------------------------------------------------------------
 
 - (BOOL) applicationShouldHandleReopen: (NSApplication*) theApplication
 		 hasVisibleWindows:             (BOOL)           visibleWindows
@@ -234,7 +404,7 @@ addTransform (Class itsClass, NSString* itsName)
 		 openFile:    (NSString*)      filename
 {
 	#pragma unused(theApplication)
-	[self fileHistoryOpenSheetForItem: filename];
+	[self displayHistory: filename];
 
 	return YES;
 }
@@ -310,6 +480,27 @@ addTransform (Class itsClass, NSString* itsName)
 }
 
 @end	// MyApp
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+//----------------------------------------------------------------------------------------
+// The text view of the help documentation window
+
+@interface HelpDocView : NSTextView
+{
+}
+@end
+
+
+@implementation HelpDocView
+
+- (void) awakeFromNib
+{
+	[self readRTFDFromFile: [[NSBundle mainBundle] pathForResource: @"Documentation" ofType: @"rtf"]];
+}
+
+@end	// HelpDocView
 
 
 //----------------------------------------------------------------------------------------

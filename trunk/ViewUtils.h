@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include <AppKit/NSView.h>
-#include <AppKit/NSWindow.h>
-#include "CommonUtils.h"
+#import <AppKit/NSView.h>
+#import <AppKit/NSWindow.h>
+#import "CommonUtils.h"
 
 
 //----------------------------------------------------------------------------------------

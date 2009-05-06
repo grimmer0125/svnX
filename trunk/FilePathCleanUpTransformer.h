@@ -19,3 +19,9 @@
 }
 @end
 
+
+@interface OneLineTransformer : NSValueTransformer
+{
+}
+@end
+

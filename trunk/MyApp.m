@@ -34,7 +34,7 @@
 static void
 addTransform (Class itsClass, NSString* itsName)
 {
-	[NSValueTransformer setValueTransformer: [[[itsClass alloc] init] autorelease] forName: itsName];
+	[NSValueTransformer setValueTransformer: [[itsClass alloc] init] forName: itsName];
 }
 
 

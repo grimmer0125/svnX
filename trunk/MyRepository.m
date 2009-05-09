@@ -255,10 +255,12 @@ TrimSlashes (id obj)
 
 - (void) displayUrlTextView
 {
-	const int rootLength = [UnEscapeURL(fRootURL) length];
-	NSString* tmpString = UnEscapeURL(fURL);
-	const id layout = [urlTextView layoutManager];
 	[self checkRepositoryURL];
+	NSString* tmpString = UnEscapeURL(fURL);
+	int rootLength = [UnEscapeURL(fRootURL) length];
+	if (rootLength == 0)
+		rootLength = [tmpString length];
+	const id layout = [urlTextView layoutManager];
 
 	[urlTextView setString: @""];	// workaround to clean-up the style for sure
 	[urlTextView setString: tmpString];
@@ -367,7 +369,8 @@ TrimSlashes (id obj)
 
 - (void) updateLog_InfoCompleted: (id) taskObj
 {
-	#pragma unused(taskObj)
+	if (!SvnWantAndHave())
+		[self svnInfoCompletedCallback: taskObj];
 	[self fetchSvnLog];
 }
 
@@ -504,7 +507,7 @@ svnInfoReceiver (void*       baton,
 {
 	if (!SvnWantAndHave())
 	{
-		if (completedMsg == nil)
+		if (completedMsg == NULL)
 			completedMsg = @selector(svnInfoCompletedCallback:);
 		[MySvn    genericCommand: @"info"
 					   arguments: [NSArray arrayWithObject: [fURL absoluteString]]
@@ -526,7 +529,7 @@ svnInfoReceiver (void*       baton,
 
 - (void) fetchSvnInfo
 {
-	[self fetchSvnInfo: nil];
+	[self fetchSvnInfo: NULL];
 }
 
 

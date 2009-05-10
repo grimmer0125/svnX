@@ -113,7 +113,7 @@
             ACTIONS = {refetch = id; }; 
             CLASS = MySvnView; 
             LANGUAGE = ObjC; 
-            OUTLETS = {fView = NSView; progress = id; refetch = id; }; 
+            OUTLETS = {fRepository = MyRepository; fView = NSView; progress = id; refetch = id; }; 
             SUPERCLASS = NSView; 
         }
     ); 

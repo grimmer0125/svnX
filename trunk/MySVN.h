@@ -137,11 +137,14 @@
 						 additionalTaskInfo: (id)            additionalTaskInfo
 						 outputToData:       (BOOL)          outputToData;
 
-+ (void) killProcess: (int) pid;
++ (void) killTask: (NSDictionary*) taskObj
+			force: (BOOL)          force;
 
 + (NSString*) cachePathForKey: (NSString*) key;
 
-@end
+@end	// MySvn
+
+static const unsigned kSortOptions = NSCaseInsensitiveSearch | NSNumericSearch;
 
 NSString* SvnPath			(void);
 NSString* SvnCmdPath		(void);

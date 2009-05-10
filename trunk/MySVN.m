@@ -1,6 +1,10 @@
+//
+// MySVN.m
+//
 #import "MySVN.h"
 #import "MyApp.h"
 #import "CommonUtils.h"
+#import "Tasks.h"
 #import <unistd.h>
 
 
@@ -527,12 +531,7 @@ ensureDict (NSDictionary* dictOrNil)
 }
 
 
-+ (NSString*) joinedOptions: (NSArray*) options1 andOptions: (NSArray*) options2
-{
-	return [NSString stringWithFormat:@"%@ %@", [options1 componentsJoinedByString: @" "],
-												[options2 componentsJoinedByString: @" "]];
-}
-
+//----------------------------------------------------------------------------------------
 
 + (NSMutableDictionary*) launchTask:         (NSString*)     taskLaunchPath
 						 arguments:          (NSArray*)      arguments
@@ -543,26 +542,19 @@ ensureDict (NSDictionary* dictOrNil)
 						 outputToData:       (BOOL)          outputToData
 {
 //	NSLog(@"launchTask: '%@' arguments=%@", taskLaunchPath, arguments);
-	NSTask *task = [[NSTask alloc] init];
-    NSPipe *pipe = [[NSPipe alloc] init];
-    NSPipe *errorPipe = [[NSPipe alloc] init];
+	NSTask* task = [[NSTask alloc] init];
+	NSPipe* pipe = [[NSPipe alloc] init];
+	NSPipe* errorPipe = [[NSPipe alloc] init];
 
-	NSDictionary *defaultEnvironment = [[NSProcessInfo processInfo] environment];
-    NSMutableDictionary *environment = [[NSMutableDictionary alloc] initWithDictionary:defaultEnvironment];
+	[task setEnvironment: [Task createEnvironment: TRUE]];	
+	[task setLaunchPath: taskLaunchPath];
+	[task setArguments: arguments];
 
-    [environment setObject:@"YES" forKey:@"NSUnbufferedIO"];
-    [environment setObject:@"en_US.UTF-8" forKey:@"LC_CTYPE"];
-    [environment setObject:@"en_US.UTF-8" forKey:@"LANG"];
-    [task setEnvironment:environment];	
+	[task setStandardOutput: pipe];
+	[task setStandardError: errorPipe];
+	NSFileHandle* handle      = [pipe      fileHandleForReading];
+	NSFileHandle* errorHandle = [errorPipe fileHandleForReading];
 
-	[task setLaunchPath:taskLaunchPath];
-    [task setArguments:arguments];
-
-    [task setStandardOutput:pipe];
-    [task setStandardError:errorPipe];
-    NSFileHandle* handle = [pipe fileHandleForReading];
-    NSFileHandle* errorHandle = [errorPipe fileHandleForReading];
-    
 	// this will be done by Tasks
 //	[task launch]; 
 
@@ -571,7 +563,7 @@ ensureDict (NSDictionary* dictOrNil)
 								task,												@"task",
 								handle,												@"handle",
 								errorHandle,										@"errorHandle",
-								[NSNumber numberWithInt:[task processIdentifier]],	@"pid",
+						//		[NSNumber numberWithInt:[task processIdentifier]],	@"pid",
 								callback,											@"callback",
 								ensureDict(callbackInfo),							@"callbackInfo",
 								ensureDict(taskInfo),								@"taskInfo",
@@ -579,39 +571,41 @@ ensureDict (NSDictionary* dictOrNil)
 								NSBool(outputToData),								@"outputToData",
 								nil];
 
-    [errorPipe release];
-    [pipe release];
-    [task release];
+	[errorPipe release];
+	[pipe release];
+	[task release];
 
-	[[NSApp delegate] newTaskWithDictionary:taskObj];
-	
+	[[NSApp delegate] newTaskWithDictionary: taskObj];
+
 	return taskObj;
 }
 
 
 //----------------------------------------------------------------------------------------
 #pragma mark -
+//----------------------------------------------------------------------------------------
 
-+ (void) killProcess: (int) pid
++ (void) killTask: (NSDictionary*) taskObj
+			force: (BOOL)          force
 {
-	NSTask *task = [[NSTask alloc] init];
-	NSPipe *pipe = [[NSPipe alloc] init];
-	NSPipe *errorPipe = [[NSPipe alloc] init];
+	NSTask* const task = [taskObj objectForKey: @"task"];
+//	dprintf("task=%@ force=%d taskObj=%@", task, force, [taskObj objectForKey: @"pid"]);
+//	dprintf("task=%@ force=%d", task, force);
+	AssertClass(task, NSTask);
 
-	[task setLaunchPath: @"/bin/kill"];
-	[task setArguments: [NSArray arrayWithObjects: @"-9", [NSString stringWithFormat: @"%d", pid], nil]];
-
-	[task setStandardOutput: pipe];
-	[task setStandardError: errorPipe];
-
-//	NSFileHandle* handle = [pipe fileHandleForReading];
-//	NSFileHandle* errorHandle = [errorPipe fileHandleForReading];
-
-	[task launch];
-
-	[errorPipe release];
-	[pipe release];
-	[task release];
+	if ([task isRunning])
+	{
+		if (force)		// Use kill -9 to kill.
+		{
+			pid_t pid = [task processIdentifier];
+			if (kill(pid, SIGKILL))
+				dprintf("kill(%d) => errno=%d", pid, errno);
+		}
+		else
+		{
+			[task terminate];
+		}
+	}
 }
 
 

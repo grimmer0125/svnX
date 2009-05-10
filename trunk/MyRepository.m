@@ -53,6 +53,7 @@ TrimSlashes (id obj)
 	- (void) fetchSvnInfo;
 	- (void) fetchSvnInfoReceiveDataFinished: (NSString*) result;
 
+	- (void) svnInfoCompletedCallback: (id) taskObj;
 	- (NSArray*) userValidatedFiles: (NSArray*) files
 				 forDestination:     (NSURL*)   destinationURL;
 

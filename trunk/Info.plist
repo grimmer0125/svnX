@@ -74,8 +74,11 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1.1</string>
 	<key>CFBundleGetInfoString</key>
-	<string>1.1b0, © 2004-2008 La Chose
-© 2008-2009 Chris</string>
+	<string>1.1b0, © 2004-2007 La Chose
+© 2007-2009 Chris</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2004-2007 La Chose
+Copyright © 2007-2009 Chris</string>
 	<key>LSEnvironment</key>
 	<dict>
 		<key>DYLD_LIBRARY_PATH</key>

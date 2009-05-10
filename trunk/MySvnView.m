@@ -27,7 +27,8 @@
 
     [self setPendingTask: nil]; 
     [self setUrl: nil]; 
-    [self setRevision: nil]; 
+    [self setRevision: nil];
+	[fOptionsInvocation release];
 
     [super dealloc];
 }

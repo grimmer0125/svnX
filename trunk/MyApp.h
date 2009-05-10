@@ -36,7 +36,6 @@
 			  user:             (NSString*) user
 			  pass:             (NSString*) pass;
 
-- (bool)      checkSVNExistence:     (bool) warn;
 - (void)      newTaskWithDictionary: (NSMutableDictionary*) taskObj;
 - (NSString*) getMACAddress;
 

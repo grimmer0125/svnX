@@ -192,6 +192,7 @@ locationInView (NSEvent* event, NSView* destView)
 
 //----------------------------------------------------------------------------------------
 #pragma mark	-
+#pragma mark	NSTableView Utils
 //----------------------------------------------------------------------------------------
 
 @implementation CTableView
@@ -278,6 +279,19 @@ trackMouse (NSCell* self, NSRect cellFrame, NSView* controlView)
 }
 
 @end	// CTableView
+
+
+//----------------------------------------------------------------------------------------
+
+void
+SetColumnSort (NSTableView* tableView, NSString* colId, NSString* key)
+{
+	NSTableColumn* col = [tableView tableColumnWithIdentifier: colId];
+	Assert(col != nil);
+	id desc = [[AlphaNumSortDesc alloc] initWithKey: key ascending: YES];
+	[col setSortDescriptorPrototype: desc];
+	[desc release];
+}
 
 
 //----------------------------------------------------------------------------------------

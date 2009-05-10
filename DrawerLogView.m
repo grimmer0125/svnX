@@ -101,17 +101,9 @@
 {
 	#pragma unused(sender)
 	id taskObj = [document valueForKey: @"displayedTaskObj"];
-	
-	if ( taskObj == nil ) return;
-	
-	if (AltOrShiftPressed())
-	{
-		[MySvn killProcess: [[taskObj objectForKey: @"pid"] intValue]];
-	}
-	else
-	{
-		[[taskObj objectForKey: @"task"] terminate];
-	}	
+
+	if (taskObj)
+		[MySvn killTask: taskObj force: AltOrShiftPressed()];
 }
 
 

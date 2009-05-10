@@ -68,6 +68,9 @@ static int gLogLevel = kLogLevelAll;
 	return sharedInstance;
 }
 
+
+//----------------------------------------------------------------------------------------
+
 - (id) init
 {
 	if ( self = [super init] )
@@ -94,12 +97,17 @@ static int gLogLevel = kLogLevelAll;
 	return self;
 }
 
+
+//----------------------------------------------------------------------------------------
+
 -(void)awakeFromNib
 {
 	[tasksAC addObserver:self forKeyPath:@"selection.newStdout" options:(NSKeyValueObservingOptionNew) context:nil];
 	[tasksAC addObserver:self forKeyPath:@"selection.newStderr" options:(NSKeyValueObservingOptionNew) context:nil];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) observeValueForKeyPath: (NSString*)     keyPath
 		 ofObject:               (id)            object
@@ -151,17 +159,12 @@ static int gLogLevel = kLogLevelAll;
 	const BOOL altPressed = AltOrShiftPressed();
 	for_each(en, taskObj, [tasksAC arrangedObjects])
 	{
-		if (altPressed)		// if Alt is pressed, use kill -9 to kill.
-		{
-			[MySvn killProcess: [[taskObj objectForKey: @"pid"] intValue]];
-		}
-		else
-		{
-			[[taskObj objectForKey: @"task"] terminate];
-		}	
+		[MySvn killTask: taskObj force: altPressed];
 	}
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (IBAction) clearCompleted: (id) sender
 {
@@ -528,6 +531,43 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 
 @implementation Task
 
+
+//----------------------------------------------------------------------------------------
+// Create a default environment dictionary for each & every task
+
++ (NSMutableDictionary*) createEnvironment: (BOOL) isUnbuffered
+{
+	// If there's a 'TaskEnvironment' dict in the plist then add its elements to the Task's environment.
+	static id kTaskEnvironment = nil;
+	static BOOL inited = FALSE;
+	if (!inited)
+	{
+		inited = TRUE;
+		kTaskEnvironment = [[NSBundle mainBundle] objectForInfoDictionaryKey: @"TaskEnvironment"];
+		if (![kTaskEnvironment isKindOfClass: [NSDictionary class]])
+			kTaskEnvironment = nil;
+	}
+
+	NSMutableDictionary* env = [NSMutableDictionary dictionaryWithDictionary:
+												[[NSProcessInfo processInfo] environment]];
+	if (isUnbuffered)
+		[env setObject: @"YES"     forKey: @"NSUnbufferedIO"];
+//	[env setObject: @"en_US.UTF-8" forKey: @"LC_CTYPE"];
+//	[env setObject: @"en_US.UTF-8" forKey: @"LANG"];
+	[env setObject: @"en_US.UTF-8" forKey: @"LC_ALL"];
+	[env setObject: @""            forKey: @"DYLD_LIBRARY_PATH"];
+	if (kTaskEnvironment)
+	{
+		for_each_key(en, key, kTaskEnvironment)
+			[env setObject: [kTaskEnvironment objectForKey: key] forKey: key];
+	}
+
+	return env;
+}
+
+
+//----------------------------------------------------------------------------------------
+
 + (id) task
 {
 	return [self taskWithDelegate: nil object: nil];
@@ -553,13 +593,7 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 		fTask     = [[NSTask alloc] init];
 		fDelegate = [target retain];
 		fObject   = [object retain];
-
-		NSMutableDictionary* env = [[NSMutableDictionary alloc] initWithDictionary:
-													[[NSProcessInfo processInfo] environment]];
-	//	[env setObject: @"YES"         forKey: @"NSUnbufferedIO"];
-		[env setObject: @"en_US.UTF-8" forKey: @"LC_ALL"];
-		[fTask setEnvironment: env];
-		[env release];
+		[fTask setEnvironment: [Task createEnvironment: FALSE]];
 	}
 
 	return self;
@@ -643,6 +677,37 @@ UCS Code (Hex)	Binary UTF-8 Format			Legal UTF-8 Values (Hex)
 		[delegate release];
 	}
 	[self release];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) kill
+{
+	WarnIf(kill([fTask processIdentifier], SIGKILL));
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) terminate: (BOOL) force
+{
+	if (force)
+	{
+		[self kill];
+	}
+	else
+	{
+		[fTask terminate];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) terminate
+{
+	[fTask terminate];
 }
 
 

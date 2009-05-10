@@ -2,5 +2,5 @@
 
 CFBundleName = "svnX";
 qCFBundleShortVersionString = "1.1";
-qCFBundleGetInfoString = "1.1, Copyright 2004-2008 La Chose";
-NSHumanReadableCopyright = "Copyright © 2004-2008 La Chose\nCopyright © 2008-2009 Chris";
+qCFBundleGetInfoString = "1.1, Copyright 2004-2007 La Chose";
+qNSHumanReadableCopyright = "Copyright © 2004-2007 La Chose\nCopyright © 2007-2009 Chris";

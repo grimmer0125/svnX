@@ -5,4 +5,7 @@
 {
 }
 
++ (void) initialize: (NSMutableDictionary*) prefs;
+
 @end
+

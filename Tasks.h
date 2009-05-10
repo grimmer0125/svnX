@@ -45,6 +45,7 @@ NSData*		stdOutData	(NSDictionary* taskObj);
 	id					fObject;	// callback argument
 }
 
++ (NSMutableDictionary*) createEnvironment: (BOOL) isUnbuffered;
 + (id) task;
 + (id) taskWithDelegate: (id<TaskDelegate>) target object: (id) object;
 - (id) initWithDelegate: (id<TaskDelegate>) target object: (id) object;

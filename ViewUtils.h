@@ -22,6 +22,8 @@
 
 @end	// CTableView
 
+void SetColumnSort (NSTableView* tableView, NSString* colId, NSString* key);
+
 
 //----------------------------------------------------------------------------------------
 // Draw styled text in a table cell

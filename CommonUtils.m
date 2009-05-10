@@ -275,7 +275,7 @@ Folder_IsChewableItems (NSURL* url)
 		[target performSelectorOnMainThread: fMessage withObject: object waitUntilDone: wait];
 }
 
-@end
+@end	// Message
 
 
 //----------------------------------------------------------------------------------------
@@ -298,7 +298,45 @@ Folder_IsChewableItems (NSURL* url)
 }
 
 
-@end
+@end	// NSSavePanel
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark -
+//----------------------------------------------------------------------------------------
+
+@implementation AlphaNumSortDesc
+
+- (id) initWithKey: (NSString*) key ascending: (BOOL) ascending
+{
+	if (self = [super initWithKey: key ascending: ascending])
+	{
+		fKey       = [self key];
+		fAscending = ascending;
+	}
+	return self;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (NSComparisonResult) compareObject: (id) obj1 toObject: (id) obj2
+{
+	NSComparisonResult result = [[obj1 objectForKey: fKey] compare: [obj2 objectForKey: fKey]
+														   options: kSortOptions];
+	return fAscending ? result : -result;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (id) reversedSortDescriptor
+{
+	return [[AlphaNumSortDesc alloc] initWithKey: fKey ascending: !fAscending];
+}
+
+
+@end	// AlphaNumSortDesc
 
 
 //----------------------------------------------------------------------------------------

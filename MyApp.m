@@ -66,13 +66,7 @@ addTransform (Class itsClass, NSString* itsName)
 + (void) initialize
 {
 	NSMutableDictionary* const dictionary = [NSMutableDictionary dictionary];
-	NSData* svnFileStatusModifiedColor = [NSArchiver archivedDataWithRootObject: [NSColor blackColor]];
-	NSData* svnFileStatusNewColor      = [NSArchiver archivedDataWithRootObject: [NSColor blueColor]];
-	NSData* svnFileStatusMissingColor  = [NSArchiver archivedDataWithRootObject: [NSColor redColor]];
-
-	[dictionary setObject:svnFileStatusModifiedColor forKey: @"svnFileStatusModifiedColor"];
-	[dictionary setObject:svnFileStatusNewColor      forKey: @"svnFileStatusNewColor"];
-	[dictionary setObject:svnFileStatusMissingColor  forKey: @"svnFileStatusMissingColor"];
+	[SvnFileStatusToColourTransformer initialize: dictionary];
 
 	SInt32 response;
 	if (Gestalt(gestaltSystemVersion, &response) != noErr)
@@ -88,10 +82,10 @@ addTransform (Class itsClass, NSString* itsName)
 	// Working Copy
 	[dictionary setObject: kNSTrue  forKey: @"addWorkingCopyOnCheckout"];
 	[dictionary setObject: kNSFalse forKey: kUseOldParsingMethod];
-
 	[dictionary setObject: kNSTrue  forKey: @"abbrevWCFilePaths"];
 	[dictionary setObject: kNSTrue  forKey: @"expandWCTree"];
 	[dictionary setObject: kNSFalse forKey: @"autoRefreshWC"];
+	[dictionary setObject: kNSFalse forKey: @"compactWCColumns"];
 
 	// Review & Commit
 	id obj = [NSDictionary dictionaryWithObjectsAndKeys:
@@ -110,26 +104,27 @@ addTransform (Class itsClass, NSString* itsName)
 	// Transformers																		// Used by:
 	addTransform([SvnFileStatusToColourTransformer class],
 												@"SvnFileStatusToColourTransformer");	// MyWorkingCopy
-	addTransform([SvnDateTransformer class], @"SvnDateTransformer");					// MySvnLogView
-	addTransform([ArrayCountTransformer class], @"ArrayCountTransformer");				// MySvnLogView
-	addTransform([FilePathCleanUpTransformer class], @"FilePathCleanUpTransformer");	// FavoriteWorkingCopies
-	addTransform([FilePathWorkingCopy class], @"FilePathWorkingCopy");					// FavoriteWorkingCopies
-	addTransform([SvnFilePathTransformer class], @"lastPathComponent");					// SingleFileInspector
-	addTransform([TrimNewLinesTransformer class], @"TrimNewLines");						// MySvnLogView (to filter author name)
-	addTransform([TaskStatusToColorTransformer class], @"TaskStatusToColor");			// Activity Window in svnX.nib
-	addTransform([OneLineTransformer class], @"ForceOneLine");							// preferencesWindow
+	addTransform([SvnDateTransformer               class], @"SvnDateTransformer");		// MySvnLogView
+	addTransform([ArrayCountTransformer            class], @"ArrayCountTransformer");	// MySvnLogView
+	addTransform([FilePathCleanUpTransformer       class], @"FilePathCleanUp");			// FavoriteWorkingCopies (path field)
+	addTransform([FilePathWorkingCopy              class], @"FilePathWorkingCopy");		// FavoriteWorkingCopies
+	addTransform([SvnFilePathTransformer           class], @"lastPathComponent");		// SingleFileInspector
+	addTransform([TrimNewLinesTransformer          class], @"TrimNewLines");			// MySvnLogView (author column)
+	addTransform([TaskStatusToColorTransformer     class], @"TaskStatusToColor");		// Activity Window in svnX.nib
+	addTransform([OneLineTransformer               class], @"ForceOneLine");			// preferencesWindow
 }
 
 
 //----------------------------------------------------------------------------------------
 
-- (bool) checkSVNExistence: (bool) warn
+- (BOOL) checkSVNExistence: (BOOL) warn
 {
 	NSFileManager* fm = [NSFileManager defaultManager];
 	BOOL isDir = NO,
 		 exists = [fm fileExistsAtPath: SvnPath() isDirectory: &isDir] && isDir &&
-				  [fm fileExistsAtPath: SvnCmdPath()];
+				  [fm isExecutableFileAtPath: SvnCmdPath()];
 
+//	dprintf("cmdPath='%@', exists=%d isDir=%d", SvnCmdPath(), exists, isDir);
 	NSData* version = nil;
 	if (exists)
 	{
@@ -145,11 +140,11 @@ addTransform (Class itsClass, NSString* itsName)
 	if (!exists && warn)
 	{
 		NSBeep();
-		id text = isDir ? @"Make sure the svn binary is present at path:\n%C%@%C.\n\n"
+		id text = isDir ? @"Make sure the svn binary is present in the folder:\n%C%@%C.\n\n"
 						   "Is a Subversion client installed?"
-						   " If so, make sure the path is correctly set in the preferences."
+						   "  If so, make sure the path is correctly set in the preferences."
 						: @"The 'Path to svn binaries folder' preference is\n%C%@%C.\n\n"
-						   "This directory was not found.";
+						   "This folder was not found.";
 		NSAlert* alert = [NSAlert alertWithMessageText: @"Error: Unable to locate svn binary."
 										 defaultButton: @"Open Preferences"
 									   alternateButton: @"Quit"
@@ -182,7 +177,7 @@ addTransform (Class itsClass, NSString* itsName)
 		}
 	}
 
-	[self checkSVNExistence: true];
+	[self checkSVNExistence: TRUE];
 	[repositoriesController showWindow];
 	[favoriteWorkingCopies showWindow];
 }
@@ -257,7 +252,7 @@ addTransform (Class itsClass, NSString* itsName)
 {
 	#pragma unused(sender)
 	[preferencesWindow close];
-	[self checkSVNExistence: true];
+	[self checkSVNExistence: TRUE];
 }
 
 
@@ -336,7 +331,7 @@ addTransform (Class itsClass, NSString* itsName)
 	// Parse \w[0-9]+.[0-9]+.[0-9]+
 	UInt32 version = 0;
 	int i = 0, n, digit;
-	while (buf[i] <= ' ')
+	while (buf[i] && buf[i] <= ' ')
 		++i;
 	for (n = 0; (digit = buf[i] - '0') >= 0 && digit <= 9; ++i)
 		n = n * 10 + digit;
@@ -355,8 +350,20 @@ addTransform (Class itsClass, NSString* itsName)
 	}
 
 	fSvnVersion = version;
-//	dprintf("version=%u => '%@'", version, [self svnVersion]);
+//	dprintf("version=%u => '%@' %@", version, [self svnVersion], data);
 	[self setSvnHasLibs: nil];		// Force bindings to update
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static BOOL gCanFocus = YES;
+
+- (void) svnCmdPathFocus: (id) sender
+{
+	[[sender window] makeFirstResponder: sender];
+	gCanFocus = YES;
+	NSBeep();
 }
 
 
@@ -364,10 +371,10 @@ addTransform (Class itsClass, NSString* itsName)
 
 - (IBAction) svnCmdPathChanged: (id) sender
 {
-	if (![self checkSVNExistence: false])
+	if (![self checkSVNExistence: FALSE] && gCanFocus)
 	{
-		[[sender window] performSelector: @selector(makeFirstResponder:) withObject: sender afterDelay: 0.125];
-		NSBeep();
+		gCanFocus = NO;
+		[self performSelector: @selector(svnCmdPathFocus:) withObject: sender afterDelay: 0.125];
 	}
 }
 

@@ -191,7 +191,18 @@ MessageString (NSString* str)
 
 @implementation NSString (MyAdditions)
 
-+ (NSString *)stringByAddingPercentEscape:(NSString *)url
+
+//----------------------------------------------------------------------------------------
+
+- (NSComparisonResult) compareAlphaNum: (NSString*) aString
+{
+	return [self compare: aString options: NSCaseInsensitiveSearch | NSNumericSearch];
+}
+
+
+//----------------------------------------------------------------------------------------
+
++ (NSString*) stringByAddingPercentEscape: (NSString*) url
 {
 	return [(id) CFURLCreateStringByAddingPercentEscapes(NULL, (CFStringRef) url, NULL, NULL,
 														 kCFStringEncodingUTF8) autorelease];

@@ -56,6 +56,20 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 
 
 //----------------------------------------------------------------------------------------
+
+- (id) newObjectWithName: (NSString*) name
+					path: (NSString*) path
+{
+	return [NSMutableDictionary dictionaryWithObjectsAndKeys:
+				name,								@"name",
+				[path stringByStandardizingPath],	@"fullPath",
+				@"",								@"user",
+				@"",								@"pass",
+				nil];
+}
+
+
+//----------------------------------------------------------------------------------------
 #pragma mark	-
 //----------------------------------------------------------------------------------------
 
@@ -87,6 +101,8 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) newWorkingCopyNotificationHandler: (NSNotification*) notification
 {
 	[self newWorkingCopyItemWithPath: [notification object]];
@@ -109,12 +125,7 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 
 - (void) newWorkingCopyItemWithPath: (NSString*) workingCopyPath
 {
-	[fAC addObject:
-		[NSMutableDictionary dictionaryWithObjectsAndKeys: @"My Project",	@"name",
-														   workingCopyPath,	@"fullPath",
-														   @"",				@"user",
-														   @"",				@"pass",
-														   nil]];
+	[fAC addObject: [self newObjectWithName: @"My Project" path: workingCopyPath]];
 	[super newItem: self];
 }
 
@@ -247,7 +258,7 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 	NSDictionary* wcEntry = nil;
 	for_each(en2, it, [fAC arrangedObjects])
 	{
-		NSRange r = [aPath rangeOfString: [it valueForKey: @"fullPath"]
+		NSRange r = [aPath rangeOfString: [it objectForKey: @"fullPath"]
 								 options: NSLiteralSearch | NSAnchoredSearch];
 		if (r.location == 0 && r.length > bestMatchScore)
 		{
@@ -273,12 +284,7 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 	if (wcDocument != nil)
 		[wcDocument showWindows];
 	else
-		[self openNewDocument:
-			[NSDictionary dictionaryWithObjectsAndKeys: [aPath lastPathComponent],	@"name",
-														aPath,						@"fullPath",
-														@"",						@"user",
-														@"",						@"pass",
-														nil]];
+		[self openNewDocument: [self newObjectWithName: [aPath lastPathComponent] path: aPath]];
 }
 
 
@@ -291,8 +297,7 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 
 	if (wcDocument != nil)
 	{
-		[[wcDocument controller]
-			fileHistoryOpenSheetForItem: [NSDictionary dictionaryWithObject: aPath forKey: @"fullPath"]];
+		[[wcDocument controller] fileHistoryOpenSheetForItem: [self newObjectWithName: @"" path: aPath]];
 	}
 	else
 	{

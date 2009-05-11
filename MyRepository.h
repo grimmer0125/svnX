@@ -21,6 +21,7 @@
 
 	BOOL									operationInProgress;
 
+	BOOL									fIsFile;		// current URL is file
 	NSURL*									fRootURL;		// repository URL
 	NSURL*									fURL;			// current URL
 	NSString*								fRevision;		// current revision
@@ -58,6 +59,7 @@
 
 - (NSString*) revision;
 - (NSString*) windowTitle;
+- (BOOL)      rootIsFile;
 - (NSURL*)    rootURL;
 - (NSURL*)    url;
 - (NSString*) browsePath;

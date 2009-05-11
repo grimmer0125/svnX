@@ -17,8 +17,6 @@ enum {
 	SVNXCallbackFileMerge
 };
 
-static const unsigned kCompareOptions = NSCaseInsensitiveSearch | NSNumericSearch;
-
 
 //----------------------------------------------------------------------------------------
 
@@ -94,7 +92,7 @@ getImageForIconType (OSType iconType, GCoord size)
 	IconRef iconRef;
 	if (WarnIf(GetIconRef(kOnSystemDisk, kSystemIconsCreator, iconType, &iconRef)) == noErr)
 	{
-		NSImage* image = [getImageForIconSize(iconRef, size) retain];
+		NSImage* image = getImageForIconSize(iconRef, size);
 		WarnIf(ReleaseIconRef(iconRef));
 		return image;
 	}
@@ -110,7 +108,7 @@ setImageForIconType (NSString* name, OSType iconType)
 {
 	NSImage* image = getImageForIconType(iconType, 32);
 	if (image == nil || ![image setName: name])
-		NSLog(@"WARNING: init image '%@' FAILED", name);
+		dprintf("WARNING: init image '%@' FAILED", name);
 
 	return image;
 }
@@ -121,8 +119,24 @@ setImageForIconType (NSString* name, OSType iconType)
 static void
 initICEntry (ICEntry* entry, OSType iconType)
 {
+//	Assert(entry->fIcon == NULL);
 	if (WarnIf(GetIconRef(kOnSystemDisk, kSystemIconsCreator, iconType, &entry->fIcon)) == noErr)
-		entry->fImage = [getImageForIcon16(entry->fIcon) retain];
+		entry->fImage = getImageForIcon16(entry->fIcon);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static inline void
+clearICEntry (ICEntry* entry)
+{
+	IconRef iconRef = entry->fIcon;
+	if (iconRef != NULL)
+	{
+		entry->fIcon = NULL;
+		WarnIf(ReleaseIconRef(iconRef));
+		[entry->fImage release];
+	}
 }
 
 
@@ -137,7 +151,7 @@ initIconCache ()
 		initICEntry(&gIconFolder, kGenericFolderIcon);
 		initICEntry(&gIconFile, kGenericDocumentIcon);
 		if (![gIconFolder.fImage setName: @"FolderRef"])
-			NSLog(@"WARNING: init image 'FolderRef' FAILED");
+			dprintf("WARNING: init image 'FolderRef' FAILED");
 
 		// 32 x 32 icons
 		setImageForIconType(@"Finder", kFinderIcon);
@@ -156,18 +170,17 @@ initIconCache ()
 static void
 resetIconCache ()
 {
-	int i;
 	ICEntry* entry = gIconCache;
-	for (i = 0; i < kMaxIcons; ++i, ++entry)
+	for (int i = 0; i < kMaxIcons; ++i, ++entry)
 	{
-		IconRef iconRef = entry->fIcon;
-		if (iconRef != NULL)
-		{
-			entry->fIcon = NULL;
-			WarnIf(ReleaseIconRef(iconRef));
-			[entry->fImage release];
-		}
+		clearICEntry(entry);
 	}
+#if qDebug && 0
+	clearICEntry(&gIconFolder);
+	clearICEntry(&gIconFile);
+	[gIconFolder32 release];
+	gIconFolder32 = nil;
+#endif
 }
 
 
@@ -213,6 +226,9 @@ getIcon (ConstCStr path, Boolean* isDirectory)
 			entry->fIcon = iconRef;
 			entry->fImage = image;
 		}
+		else
+			[image autorelease];
+	//	NSLog(@"getIcon %d 0x%X '%s'", i, iconRef, path);
 	}
 
 	return image;
@@ -246,6 +262,19 @@ GenericFolderImage32 ()
 #pragma mark -
 //----------------------------------------------------------------------------------------
 
+@interface MyWorkingCopy (Private)
+
+	- (void) setDisplayedTaskObj: (NSMutableDictionary*) aDisplayedTaskObj;
+	- (void) setSvnDirectories:   (WCTreeEntry*)         aSvnDirectories;
+
+	- (NSInvocation*) makeCallbackInvocation:       (SEL) selector;
+	- (NSInvocation*) makeCallbackInvocationOfKind: (int) callbackKind;
+
+@end	// MyWorkingCopy (Private)
+
+
+//----------------------------------------------------------------------------------------
+
 @implementation MyWorkingCopy
 
 
@@ -263,6 +292,7 @@ GenericFolderImage32 ()
 
 - (void) svnRefresh
 {
+//	NSLog(@"svnRefresh - isVisible=%d", [[controller window] isVisible]);
 	if (useOldParsingMethod())
 		[controller fetchSvnInfo];
 	[controller fetchSvnStatus];
@@ -292,7 +322,7 @@ GenericFolderImage32 ()
 		// initialize svnFiles:
 		// svnFilesAC is bound in Interface Builder to this variable.
 		[self setSvnFiles: [NSArray array]];
-		[self setSvnDirectories: [[WCTreeEntry alloc] init]];
+		svnDirectories = [[WCTreeEntry alloc] init];
 
 		[self setOutlineSelectedPath:@""];
 
@@ -341,6 +371,7 @@ GenericFolderImage32 ()
 	[self setOutlineSelectedPath: nil];
 	[self setRepositoryUrl: nil];
 	[self setDisplayedTaskObj: nil];
+	[subControllers release];
 	SvnEndClient(fSvnEnv);
 
 	[super dealloc];
@@ -363,7 +394,7 @@ GenericFolderImage32 ()
 
 	// set table view's default sorting to status type column
 	id desc1 = [[NSSortDescriptor alloc] initWithKey: @"col1" ascending: NO],
-	   desc2 = [[NSSortDescriptor alloc] initWithKey: @"path" ascending: YES];
+	   desc2 = [[AlphaNumSortDesc alloc] initWithKey: @"path" ascending: YES];
 	[svnFilesAC setSortDescriptors: [NSArray arrayWithObjects: desc1, desc2, nil]];
 	[desc1 release];
 	[desc2 release];
@@ -374,9 +405,29 @@ GenericFolderImage32 ()
 
 //----------------------------------------------------------------------------------------
 
-- (int*) reviewCount
+- (void) registerSubController: (id) aController
 {
-	return &reviewCount;
+	if (subControllers == nil)
+		subControllers = [[NSMutableSet alloc] init];
+	[subControllers addObject: aController];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) unregisterSubController: (id) aController
+{
+	Assert(subControllers != nil);
+	Assert([subControllers containsObject: aController]);
+	[subControllers removeObject: aController];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (id) anySubController
+{
+	return [subControllers anyObject];
 }
 
 
@@ -472,6 +523,7 @@ typedef struct SvnStatusEnv SvnStatusEnv;
 static NSMutableArray*
 addDirToTree (const SvnStatusEnv* env, NSString* const fullPath, NSImage* icon)
 {
+//	NSLog(@"addDirToTree('%@')", fullPath);
 	NSMutableArray* children = [env->fTree objectForKey: fullPath];
 	if (children == nil)
 	{
@@ -480,11 +532,12 @@ addDirToTree (const SvnStatusEnv* env, NSString* const fullPath, NSImage* icon)
 		NSString* const name = [fullPath substringFromIndex: parentLen + 1];
 		children = [NSMutableArray array];
 		[env->fTree setObject: children forKey: fullPath];
-		id entry = [[WCTreeEntry alloc] initWithChildren: children
-										name: name
-										path: [fullPath substringFromIndex: env->wcPathLength + 1]
-										icon: icon];
+		id entry = [WCTreeEntry create: children
+								  name: name
+								  path: [fullPath substringFromIndex: env->wcPathLength + 1]
+								  icon: icon];
 		[addDirToTree(env, parent, nil) addObject: entry];
+		[entry release];
 	}
 	return children;
 }
@@ -498,6 +551,7 @@ svnStatusReceiver (void*       baton,
 				   const char* path,
 				   SvnStatus   status)
 {
+//	NSLog(@"svnStatusReceiver('%s')", path);
 	const SvnStatusEnv* const env = (const SvnStatusEnv*) baton;
 	const svn_wc_entry_t* const entry = status->entry;
 
@@ -691,6 +745,7 @@ svnInfoReceiver (void*       baton,
 				 SvnPool     pool)
 {
 	#pragma unused(pool)
+//	NSLog(@"svnInfoReceiver: URL=<%s>", info->URL);
 	SvnInfoEnv* env = (SvnInfoEnv*) baton;
 	[env->fInterface svnInfo: info forPath: path];
 	strncpy(env->fURL, info->URL, sizeof(env->fURL));
@@ -728,17 +783,19 @@ svnInfoReceiver (void*       baton,
 		if (!flatMode)	// will build folder tree
 		{
 			id rootChildren = [NSMutableArray array];
-			treeDirs = [[WCTreeEntry alloc] initWithChildren: rootChildren
-											name: [workingCopyPath lastPathComponent]
-											path: @""
-											icon: nil];
+			treeDirs = [WCTreeEntry create: rootChildren
+									  name: [workingCopyPath lastPathComponent]
+									  path: @""
+									  icon: nil];
 
 			env.fTree = [NSMutableDictionary dictionaryWithObject: rootChildren forKey: workingCopyPath];
 		}
+	//	env.wcPath       = workingCopyPath;
 		env.wcPathLength = [workingCopyPath length];
 		env.flatMode     = flatMode;
 		env.showUpdates  = showUpdates_;
 
+	//	NSLog(@"svnDoStatus('%s')", path);
 		svn_revnum_t result_rev = SVN_INVALID_REVNUM;
 		SvnThrowIf(svn_client_status2(&result_rev, path, &rev_opt,
 									  svnStatusReceiver, &env, kSvnRecurse,
@@ -749,11 +806,15 @@ svnInfoReceiver (void*       baton,
 									  ctx, pool));
 
 		if (treeDirs)
+		{
 			[self setSvnDirectories: treeDirs];
+			[treeDirs release];
+		}
 		[controller saveSelection];
 		[self setSvnFiles: env.newSvnFiles];
 		[controller fetchSvnStatusVerboseReceiveDataFinished];
 		[controller restoreSelection];
+	//	NSLog(@"svnDoStatus rev=%d url=<%s>", result_rev, NULL);
 	}
 }
 
@@ -765,6 +826,7 @@ svnInfoReceiver (void*       baton,
 	[controller setStatusMessage: @"Refreshing"];
 	if (SvnWantAndHave())
 	{
+	//	NSLog(@"svn status - begin");
 		NSAutoreleasePool* autoPool = [[NSAutoreleasePool alloc] init];
 		// Create top-level memory pool.
 		SvnPool pool = SvnNewPool();
@@ -782,6 +844,7 @@ svnInfoReceiver (void*       baton,
 		{
 			SvnDeletePool(pool);
 			[autoPool release];
+	//		NSLog(@"svn status - end");
 			[controller setStatusMessage: nil];
 		}
 	}
@@ -849,10 +912,10 @@ svnInfoReceiver (void*       baton,
 
 	NSMutableArray *newSvnFiles = [NSMutableArray arrayWithCapacity: 100];
 	NSMutableArray* const rootChildren = [NSMutableArray array];
-	WCTreeEntry* outlineDirs = [[WCTreeEntry alloc] initWithChildren: rootChildren
-													name: [workingCopyPath lastPathComponent]
-													path: @""
-													icon: nil];
+	WCTreeEntry* outlineDirs = [WCTreeEntry create: rootChildren
+											  name: [workingCopyPath lastPathComponent]
+											  path: @""
+											  icon: nil];
 
 	// <target> node
 	NSXMLElement *targetElement = [[[xmlDoc rootElement] elementsForName:@"target"] objectAtIndex:0];
@@ -1194,11 +1257,12 @@ svnInfoReceiver (void*       baton,
 				{
 					NSImage* dirIcon = [workspace iconForFile: filePath];
 					[dirIcon setSize: kIconSize];
-					child = [[WCTreeEntry alloc] initWithChildren: [NSMutableArray array]
-												 name: dirName
-												 path: [filePath substringFromIndex: wcPathLength]
-												 icon: dirIcon];
+					child = [WCTreeEntry create: [NSMutableArray array]
+										   name: dirName
+										   path: [filePath substringFromIndex: wcPathLength]
+										   icon: dirIcon];
 					[tmp addObject: child];
+					[child release];
 				}
 
 				tmp = [child children];
@@ -1245,8 +1309,9 @@ svnInfoReceiver (void*       baton,
 	}
 	[pool release];
 
-	[self setSvnDirectories:outlineDirs];
-	[self setSvnFiles:newSvnFiles];
+	[self setSvnDirectories: outlineDirs];
+	[outlineDirs release];
+	[self setSvnFiles: newSvnFiles];
 }
 
 
@@ -1287,6 +1352,7 @@ svnInfoReceiver (void*       baton,
 		 forPath: (const char*) path
 {
 	#pragma unused(path)
+//	NSLog(@"svnInfo revision=%d url=<%s>", info->rev, info->URL);
 	[self setRevision: SvnRevNumToString(info->rev)];
 
 	NSString* urlString = UTF8(info->URL);
@@ -1322,8 +1388,7 @@ svnInfoReceiver (void*       baton,
 	else
 	{
 		bool gotRev = false, gotURL = false;
-		int i;
-		for (i = 0; i < count && (!gotRev || !gotURL); ++i)
+		for (int i = 0; i < count && (!gotRev || !gotURL); ++i)
 		{
 			NSString* const line = [lines objectAtIndex: i];
 			const int lineLength = [line length];
@@ -1426,6 +1491,7 @@ svnInfoReceiver (void*       baton,
 {
 	if (itemPaths == nil)
 		itemPaths = [[svnFilesAC selectedObjects] valueForKey: @"fullPath"];
+//	dprintf("itemPaths=%@", itemPaths);
 	if (options == nil)
 		options = [NSArray array];
 
@@ -1858,7 +1924,7 @@ static int
 compareNames (id obj1, id obj2, void* context)
 {
 	#pragma unused(context)
-	return [[obj1 name] compare: [obj2 name] options: kCompareOptions];
+	return [[obj1 name] compare: [obj2 name] options: kSortOptions];
 }
 
 
@@ -1867,6 +1933,26 @@ compareNames (id obj1, id obj2, void* context)
 @implementation WCTreeEntry
 
 
++ (id) create: (NSMutableArray*) itsChildren
+	   name:   (NSString*)       itsName
+	   path:   (NSString*)       itsPath
+	   icon:   (NSImage*)        itsIcon
+{
+	WCTreeEntry* obj = [self alloc];
+	if (obj)
+	{
+		obj->children = [itsChildren retain];
+		obj->name     = [itsName     retain];
+		obj->path     = [itsPath     retain];
+		obj->icon     = [itsIcon     retain];
+	}
+
+	return obj;
+}
+
+
+//----------------------------------------------------------------------------------------
+
 - (void) dealloc
 {
 	[children release];
@@ -1874,26 +1960,6 @@ compareNames (id obj1, id obj2, void* context)
 	[path     release];
 	[icon     release];
 	[super dealloc];
-}
-
-
-//----------------------------------------------------------------------------------------
-
-- (id) initWithChildren: (NSMutableArray*) itsChildren
-	   name:             (NSString*)       itsName
-	   path:             (NSString*)       itsPath
-	   icon:             (NSImage*)        itsIcon
-{
-	self = [super init];
-	if (self)
-	{
-		children = [itsChildren retain];
-		name     = [itsName     retain];
-		path     = [itsPath     retain];
-		icon     = [itsIcon     retain];
-	}
-
-	return self;
 }
 
 

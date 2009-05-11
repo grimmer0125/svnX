@@ -34,7 +34,7 @@ enum {
 	BOOL			flatMode, smartMode;
 	BOOL			showUpdates;	// svn status -u
 	int				filterMode;
-	int				reviewCount;	// number of active ReviewContollers
+	NSMutableSet*	subControllers;			// active ReviewContollers
 
 	NSMutableDictionary*	displayedTaskObj;
 	struct SvnEnv*			fSvnEnv;		// The svn client environment
@@ -78,27 +78,20 @@ enum {
 		 itemPaths:  (NSArray*)      itemPaths;
 
 - (NSInvocation*) svnOptionsInvocation;
-- (void) setDisplayedTaskObj: (NSMutableDictionary*) aDisplayedTaskObj;
-- (NSInvocation*) makeCallbackInvocation: (SEL) selector;
-- (NSInvocation*) makeCallbackInvocationOfKind: (int) callbackKind;
+- (WCTreeEntry*)  svnDirectories;
 
 - (NSString*) workingCopyPath;
-- (void) setWorkingCopyPath: (NSString*) str;
+- (void)      setWorkingCopyPath: (NSString*) str;
 - (NSString*) user;
-- (void) setUser: (NSString*) aUser;
+- (void)      setUser:            (NSString*) aUser;
 - (NSString*) pass;
-- (void) setPass: (NSString*) aPass;
+- (void)      setPass:            (NSString*) aPass;
 - (NSString*) revision;
-- (void) setRevision: (NSString*) aRevision;
-
-- (NSArray*) svnFiles;
-- (void) setSvnFiles: (NSArray*) aSvnFiles;
-
-- (WCTreeEntry*) svnDirectories;
-- (void) setSvnDirectories: (WCTreeEntry*) aSvnDirectories;
-
+- (void)      setRevision:        (NSString*) aRevision;
+- (NSArray*)  svnFiles;
+- (void)      setSvnFiles:        (NSArray*)  aSvnFiles;
 - (NSString*) windowTitle;
-- (void) setWindowTitle: (NSString*) aWindowTitle;
+- (void)      setWindowTitle:     (NSString*) aWindowTitle;
 
 - (BOOL) flatMode;
 - (void) setFlatMode: (BOOL) flag;
@@ -106,7 +99,10 @@ enum {
 - (void) setSmartMode: (BOOL) flag;
 - (int)  filterMode;
 - (void) setFilterMode: (int) aFilterMode;
-- (int*) reviewCount;
+
+- (void) registerSubController:   (id) aController;
+- (void) unregisterSubController: (id) aController;
+- (id)   anySubController;
 
 - (id) controller;
 - (NSURL*) repositoryUrl;
@@ -131,11 +127,11 @@ enum {
 	BOOL			sorted;
 }
 
++ (id) create: (NSMutableArray*) itsChildren
+	   name:   (NSString*)       itsName
+	   path:   (NSString*)       itsPath
+	   icon:   (NSImage*)        itsIcon;
 - (void) dealloc;
-- (id) initWithChildren: (NSMutableArray*) itsChildren
-	   name:             (NSString*)       itsName
-	   path:             (NSString*)       itsPath
-	   icon:             (NSImage*)        itsIcon;
 - (int) childCount;
 - (id) childAtIndex: (int) index;
 - (NSMutableArray*) children;

@@ -32,6 +32,7 @@
 
 + (void) openForDocument: (MyWorkingCopy*) document;
 
+- (NSWindow*) window;
 - (IBAction) checkAllFiles:    (id) sender;
 - (IBAction) checkNoFiles:     (id) sender;
 - (IBAction) refreshFiles:     (id) sender;

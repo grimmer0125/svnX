@@ -58,13 +58,11 @@
 #pragma mark	-
 //----------------------------------------------------------------------------------------
 
-static const unsigned kCompareOptions = NSCaseInsensitiveSearch | NSNumericSearch;
-
 static int
 compareNames (id obj1, id obj2, void* context)
 {
 	#pragma unused(context)
-	return [[obj1 name] compare: [obj2 name] options: kCompareOptions];
+	return [[obj1 name] compare: [obj2 name] options: kSortOptions];
 }
 
 
@@ -75,7 +73,7 @@ compareTemplateNames (id obj1, id obj2, void* context)
 {
 	#pragma unused(context)
 	return [[obj1 objectForKey: @"name"] compare: [obj2 objectForKey: @"name"]
-										 options: kCompareOptions];
+										 options: kSortOptions];
 }
 
 
@@ -185,7 +183,7 @@ enum {
 	{
 	//	[[[document windowControllers] objectAtIndex: 0] setShouldCloseDocument: NO];
 	//	[[document controller] retain];
-		++*[document reviewCount];
+		[document registerSubController: self];
 		fDocument = [document retain];
 		fTemplates = [[NSMutableArray array] retain];
 		if ([NSBundle loadNibNamed: @"ReviewCommit" owner: self])
@@ -1112,9 +1110,7 @@ enum {
 - (void) windowWillClose: (NSNotification*) aNotification
 {
 	#pragma unused(aNotification)
-//	dprintf("refs=%d  fWindow.refs=%d  windowController.refs=%d",
-//			[self retainCount], [fWindow retainCount], [[fWindow windowController] retainCount]);
-	--*[fDocument reviewCount];
+	[fDocument unregisterSubController: self];
 
 	saveSplitViews(fWindow, kPrefKeySplits);
 	[self saveTemplates];

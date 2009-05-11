@@ -166,6 +166,26 @@ getRecursiveOption (NSString* cmd, bool isRecursive)
 
 	NSTableView* const tableView = tableResult;
 	[[[tableView tableColumnWithIdentifier: @"path"] dataCell] setDrawsBackground: NO];
+	SetColumnSort(tableView, @"path",   @"path");
+	SetColumnSort(tableView, @"rev",    @"revisionCurrent");
+	SetColumnSort(tableView, @"change", @"revisionLastChanged");
+
+	if (GetPreferenceBool(@"compactWCColumns"))
+	{
+		NSFont* const font = [NSFont boldSystemFontOfSize: 8];
+		for (int i = 1; i <= 8; ++i)
+		{
+			const unichar ch = '0' + i;
+			NSTableColumn* col = [tableView tableColumnWithIdentifier: [NSString stringWithCharacters: &ch length: 1]];
+			if (!col) continue;
+			NSCell* cell = [col dataCell];
+			[cell setFont: font];
+			[cell setAlignment: NSRightTextAlignment];
+			[col setMinWidth: 9];
+			[col setWidth:    9];
+			[col setMaxWidth: 9];
+		}
+	}
 
 	[self setNextResponder: [tableView nextResponder]];
 	[tableView setNextResponder: self];
@@ -274,10 +294,17 @@ getRecursiveOption (NSString* cmd, bool isRecursive)
 - (BOOL) windowShouldClose: (id) sender
 {
 	#pragma unused(sender)
-	const BOOL shouldClose = (*[document reviewCount] == 0);
-	if (!shouldClose)
+	// If there's a sub-controller then we can't close.
+	const id subController = [document anySubController];
+	if (subController)
+	{
+		// Focus the sub-controller's window
+		[[subController window] performSelector: @selector(makeKeyAndOrderFront:)
+									 withObject: nil afterDelay: 0];
 		NSBeep();
-	return shouldClose;
+		return FALSE;
+	}
+	return TRUE;
 }
 
 
@@ -1006,6 +1033,7 @@ enum {
 				NSBeep();
 				break;
 			}
+			suppressAutoRefresh = true;
 			// Fall through
 		case NSCancelButton:
 			[NSApp endSheet: updateSheet returnCode: tag];
@@ -1112,14 +1140,18 @@ enum {
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) updateWorkingCopyPanelDidEnd: (NSAlert*) alert
 		 returnCode:                   (int)      returnCode
 		 contextInfo:                  (void*)    contextInfo
 {
 	#pragma unused(alert, contextInfo)
-	if ( returnCode == 0 ) return;
-
-	[document performSelector: @selector(svnUpdate) withObject: nil afterDelay: 0.1];
+	if (returnCode == NSOKButton)
+	{
+		suppressAutoRefresh = true;
+		[document performSelector: @selector(svnUpdate) withObject: nil afterDelay: 0.1];
+	}
 }
 
 
@@ -1295,7 +1327,7 @@ enum {
 		 contextInfo:       (void*)     contextInfo
 {
 	[sheet orderOut: self];
-	NSMutableDictionary* action = contextInfo;
+	NSDictionary* action = contextInfo;
 
 	if (returnCode == NSOKButton)
 	{
@@ -1466,8 +1498,9 @@ enum {
 	if ( !isDisplayingErrorSheet && [window attachedSheet] != nil )
 		[NSApp endSheet: [window attachedSheet]];
 
+	svnStatusPending = NO;
  	[self stopProgressIndicator];
-	
+
 	if (!isDisplayingErrorSheet)
 	{
 		isDisplayingErrorSheet = YES;
@@ -1522,13 +1555,13 @@ enum {
 - (void) startProgressIndicator
 {
 	svnStatusPending = YES;
-	[progressIndicator startAnimation:self];
+	[progressIndicator startAnimation: self];
 }
 
 
 - (void) stopProgressIndicator
 {
-	[progressIndicator stopAnimation:self];
+	[progressIndicator stopAnimation: self];
 }
 
 

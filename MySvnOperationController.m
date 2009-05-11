@@ -103,14 +103,15 @@
 
 //----------------------------------------------------------------------------------------
 
-#if qDebug && 0
 - (void) dealloc
 {
-	NSLog(@"MySvnOperationController::dealloc: 0x%X operation=%d", self, svnOperation);
+//	NSLog(@"MySvnOperationController::dealloc: 0x%X operation=%d", self, svnOperation);
+	[svnOptionsInvocation release];
 	[super dealloc];
 }
-#endif
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) finished
 {

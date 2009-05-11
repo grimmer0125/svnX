@@ -7,16 +7,16 @@
 
 @interface MySvnLogView : MySvnView
 {
-	IBOutlet NSTableView*	logTable;
-	IBOutlet NSTableView*	pathsTable;
-	IBOutlet NSSearchField*	searchPaths;
-	IBOutlet id				splitView;
-	IBOutlet MySvnLogAC*	logsAC;
-	IBOutlet MySvnLogAC*	logsACSelection;
+	IBOutlet NSTableView*		logTable;
+	IBOutlet NSTableView*		pathsTable;
+	IBOutlet NSSearchField*		searchPaths;
+	IBOutlet id					splitView;
+	IBOutlet MySvnLogAC*		logsAC;
+	IBOutlet NSArrayController*	logsACSelection;
 
-	NSString*				currentRevision;
-	NSString*				path;
-	NSMutableArray*			logArray;
+	NSString*					currentRevision;
+	NSString*					path;
+	NSMutableArray*				logArray;
 	int		mostRecentRevision;	// remembers most recent revision to avoid fetching from scratch
 	BOOL	isVerbose;			// passes -v to svn log to retrieve the changed paths of each revision
 	BOOL	fIsAdvanced;
@@ -42,6 +42,7 @@
 
 - (BOOL) advanced;
 - (void) setAdvanced: (BOOL) isAdvanced;
+- (NSArray*) arrangedObjects;
 
 @end
 

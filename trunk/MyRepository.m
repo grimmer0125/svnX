@@ -49,11 +49,11 @@ TrimSlashes (id obj)
 	- (void) displayUrlTextView;
 
 	- (void) updateLog;
+	- (void) svnInfoCompletedCallback: (id) taskObj;
 	- (void) fetchSvnInfo: (SEL) selector;
 	- (void) fetchSvnInfo;
 	- (void) fetchSvnInfoReceiveDataFinished: (NSString*) result;
 
-	- (void) svnInfoCompletedCallback: (id) taskObj;
 	- (NSArray*) userValidatedFiles: (NSArray*) files
 				 forDestination:     (NSURL*)   destinationURL;
 
@@ -424,6 +424,7 @@ TrimSlashes (id obj)
 struct SvnInfoEnv
 {
 	SvnRevNum		fRevision;
+	SvnNodeKind		fKind;
 	char			fURL[2048];
 };
 
@@ -440,10 +441,15 @@ svnInfoReceiver (void*       baton,
 				 SvnPool     pool)
 {
 	#pragma unused(path, pool)
+//	dprintf("revision=%d URL=<%s>", info->rev, info->repos_root_URL);
 	SvnInfoEnv* env = (SvnInfoEnv*) baton;
 	env->fRevision = info->rev;
+	env->fKind     = info->kind;
 	strncpy(env->fURL, info->repos_root_URL, sizeof(env->fURL));
 //	strncpy(env->fUUID, info->repos_UUID, sizeof(env->fUUID));
+//	svn_revnum_t last_changed_rev;
+//	apr_time_t last_changed_date;
+//	const char *last_changed_author;
 
 	return SVN_NO_ERROR;
 }
@@ -454,6 +460,7 @@ svnInfoReceiver (void*       baton,
 
 - (void) svnDoInfo: (Message*) completedMsg
 {
+//	NSLog(@"svn info - begin");
 	[self retain];
 	NSAutoreleasePool* autoPool = [[NSAutoreleasePool alloc] init];
 	SvnPool pool = SvnNewPool();	// Create top-level memory pool.
@@ -470,19 +477,25 @@ svnInfoReceiver (void*       baton,
 			const SvnOptRevision peg_rev = { svn_opt_revision_head, 0 },
 								 rev_opt = { svn_opt_revision_unspecified, 0 };
 			SvnInfoEnv env;
-			env.fURL[0] = 0;
+			env.fRevision = 0;
+			env.fKind     = svn_node_unknown;
+			env.fURL[0]   = 0;
 
+		//	dprintf("svn_client_info URL=<%s>", path);
 			// Retrive HEAD revision info from repository root.
 			SvnThrowIf(svn_client_info(path, &peg_rev, &rev_opt,
 									   svnInfoReceiver, &env, !kSvnRecurse,
 									   ctx, pool));
 
+			fIsFile = (env.fKind == svn_node_file);
 			[fRootURL release];
 			fRootURL = (NSURL*) CFURLCreateWithBytes(kCFAllocatorDefault,
 													 (const UInt8*) env.fURL, strlen(env.fURL),
 													 kCFStringEncodingUTF8, NULL);
 			fHeadRevision = env.fRevision;
 			[self checkRepositoryURL];
+		/*	dprintf("'%s' => env.fRevision=%d  fLogRevision=%d fIsFile=%d",
+					path, env.fRevision, fLogRevision, fIsFile);*/
 			[completedMsg sendToOnMainThread: self];
 			[self performSelectorOnMainThread: @selector(displayUrlTextView) withObject: nil waitUntilDone: NO];
 		}
@@ -496,7 +509,9 @@ svnInfoReceiver (void*       baton,
 	{
 		SvnDeletePool(pool);
 		[autoPool release];
+		[completedMsg release];
 		[self release];
+//		NSLog(@"svn info - end");
 	}
 }
 
@@ -560,18 +575,36 @@ svnInfoReceiver (void*       baton,
 	}
 	else
 	{
+		BOOL isFile = NO;
+		NSString* url = nil;
 		for (int i = 0; i < count; ++i)
 		{
 			NSString* line = [lines objectAtIndex: i];
+			const int len = [line length];
 
-			if ([line length] > 16 &&
+			if (len > 16 &&
 				[[line substringWithRange: NSMakeRange(0, 17)] isEqualToString: @"Repository Root: "])
 			{
-				[fRootURL release];
-				fRootURL = [[NSURL URLWithString: [line substringFromIndex: 17]] retain];
-				[self displayUrlTextView];
-				break;
+				url = [line substringFromIndex: 17];
 			}
+			else if (len > 14 &&
+					 [[line substringWithRange: NSMakeRange(0, 15)] isEqualToString: @"Node Kind: file"])
+			{
+				isFile = TRUE;
+			}
+			else if (len > 10 &&
+					 [[line substringWithRange: NSMakeRange(0, 10)] isEqualToString: @"Revision: "])
+			{
+				fHeadRevision = [[line substringFromIndex: 10] intValue];
+			}
+		}
+	//	dprintf("isFile=%d fHeadRevision=%d url=<%@>", isFile, fHeadRevision, url);
+		if (url != nil)
+		{
+			fIsFile = isFile;
+			[fRootURL release];
+			fRootURL = [[NSURL URLWithString: url] retain];
+			[self displayUrlTextView];
 		}
 	}
 }
@@ -703,9 +736,15 @@ svnInfoReceiver (void*       baton,
 	}
 	else
 	{
-		[SvnLogReport svnLogReport: [[selection valueForKey: @"url"] absoluteString]
-					  revision:     [self revision]
-					  verbose:      !AltOrShiftPressed()];
+		[SvnLogReport createForURL:  [[selection valueForKey: @"url"] absoluteString]
+					  logItems:      nil
+					  revision:      fRevision
+					  limit:         0
+					  pageLength:    0
+					  verbose:       !AltOrShiftPressed()
+					  stopOnCopy:    NO
+					  relativeDates: NO
+					  reverseOrder:  NO];
 	}
 }
 
@@ -997,7 +1036,7 @@ svnInfoReceiver (void*       baton,
 
 - (IBAction) importCommitPanelValidate: (id) sender
 {
-	[NSApp endSheet:importCommitPanel returnCode:[sender tag]];
+	[NSApp endSheet: importCommitPanel returnCode: [sender tag]];
 }
 
 
@@ -1285,6 +1324,11 @@ svnInfoReceiver (void*       baton,
 	displayedTaskObj = [aDisplayedTaskObj retain];
 	[old release];
 }
+
+
+//----------------------------------------------------------------------------------------
+
+- (BOOL) rootIsFile { return fIsFile; }
 
 
 //----------------------------------------------------------------------------------------

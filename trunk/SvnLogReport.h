@@ -13,9 +13,15 @@
 	IBOutlet WebView*	fLogView;
 }
 
-+ (void) svnLogReport: (NSString*) fileURL
-		 revision:     (NSString*) revision
-		 verbose:      (BOOL)      verbose;
++ (void) createForURL:  (NSString*) fileURL
+		 logItems:      (NSArray*)  logItems
+		 revision:      (NSString*) revision
+		 limit:         (int)       limit
+		 pageLength:    (int)       pageLength
+		 verbose:       (BOOL)      verbose
+		 stopOnCopy:    (BOOL)      stopOnCopy
+		 relativeDates: (BOOL)      relativeDates
+		 reverseOrder:  (BOOL)      reverseOrder;
 
 - (void) textSmaller: (id) sender;
 - (void) textBigger: (id) sender;

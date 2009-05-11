@@ -28,6 +28,11 @@
 }
 @end
 
+@interface ActionToColor : NSValueTransformer
+{
+}
+@end
+
 
 //----------------------------------------------------------------------------------------
 
@@ -102,8 +107,7 @@ addTransform (Class itsClass, NSString* itsName)
 	[[NSUserDefaultsController sharedUserDefaultsController] setInitialValues: dictionary];
 
 	// Transformers																		// Used by:
-	addTransform([SvnFileStatusToColourTransformer class],
-												@"SvnFileStatusToColourTransformer");	// MyWorkingCopy
+	addTransform([SvnFileStatusToColourTransformer class], @"FileStatusToColor");		// MyWorkingCopy
 	addTransform([SvnDateTransformer               class], @"SvnDateTransformer");		// MySvnLogView
 	addTransform([ArrayCountTransformer            class], @"ArrayCountTransformer");	// MySvnLogView
 	addTransform([FilePathCleanUpTransformer       class], @"FilePathCleanUp");			// FavoriteWorkingCopies (path field)
@@ -111,6 +115,7 @@ addTransform (Class itsClass, NSString* itsName)
 	addTransform([SvnFilePathTransformer           class], @"lastPathComponent");		// SingleFileInspector
 	addTransform([TrimNewLinesTransformer          class], @"TrimNewLines");			// MySvnLogView (author column)
 	addTransform([TaskStatusToColorTransformer     class], @"TaskStatusToColor");		// Activity Window in svnX.nib
+	addTransform([ActionToColor                    class], @"ActionToColor");			// MySvnLogView
 	addTransform([OneLineTransformer               class], @"ForceOneLine");			// preferencesWindow
 }
 

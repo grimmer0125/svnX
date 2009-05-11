@@ -4,7 +4,9 @@
 #import "MyRepository.h"
 #import "MyApp.h"
 #import "NSString+MyAdditions.h"
+#import "Tasks.h"
 #import "CommonUtils.h"
+#import "ViewUtils.h"
 
 
 //----------------------------------------------------------------------------------------
@@ -56,6 +58,79 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 
 	return str;
 }
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark -
+//----------------------------------------------------------------------------------------
+
+@interface ActionToColor : NSValueTransformer
+{
+}
+@end
+
+
+//----------------------------------------------------------------------------------------
+
+@implementation ActionToColor
+
++ (Class) transformedValueClass
+{
+    return [NSColor class];
+}
+
+
++ (BOOL) allowsReverseTransformation
+{
+    return NO;
+}
+
+
+- (id) transformedValue: (id) aString
+{
+	switch (([aString length] == 1) ? [aString characterAtIndex: 0] : 0)
+	{
+		case 'A':	// Add
+		{
+			static id color = nil;
+			if (color == nil)
+				color = [[NSColor colorWithDeviceRed: 0 green: .6 blue: 0 alpha: 1] retain];
+			return color;
+		}
+
+		case 'M':	// Modify
+		{
+			static id color = nil;
+			if (color == nil)
+				color = [[NSColor colorWithDeviceRed: 0 green: 0 blue: .6 alpha: 1] retain];
+			return color;
+		}
+
+		case 'D':	// Delete
+		{
+			static id color = nil;
+			if (color == nil)
+				color = [[NSColor colorWithDeviceRed: .7 green: 0 blue: 0 alpha: 1] retain];
+			return color;
+		}
+
+		case 'R':	// Replace
+		{
+			static id color = nil;
+			if (color == nil)
+				color = [[NSColor colorWithDeviceRed: .85 green: .33 blue: 0 alpha: 1] retain];
+			return color;
+		}
+	}
+
+	// Other
+	static id color = nil;
+	if (color == nil)
+		color = [[NSColor blackColor] retain];
+	return color;
+}
+
+@end
 
 
 //----------------------------------------------------------------------------------------
@@ -121,7 +196,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 
 	// these objects are bound to the file owner and retain it
 	// we need to unbind them 
-	[logsAC unbind:@"contentArray"];	// -> self retainCount -1
+	[logsAC unbind: @"contentArray"];	// -> self retainCount -1
 	
 	[super unload];
 }
@@ -136,13 +211,20 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 	NSWindow* const window = [self window];
 	if (window)
 	{
-		// Can't use [self repository] here as [window windowController] == nil
-		[self setAdvanced: [[window delegate] isKindOfClass: [MyRepository class]] &&
-						   GetPreferenceBool(@"defaultLogViewKindIsAdvanced")];
+		id desc = [[AlphaNumSortDesc alloc] initWithKey: @"path" ascending: YES];
+		[logsACSelection setSortDescriptors: [NSArray arrayWithObjects: desc, desc, desc, desc, nil]];
+		[desc release];
 
+		[self setAdvanced: [self repository] && GetPreferenceBool(@"defaultLogViewKindIsAdvanced")];
 		[splitView setDelegate: self];	// allow us to keep the paths pane hidden during window resize
+
+		// Paths table
 		[pathsTable setTarget: self];
 		[pathsTable setDoubleAction: @selector(doubleClickPath:)];
+		SetColumnSort(pathsTable, @"path",    @"path");
+		SetColumnSort(pathsTable, @"from",    @"copyfromrev");
+		SetColumnSort(pathsTable, @"srcPath", @"copyfrompath");
+
 		[window makeFirstResponder: logTable];
 	}
 }
@@ -313,7 +395,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 {
 	[super fetchSvnReceiveDataFinished:taskObj];
 
-	NSData* data = [taskObj valueForKey: @"stdoutData"];
+	NSData* data = stdOutData(taskObj);
 	if (data != nil && [data length] != 0)
 	{
 		NSMutableArray* parsedArray = [MySvnLogParser parseData: data];
@@ -528,6 +610,14 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 	if (firstResponder && [firstResponder isKindOfClass: [NSView class]] &&
 						  [firstResponder isHiddenOrHasHiddenAncestor])
 		[[self window] makeFirstResponder: logTable];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (NSArray*) arrangedObjects
+{
+	return [logsAC arrangedObjects];
 }
 
 

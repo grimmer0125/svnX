@@ -9,8 +9,8 @@
 #import "MyRepository.h"
 #import "SvnListParser.h"
 #import "NSString+MyAdditions.h"
-#include "CommonUtils.h"
-#include "DbgUtils.h"
+#import "Tasks.h"
+#import "CommonUtils.h"
 
 
 @class IconCache;
@@ -18,8 +18,9 @@
 enum { kMiniIconSize = 13 };
 
 
-static NSFont* gFont;
-static IconCache* gIconCache;
+static NSFont* gFont = nil;
+static NSDictionary* gStyle = nil;
+static IconCache* gIconCache = nil;
 
 
 //----------------------------------------------------------------------------------------
@@ -110,6 +111,7 @@ makeMiniIcon (NSImage* image)
 		{
 			icon = makeMiniIcon(image);
 			[fDict setObject: icon forKey: fileType];
+			[icon release];
 		}
 	}
 
@@ -145,6 +147,11 @@ makeMiniIcon (NSImage* image)
 {
 	if (gFont == nil)
 		gFont = [[NSFont labelFontOfSize: [NSFont labelFontSize]] retain];
+	if (gStyle == nil)
+		gStyle = [[NSDictionary dictionaryWithObjectsAndKeys:
+							gFont,                           NSFontAttributeName,
+							[NSNumber numberWithFloat: 0.4], NSObliquenessAttributeName,
+							nil] retain];
 
 	if (gIconCache == nil)
 		gIconCache = [[IconCache alloc] init];
@@ -154,7 +161,7 @@ makeMiniIcon (NSImage* image)
 	if (self = [super initWithFrame: frameRect])
 	{
 		showRoot = YES;
-		if ([NSBundle loadNibNamed:@"MySvnRepositoryBrowserView" owner:self])
+		if ([NSBundle loadNibNamed: @"MySvnRepositoryBrowserView" owner: self])
 		{
 			[fView setFrame: [self bounds]];
 			[self addSubview: fView];
@@ -182,7 +189,7 @@ makeMiniIcon (NSImage* image)
 
 	// these objects are bound to the file owner and retain it
 	// we need to unbind them 
-	[revisionTextField unbind:@"value"];
+	[revisionTextField unbind: @"value"];
 	[super unload];
 }
 
@@ -201,28 +208,21 @@ makeMiniIcon (NSImage* image)
 //----------------------------------------------------------------------------------------
 #pragma mark	-
 #pragma mark	public methods
+//----------------------------------------------------------------------------------------
+// Returns an array of the selected represented objects
 
-// Returns a array of the selected represented objects
-
-- (NSMutableArray*) selectedItems
+- (NSArray*) selectedItems
 {
-	NSEnumerator *en = [[browser selectedCells] objectEnumerator];
-	NSCell *cell;
-	NSMutableArray *arr = [NSMutableArray array];
-	
-	while ( cell = [en nextObject] )
-	{
-		[arr addObject:[cell representedObject]];
-	}
-	
-	return arr;
+	return [[browser selectedCells] valueForKey: @"representedObject"];
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) reset
 {
-	[self setBrowserPath:nil];
-	[browser setPath:@"/"];
+	[self setBrowserPath: nil];
+	[browser setPath: @"/"];
 }
 
 
@@ -256,42 +256,44 @@ makeMiniIcon (NSImage* image)
 
 	if (isSubBrowser)
 		[(MyDragSupportMatrix*) matrix setupForSubBrowser];
-	if ( [matrix numberOfRows] != 0 )
+	if ([matrix numberOfRows] != 0)
 	{
 	}
 	else if (column == 0 && showRoot)
 	{
-		NSBrowserCell *cell = [[NSBrowserCell alloc] initTextCell:@"root"];
-		NSDictionary *txtDict = [NSDictionary dictionaryWithObjectsAndKeys:
-										gFont, NSFontAttributeName,
-										[NSNumber numberWithFloat:0.4], NSObliquenessAttributeName,
-										nil];
-		NSAttributedString *attrStr = [[[NSAttributedString alloc]
-											initWithString:@"root" attributes:txtDict] autorelease];
-		[cell setAttributedStringValue:attrStr];
+		[self setIsFetching: NO];
+		const id repository = [self repository];
+		const BOOL isDir = ![repository rootIsFile];
+		NSURL* const    url = [self url];
+		NSString* const name = isDir ? @"root" : [UnEscapeURL(url) lastPathComponent];
+		NSString* const fileType = isDir ? NSFileTypeDirectory : [name pathExtension];
+		fNameLen = [name length] + 1;
 
-		[self setIsFetching:NO];
-
-		[cell setImage: [gIconCache rootIcon]];
-		[cell setLeaf:NO];
+		NSBrowserCell* const cell =
+			[[NSBrowserCell alloc] initImageCell: isDir ? [gIconCache rootIcon]
+														: [gIconCache iconForFileType: fileType]];
+		[cell setAttributedStringValue: [[[NSAttributedString alloc]
+												initWithString: name attributes: gStyle] autorelease]];
+		[cell setLeaf: !isDir];
+		[cell setLineBreakMode: NSLineBreakByTruncatingTail];
 		[cell setRepresentedObject:
-			[NSDictionary dictionaryWithObjectsAndKeys: kNSTrue,				@"isRoot",
-														@"root",				@"name",
-														@"",					@"path",
-														[self url],				@"url",
-														revision,				@"revision",
-														NSFileTypeDirectory,	@"fileType",
-														kNSTrue,				@"isDir",
+			[NSDictionary dictionaryWithObjectsAndKeys: kNSTrue,		@"isRoot",
+														name,			@"name",
+														@"",			@"path",
+														url,			@"url",
+														revision,		@"revision",
+														fileType,		@"fileType",
+														NSBool(isDir),	@"isDir",
 														nil]];
 
-		[matrix addRowWithCells:[NSArray arrayWithObject:cell]];
-		[matrix putCell:cell atRow:0 column:0];
+		[matrix addRowWithCells: [NSArray arrayWithObject: cell]];
+		[matrix putCell: cell atRow: 0 column: 0];
 		[cell release];
 		[matrix sizeToCells];
 		[matrix display];
 	}
 	else
-		[self fetchSvnListForUrl:[sender path] column:column matrix:matrix];
+		[self fetchSvnListForUrl: [sender path] column: column matrix: matrix];
 }
 
 
@@ -303,15 +305,15 @@ makeMiniIcon (NSImage* image)
 
 - (void) fetchSvn
 {
-	[self setBrowserPath:[browser path]];
+	[self setBrowserPath: [browser path]];
 
 	[super fetchSvn];
 
 	[browser reloadColumn: 0];
 	if (showRoot)
 	{
-		[browser selectRow:0 inColumn:0];
-		[browser setWidth:50 ofColumn:0];
+		[browser selectRow: 0 inColumn: 0];
+		[browser setWidth: fNameLen * 8 ofColumn: 0];
 	}
 }
 
@@ -325,35 +327,40 @@ makeMiniIcon (NSImage* image)
 	NSString* url2 = theURL;
 
 	if (showRoot)
-		url2 = [url2 substringFromIndex:5]; // get rid of "root" prefix
+		url2 = [url2 substringFromIndex: fNameLen];		// get rid of "root" prefix
 
 	NSURL* cleanUrl = [NSURL URLWithString: [[url2 trimSlashes] escapeURL] relativeToURL: [self url]];
 	NSString* const revision = [self revision];
-	NSData* cachedXML;
+	NSData* cachedData;
 
 	if (GetPreferenceBool(@"cacheSvnQueries") &&
 		![revision isEqualToString: @"HEAD"] &&
-		(cachedXML = [NSData dataWithContentsOfFile: [self getCachePathForUrl: cleanUrl]]))
+		(cachedData = [NSData dataWithContentsOfFile: [self getCachePathForUrl: cleanUrl]]))
 	{
-		NSArray* resultArray = [SvnListParser parseData: cachedXML];
+		NSArray* resultArray = [SvnListParser parseData: cachedData];
 
-		[self displayResultArray:resultArray column:column matrix:matrix];
+		[self displayResultArray: resultArray column: column matrix: matrix];
 	}
 	else
 	{
-		[self setIsFetching:YES];
+		NSDictionary* info = [NSDictionary dictionaryWithObjectsAndKeys:
+												[NSMutableArray array],           @"result",
+												matrix,                           @"matrix",
+												[NSNumber numberWithInt: column], @"column",
+												cleanUrl,                         @"url",
+												nil];
+		[self setIsFetching: YES];
 
-		[self setPendingTask:
-			[MySvn	list: [NSString stringWithFormat:@"%@@%@", [cleanUrl absoluteString], revision]
-		  generalOptions: [self svnOptionsInvocation]
-				 options: [NSArray arrayWithObjects:@"--xml", @"-r", revision, nil]
-                callback: [self makeCallbackInvocationOfKind:10]
-			callbackInfo: [NSDictionary dictionaryWithObjectsAndKeys:
-												matrix, @"matrix",
-												[NSNumber numberWithInt:column], @"column",
-												cleanUrl, @"url", nil]
-			    taskInfo: [self documentNameDict]]
-		];
+		{
+			[self setPendingTask:
+				[MySvn	list: PathPegRevision(cleanUrl, revision)
+			  generalOptions: [self svnOptionsInvocation]
+					 options: [NSArray arrayWithObjects: @"--xml", @"-r", revision, nil]
+					callback: [self makeCallbackInvocationOfKind: 10]
+				callbackInfo: info
+					taskInfo: [self documentNameDict]]
+			];
+		}
 	}
 }
 
@@ -365,7 +372,7 @@ makeMiniIcon (NSImage* image)
 	NSString* result = [browser pathToColumn: column];
 	if (showRoot)
 	{
-		result = [result substringFromIndex: 5];	// don't keep the "root" prefix
+		result = [result substringFromIndex: fNameLen];		// don't keep the "root" prefix
 	}
 
 	return result;
@@ -379,7 +386,7 @@ makeMiniIcon (NSImage* image)
 	[super fetchSvnReceiveDataFinished:taskObj];
 
 	id info = [taskObj objectForKey:@"callbackInfo"];
-	NSData* result = [taskObj objectForKey: @"stdoutData"];
+	NSData* result = stdOutData(taskObj);
 
 	NSURL *fetchedUrl = [info objectForKey:@"url"];
 	NSMatrix *matrix = [info objectForKey:@"matrix"];
@@ -398,17 +405,32 @@ makeMiniIcon (NSImage* image)
 
 
 //----------------------------------------------------------------------------------------
+/*
+	Each cell has a representedObject type: RepoItem
+		isRoot:		is root item (BOOL)
+		name:		file name (NSString)
+		path:		file path (NSString)
+		url:		file URL  (NSURL)
+		mod_rev:	last change revision number (NSString)
+		revision:	revision number (NSString)
+		fileType:	file ext or NSFileTypeDirectory (NSString)
+		isDir:		item is a dir (BOOL)
+		author:		revision author (NSString)
+		date:		file modification date (UTCTime)
+		size:		file size (SInt64)
+*/
 
 - (void) displayResultArray: (NSArray*)  resultArray
 		 column:             (int)       column
 		 matrix:             (NSMatrix*) matrix
 {
-	//NSLog(@"matrix %@ %@ %d %@", browser, matrix, column, [self pathToColumn:column]);
+	//NSLog(@"matrix %@ %@ %d %@", browser, matrix, column, [self pathToColumn: column]);
 	NSImage* const dirIcon = [gIconCache dirIcon];
 	NSString* const pathToColumn = [self pathToColumn: column];
+	NSURL* const url = [self url];
 
-	int i, count = [resultArray count];
-	for (i = 0; i < count; ++i)
+	const int count = [resultArray count];
+	for (int i = 0; i < count; ++i)
 	{
 		NSMutableDictionary* row  = [resultArray objectAtIndex: i];
 		NSString* const name      = [row objectForKey: @"name"];
@@ -419,7 +441,7 @@ makeMiniIcon (NSImage* image)
 		NSString* urlPath = [path escapeURL];
 		if (isDir)
 			urlPath = [urlPath stringByAppendingString: @"/"];
-		NSURL* theURL = [NSURL URLWithString: urlPath relativeToURL: [self url]];
+		NSURL* theURL = [NSURL URLWithString: urlPath relativeToURL: url];
 
 		NSString* fileType = isDir ? NSFileTypeDirectory : [name pathExtension];
 		NSImage* icon = isDir ? dirIcon : [gIconCache iconForFileType: fileType];
@@ -466,11 +488,11 @@ makeMiniIcon (NSImage* image)
 
 	[matrix sizeToCells];
 	[matrix display];
-	
+
 //	if ( [self browserPath] != nil ) 
 //	{
-//		[browser setPath:[self browserPath]]; // attempt to restore the previously displayed path
-//		[self setBrowserPath:nil];
+//		[browser setPath: [self browserPath]]; // attempt to restore the previously displayed path
+//		[self setBrowserPath: nil];
 //	}
 }
 
@@ -480,10 +502,11 @@ makeMiniIcon (NSImage* image)
 #pragma mark	Accessors
 //----------------------------------------------------------------------------------------
 
-// - browserPath:
 - (NSString*) browserPath { return browserPath; }
 
-// - setBrowserPath:
+
+//----------------------------------------------------------------------------------------
+
 - (void) setBrowserPath: (NSString*) aBrowserPath
 {
 	id old = browserPath;
@@ -491,6 +514,8 @@ makeMiniIcon (NSImage* image)
 	[old release];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (NSString*) getCachePathForUrl: (NSURL*) theURL
 {
@@ -501,3 +526,5 @@ makeMiniIcon (NSImage* image)
 
 @end
 
+//----------------------------------------------------------------------------------------
+// End of MySvnRepositoryBrowserView.m

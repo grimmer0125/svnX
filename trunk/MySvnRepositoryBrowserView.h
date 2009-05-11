@@ -7,12 +7,13 @@
 {
 	IBOutlet NSBrowser*		browser;
 	IBOutlet NSTextField*	revisionTextField;
-	IBOutlet NSMenu*		browserContextMenu;
+	IBOutlet NSMenu*		browserContextMenu;	// Unused
 
 	BOOL					showRoot;
 	BOOL					disallowLeaves;
 	BOOL					isSubBrowser;
 	NSString*				browserPath;
+	int						fNameLen;
 }
 
 - (void) unload;
@@ -31,11 +32,12 @@
 		 allowsLeaves:            (BOOL) allowsLeaves
 		 allowsMultipleSelection: (BOOL) allowsMultiSel;
 
-- (NSMutableArray*) selectedItems;
+- (NSArray*) selectedItems;
 - (void) reset;
 
 - (NSString*) browserPath;
-- (void) setBrowserPath: (NSString*) aBrowserPath;
-- (NSString*) getCachePathForUrl: (NSURL*) theURL;
+- (void)      setBrowserPath:     (NSString*) aBrowserPath;
+- (NSString*) getCachePathForUrl: (NSURL*)    theURL;
 
 @end
+

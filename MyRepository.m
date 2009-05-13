@@ -11,29 +11,49 @@
 #import "MySvnRepositoryBrowserView.h"
 #import "MySvnLogView.h"
 #import "NSString+MyAdditions.h"
-#import "Tasks.h"
+#import "RepoItem.h"
 #import "SvnLogReport.h"
 #import "CommonUtils.h"
+#import "MySvnLogParser.h"
 #import "SvnInterface.h"
-
-enum {
-	SVNXCallbackExtractedToFileSystem,
-	SVNXCallbackCopy,
-	SVNXCallbackMove,
-	SVNXCallbackMkdir,
-	SVNXCallbackDelete,
-	SVNXCallbackImport,
-	SVNXCallbackSvnInfo,
-	SVNXCallbackGetOptions
-};
+#import "ViewUtils.h"
 
 
 //----------------------------------------------------------------------------------------
 
 static NSString*
-TrimSlashes (id obj)
+TrimSlashes (RepoItem* obj)
 {
-	return [[[obj valueForKey: @"url"] absoluteString] trimSlashes];
+	return [[[obj url] absoluteString] trimSlashes];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Path items in log items
+
+static NSString*
+getPath (NSDictionary* obj)
+{
+	return [obj objectForKey: @"path"];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSString*
+getRevision (NSDictionary* obj)
+{
+	return [obj objectForKey: @"revision"];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static int
+compareRevisions (id obj1, id obj2, void* context)
+{
+	#pragma unused(context)
+	return [(NSNumber*) [obj2 objectForKey: @"revision_n"] compare: [obj1 objectForKey: @"revision_n"]];
 }
 
 
@@ -43,12 +63,10 @@ TrimSlashes (id obj)
 
 @interface MyRepository (Private)
 
+	- (void) changeRepositoryUrl: (NSURL*) anUrl;
 	- (BOOL) svnErrorIf: (id) taskObj;
 	- (void) svnError: (NSString*) errorString;
 
-	- (void) displayUrlTextView;
-
-	- (void) updateLog;
 	- (void) svnInfoCompletedCallback: (id) taskObj;
 	- (void) fetchSvnInfo: (SEL) selector;
 	- (void) fetchSvnInfo;
@@ -57,12 +75,24 @@ TrimSlashes (id obj)
 	- (NSArray*) userValidatedFiles: (NSArray*) files
 				 forDestination:     (NSURL*)   destinationURL;
 
+	- (NSArray*) exportFiles: (NSArray*) fileObjs
+				 toFolder:    (NSURL*)   folderURL
+				 includeRev:  (BOOL)     includeRev
+				 openAfter:   (BOOL)     openAfter;
+
+	- (void) importFiles: (NSArray*)  files
+			 intoFolder:  (RepoItem*) destRepoDir;
+
+	- (void) requestReport;
+
 	- (void) setRevision:         (NSString*) aRevision;
 	- (void) setUrl:              (NSURL*)    anUrl;
 	- (void) checkRepositoryURL;
 	- (void) setDisplayedTaskObj: (NSMutableDictionary*) aDisplayedTaskObj;
+
 	- (NSInvocation*) makeSvnOptionInvocation;
-	- (NSInvocation*) makeCallbackInvocationOfKind: (int) callbackKind;
+	- (NSInvocation*) makeCommandCallback;
+	- (NSInvocation*) makeExtractedCallback;
 
 @end
 
@@ -92,14 +122,15 @@ TrimSlashes (id obj)
 	[svnLogView unload];
 	[svnBrowserView unload];
 
-	[self setUrl: nil];
- 	[fRootURL release];
-	[self setRevision: nil];
+	[fRootURL release];
+	[fURL release];
+	[fRevision release];
 	[windowTitle release];
 	[user release];
 	[pass release];
 
-	[self setDisplayedTaskObj: nil];
+	[fLog release];
+	[displayedTaskObj release];
 
 //	NSLog(@"Repository dealloc'ed");
 	SvnEndClient(fSvnEnv);
@@ -245,7 +276,7 @@ TrimSlashes (id obj)
 	// "Browse as sub-repository" context menu item. (see "browserContextMenu" Menu in IB)
 	// representedObject of the sender menu item is the same as the row's in the browser.
 	// Was set in MySvnRepositoryBrowserView.
-	[self changeRepositoryUrl: [[sender representedObject] objectForKey: @"url"]];
+	[self changeRepositoryUrl: [[sender representedObject] url]];
 }
 
 
@@ -321,6 +352,7 @@ TrimSlashes (id obj)
 	#pragma unused(textView, charIndex)
 	if ([link isKindOfClass: [NSString class]])
 	{	
+	//	[svnLogView setRevision: fRevision];		// FIX_ME: call latestRevision:pegRev:
 		[self changeRepositoryUrl: [NSURL URLWithString: link]];					
         return YES;
 	}
@@ -339,7 +371,7 @@ TrimSlashes (id obj)
 
 //----------------------------------------------------------------------------------------
 
-- (NSString*) pathAtCurrentRevision: (id) repoItem
+- (NSString*) pathAtCurrentRevision: (RepoItem*) repoItem
 {
 	// <path>@<revision>
 	return [NSString stringWithFormat: @"%@@%@", TrimSlashes(repoItem), fRevision];
@@ -350,10 +382,78 @@ TrimSlashes (id obj)
 #pragma mark	-
 #pragma mark	Log Management
 //----------------------------------------------------------------------------------------
+// Sort, remove duplicates & return newest revision.
+
++ (unsigned int) cleanUpLog: (NSMutableArray*) aLog
+{
+	unsigned int revision = 0,
+				 count = [aLog count];
+	if (count)
+	{
+		[aLog sortUsingFunction: compareRevisions context: NULL];
+		--count;
+		for (unsigned int i = 0; i < count; )		// remove duplicates
+		{
+			const id rev = getRevision([aLog objectAtIndex: i]);
+			++i;
+			if ([rev isEqualToString: getRevision([aLog objectAtIndex: i])])
+			{
+				[aLog removeObjectAtIndex: i];
+				--i;
+				--count;
+			}
+		}
+		revision = [getRevision([aLog objectAtIndex: 0]) intValue];
+	}
+	return revision;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) setLog: (NSMutableArray*) newLog
+{
+	id oldLog = fLog;
+	fLog = [newLog retain];
+	[oldLog release];
+
+	fLogRevision = [MyRepository cleanUpLog: newLog];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (NSString*) getCachePath
+{
+	Assert(fRootURL);
+	return [MySvn cachePathForKey: [[fRootURL absoluteString] stringByAppendingString: @" repo_log"]];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Initiate fetching of repository log entries HEAD thru fLogRevision.
+
+- (void) fetchSvnLog: (SEL) completedMsg
+{
+	[svnLogView fetchSvn: MakeCallbackInvocation(self, completedMsg)];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Initiate fetching of repository log entries HEAD thru fLogRevision.
 
 - (void) fetchSvnLog
 {
-	[svnLogView fetchSvnLog];
+	[self fetchSvnLog: @selector(svnLogCompleted:)];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnLogCompleted: (id) taskObj
+{
+	[svnLogView fetchSvnReceiveDataFinished: taskObj];
+	[self setLog: [svnLogView logArray]];
 }
 
 
@@ -381,12 +481,53 @@ TrimSlashes (id obj)
 #pragma mark	Repository URL
 //----------------------------------------------------------------------------------------
 
-- (void) browsePath: (NSString*) relativePath
-		 revision:   (NSString*) pegRevision
+- (NSString*) latestRevision: (NSURL*)    aURL
+			  pegRev:         (NSString*) pegRev
 {
-	NSString* newURL = [[fRootURL absoluteString] stringByAppendingString: relativePath];
-	[self changeRepositoryUrl: [NSURL URLWithString: newURL]];
-	[self setRevision: pegRevision];
+	#pragma unused(aURL)
+	return pegRev;
+}
+
+
+//----------------------------------------------------------------------------------------
+// Private:
+
+- (void) browseURL: (NSURL*)    aURL
+		 revision:  (NSString*) revision
+{
+//	dprintf("aURL=<%@> rev. %@=>%@", [aURL absoluteString], fRevision, revision);
+	id oldRev = [fRevision retain];
+	if (revision != oldRev)
+		[svnLogView setRevision: revision];
+	[self changeRepositoryUrl: aURL];
+	if (revision != oldRev)
+		[svnLogView setRevision: oldRev];
+	//	[svnBrowserView setRevision: revision];
+	[oldRev release];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Set browse URL from repository browser
+
+- (void) openItem: (RepoItem*) repoItem
+		 revision: (NSString*) pegRevision
+{
+	if ([repoItem isRoot])
+		return;
+	NSString* path = [repoItem path];
+	if ([repoItem isDir])
+		path = [path stringByAppendingString: @"/"];
+	if (!pegRevision)
+		pegRevision = [repoItem revision];
+	//	pegRevision = [repoItem modRev];
+
+//	dprintf("path='%@' revision=%@\n    fURL=<%@>", [path escapeURL], pegRevision, fURL);
+	NSURL* aURL = [path isEqualToString: @"/"]
+						? [NSURL URLWithString: [[fRootURL absoluteString] stringByAppendingString: @"/"]]
+						: [NSURL URLWithString: [path escapeURL] relativeToURL: fURL];
+	NSString* rev = [self latestRevision: aURL pegRev: pegRevision];
+	[self browseURL: aURL revision: rev];
 }
 
 
@@ -396,10 +537,20 @@ TrimSlashes (id obj)
 - (void) openLogPath: (NSDictionary*) pathInfo
 		 revision:    (NSString*)     pegRevision
 {
-	#pragma unused(pathInfo, pegRevision)
-#if 0
-	[self browsePath: [pathInfo objectForKey: @"path"] revision: pegRevision];
-#endif
+	NSString* relativePath = getPath(pathInfo);
+	NSURL* aURL = [NSURL URLWithString: [[fRootURL absoluteString] stringByAppendingString: [relativePath escapeURL]]];
+//	dprintf("path='%@' revision=%@\n    aURL=<%@>", [relativePath escapeURL], pegRevision, aURL);
+	NSString* rev = [self latestRevision: aURL pegRev: pegRevision];
+	[self browseURL: aURL revision: rev];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) openLogPath: (NSDictionary*) pathInfo
+		 forLogEntry: (NSDictionary*) logEntry
+{
+	[self openLogPath: pathInfo revision: getRevision(logEntry)];
 }
 
 
@@ -409,9 +560,9 @@ TrimSlashes (id obj)
 {
 	[self setUrl: anUrl];
 	[svnBrowserView setUrl: fURL];
-	[svnLogView resetUrl: fURL];
 	[self displayUrlTextView];
-	[svnLogView fetchSvnLog];
+	[svnLogView resetUrl: fURL];
+	[self updateLog];
 	[svnBrowserView fetchSvn];
 }
 
@@ -487,7 +638,7 @@ svnInfoReceiver (void*       baton,
 									   svnInfoReceiver, &env, !kSvnRecurse,
 									   ctx, pool));
 
-			fIsFile = (env.fKind == svn_node_file);
+		//	fIsFile = (env.fKind == svn_node_file);
 			[fRootURL release];
 			fRootURL = (NSURL*) CFURLCreateWithBytes(kCFAllocatorDefault,
 													 (const UInt8*) env.fURL, strlen(env.fURL),
@@ -601,7 +752,7 @@ svnInfoReceiver (void*       baton,
 	//	dprintf("isFile=%d fHeadRevision=%d url=<%@>", isFile, fHeadRevision, url);
 		if (url != nil)
 		{
-			fIsFile = isFile;
+		//	fIsFile = isFile;
 			[fRootURL release];
 			fRootURL = [[NSURL URLWithString: url] retain];
 			[self displayUrlTextView];
@@ -614,10 +765,34 @@ svnInfoReceiver (void*       baton,
 // If there is a single selected repository-browser item then return it else return nil.
 // Private:
 
-- (NSDictionary*) selectedItemOrNil
+- (RepoItem*) selectedItemOrNil
 {
+	return [svnBrowserView selectedItemOrNil];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Get the deepest selected directory from the repository-browser.
+// Private:
+
+- (RepoItem*) selectedDirectory
+{
+	RepoItem* dir = nil;
 	NSArray* const selectedObjects = [svnBrowserView selectedItems];
-	return ([selectedObjects count] == 1) ? [selectedObjects objectAtIndex: 0] : nil;
+	if ([selectedObjects count] > 0)
+		dir = [selectedObjects objectAtIndex: 0];
+
+	if (dir == nil || ![dir isDir])
+	{
+		NSBrowser* browser = [svnBrowserView valueForKey: @"browser"];
+		int col = [browser selectedColumn] - 1;
+		col = MAX(col, 0);
+		int row = [browser selectedRowInColumn: col];
+		row = MAX(row, 0);
+		dir = [[[browser matrixInColumn: col] cellAtRow: row column: 0] representedObject];
+	}
+
+	return dir;
 }
 
 
@@ -628,12 +803,12 @@ svnInfoReceiver (void*       baton,
 - (IBAction) svnCopy: (id) sender
 {
 	#pragma unused(sender)
-	NSDictionary* selection = [self selectedItemOrNil];
+	RepoItem* selection = [self selectedItemOrNil];
 	if (!selection)
 	{
 		[self svnError: @"Please select exactly one item to copy."];
 	}
-	else if ([[selection valueForKey: @"isRoot"] boolValue])
+	else if ([selection isRoot])
 	{
 		[self svnError: @"Can't copy root folder."];
 	}
@@ -644,15 +819,17 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (IBAction) svnMove: (id) sender
 {
 	#pragma unused(sender)
-	NSDictionary* selection = [self selectedItemOrNil];
+	RepoItem* selection = [self selectedItemOrNil];
 	if (!selection)
 	{
 		[self svnError: @"Please select exactly one item to move."];
 	}
-	else if ([[selection valueForKey: @"isRoot"] boolValue])
+	else if ([selection isRoot])
 	{
 		[self svnError: @"Can't move root folder."];
 	}
@@ -663,12 +840,16 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (IBAction) svnMkdir: (id) sender
 {
 	#pragma unused(sender)
 	[MySvnOperationController runSheet: kSvnMkdir repository: self url: fURL sourceItem: nil];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (IBAction) svnDelete: (id) sender
 {
@@ -677,10 +858,12 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (IBAction) svnFileMerge: (id) sender
 {
 	#pragma unused(sender)
-	NSDictionary* selection = [self selectedItemOrNil];
+	RepoItem* selection = [self selectedItemOrNil];
 	if (!selection)
 	{
 		[self svnError: @"Please select exactly one item."];
@@ -688,7 +871,7 @@ svnInfoReceiver (void*       baton,
 	else
 	{
 		[MyFileMergeController runSheet: kSvnDiff repository: self
-							   url: [selection valueForKey: @"url"] sourceItem: selection];
+							   url: [selection url] sourceItem: selection];
 	}	
 }
 
@@ -703,8 +886,8 @@ svnInfoReceiver (void*       baton,
 	NSMutableArray* files = [NSMutableArray array];
 	for_each(enumerator, item, selectedObjects)
 	{
-		if (![[item valueForKey: @"isDir"] boolValue])
-			[files addObject: PathPegRevision([item valueForKey: @"url"], fRevision)];
+		if (![item isDir])
+			[files addObject: PathPegRevision([item url], fRevision)];
 	}
 
 	if ([files count] == 0)
@@ -725,37 +908,180 @@ svnInfoReceiver (void*       baton,
 
 
 //----------------------------------------------------------------------------------------
+// Report sheet: Setup views & open sheet
 
 - (IBAction) svnReport: (id) sender
 {
 	#pragma unused(sender)
-	NSDictionary* selection = [self selectedItemOrNil];
-	if (!selection)
+	
+	[self requestReport];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Export & open the selected files/folders
+
+- (IBAction) svnOpen: (id) sender
+{
+	#pragma unused(sender)
+
+	FSRef tempFolder;
+	if (Folder_TemporaryItems(&tempFolder))
 	{
-		[self svnError:@"Please select exactly one item."];
-	}
-	else
-	{
-		[SvnLogReport createForURL:  [[selection valueForKey: @"url"] absoluteString]
-					  logItems:      nil
-					  revision:      fRevision
-					  limit:         0
-					  pageLength:    0
-					  verbose:       !AltOrShiftPressed()
-					  stopOnCopy:    NO
-					  relativeDates: NO
-					  reverseOrder:  NO];
+		NSURL* folderURL = (NSURL*) CFURLCreateFromFSRef(NULL, &tempFolder);
+		if (folderURL != nil)
+		{
+			[self exportFiles: [svnBrowserView selectedItems]
+				  toFolder: folderURL includeRev: YES openAfter: YES];
+			CFRelease(folderURL);
+		}
 	}
 }
 
 
 //----------------------------------------------------------------------------------------
 #pragma mark	-
-#pragma mark	Checkout, Export & Import
+#pragma mark	Report Sheet
+//----------------------------------------------------------------------------------------
+
+enum {
+	vReportKind				=	100,
+	vReportPaths			=	101,
+	vReportCrossCopies		=	102,
+	vReportLimit			=	103,
+	vReportLimitNum			=	104,
+	vReportRelativeDates	=	105,
+	vReportReverseOrder		=	106,
+	kReportKindURL			=	0,
+	kReportKindCurrentLog	=	1,
+	kReportLimitDefault		=	1000,
+	kReportLimitMin			=	1,
+	kReportLimitMax			=	1000000
+};
+
+
+//----------------------------------------------------------------------------------------
+// Report sheet: Setup views & open sheet
+
+- (void) requestReport
+{
+	NSWindow* const sheet = fLogReportSheet;
+	NSView* const views = [sheet contentView];
+
+	NSMatrix* kinds = GetView(views, vReportKind);
+	[[kinds cellWithTag: kReportKindURL] setTitle: UnEscapeURL([self browsePath])];
+	[kinds selectCellWithTag: (IsViewInResponderChain(svnLogView) ? kReportKindCurrentLog : kReportKindURL)];
+
+	NSControl* const limitView = GetView(views, vReportLimitNum);
+	const int reportLimitNum = [limitView intValue];
+	if (reportLimitNum < kReportLimitMin || reportLimitNum > kReportLimitMax)
+		[limitView setIntValue: kReportLimitDefault];
+	[limitView setEnabled: GetViewInt(views, vReportLimit)];
+
+	[NSApp beginSheet:     sheet
+		   modalForWindow: [self window]
+		   modalDelegate:  self
+		   didEndSelector: @selector(reportSheetDidEnd:returnCode:contextInfo:)
+		   contextInfo:    (void*) NULL];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Report sheet: Read views & create report
+
+- (void) reportFromSheet: (NSWindow*) sheet
+{
+	NSView* const views = [sheet contentView];
+	const bool isCurrentLog = ([[GetView(views, vReportKind) selectedCell] tag] == kReportKindCurrentLog),
+			   reportPaths  = GetViewInt(views, vReportPaths),
+			   reportCopies = GetViewInt(views, vReportCrossCopies),
+			   reportLimit  = GetViewInt(views, vReportLimit),
+			   reportDates  = GetViewInt(views, vReportRelativeDates),
+			   reverseOrder = GetViewInt(views, vReportReverseOrder);
+	const int reportLimitNum = reportLimit ? GetViewInt(views, vReportLimitNum) : 0;
+
+	[SvnLogReport createForURL:  (isCurrentLog ? [fURL absoluteString] : [self browsePath])
+				  logItems:      (isCurrentLog ? [svnLogView arrangedObjects] : nil)
+				  revision:      fRevision
+				  limit:         reportLimitNum
+				  pageLength:    0
+				  verbose:       reportPaths
+				  stopOnCopy:    !reportCopies
+				  relativeDates: reportDates
+				  reverseOrder:  reverseOrder];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Report sheet: Limit checkbox clicked
+
+- (IBAction) reportLimit: (id) sender
+{
+	NSWindow* const window = [sender window];
+	NSView* const views = [window contentView];
+
+	NSControl* const limitView = GetView(views, vReportLimitNum);
+	const bool enable = GetViewInt(views, vReportLimit);
+	[limitView setEnabled: enable];
+	if (enable)
+		[window selectNextKeyView: self];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Report sheet: OK button clicked
+
+- (IBAction) reportOKed: (id) sender
+{
+	NSWindow* const window = [sender window];
+	NSControl* const limitView = GetView([window contentView], vReportLimitNum);
+	[limitView validateEditing];
+	const int reportLimitNum = [limitView intValue];
+	if (![limitView isEnabled] ||
+		(reportLimitNum >= kReportLimitMin && reportLimitNum <= kReportLimitMax))
+	{
+		[NSApp endSheet: window returnCode: NSOKButton];
+	}
+	else
+	{
+		[limitView setIntValue: kReportLimitDefault];
+		[window selectNextKeyView: self];
+		NSBeep();
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+// Report sheet: Cancel button clicked
+
+- (IBAction) reportCancelled: (id) sender
+{
+	[NSApp endSheet: [sender window] returnCode: NSCancelButton];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Report sheet: dismissed
+
+- (void) reportSheetDidEnd: (NSWindow*) sheet
+		 returnCode:        (int)       returnCode
+		 contextInfo:       (void*)     contextInfo
+{
+	#pragma unused(contextInfo)
+	[sheet orderOut: self];
+	if (returnCode == NSOKButton)
+		[self reportFromSheet: sheet];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	Checkout, Export
 //----------------------------------------------------------------------------------------
 // Private:
 
-- (void) chooseFolder:   (NSString*) message
+- (void) chooseAny:      (NSString*) message
+		 allowFiles:     (BOOL)      allowFiles
 		 didEndSelector: (SEL)       didEndSelector
 		 contextInfo:    (void*)     contextInfo
 {
@@ -763,8 +1089,8 @@ svnInfoReceiver (void*       baton,
 
 	[oPanel setAllowsMultipleSelection: NO];
 	[oPanel setCanChooseDirectories:    YES];
-	[oPanel setCanChooseFiles:          NO];
-	[oPanel setCanCreateDirectories:    YES];
+	[oPanel setCanChooseFiles:          allowFiles];
+	[oPanel setCanCreateDirectories:    !allowFiles];
 	[oPanel setMessage: message];
 
 	[oPanel beginSheetForDirectory: NSHomeDirectory() file: nil types: nil
@@ -772,6 +1098,41 @@ svnInfoReceiver (void*       baton,
 					 modalDelegate: self
 				    didEndSelector: didEndSelector
 					   contextInfo: contextInfo];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Private:
+
+- (void) chooseFolder:   (NSString*) message
+		 didEndSelector: (SEL)       didEndSelector
+		 contextInfo:    (void*)     contextInfo
+{
+	[self chooseAny: message allowFiles: NO didEndSelector: didEndSelector contextInfo: contextInfo];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Private:
+
+- (void) checkout: (RepoItem*) repoItem
+		 toFolder: (NSString*) destinationPath
+{
+	[self setDisplayedTaskObj:
+		[MySvn    checkout: [self pathAtCurrentRevision: repoItem]
+			   destination: destinationPath
+			generalOptions: [self svnOptionsInvocation]
+				   options: [NSArray arrayWithObjects: @"-r", fRevision, nil]
+				  callback: [self makeExtractedCallback]
+			  callbackInfo: destinationPath
+				  taskInfo: [self documentNameDict]]
+	];
+
+	// TL : Creating new working copy for the checked out path.
+	if (GetPreferenceBool(@"addWorkingCopyOnCheckout"))
+	{
+		[[NSNotificationCenter defaultCenter] postNotificationName: @"newWorkingCopy" object: destinationPath];
+	}
 }
 
 
@@ -784,12 +1145,12 @@ svnInfoReceiver (void*       baton,
 	const int count = [selectedObjects count];
 	NSString* message = (count == 1)
 				? [NSString stringWithFormat: @"Export %C%@%C into folder:", 0x201C,
-											  [[selectedObjects objectAtIndex: 0] valueForKey: @"name"], 0x201D]
+											  [[selectedObjects lastObject] name], 0x201D]
 				: [NSString stringWithFormat: @"Export %d items into folder:", count];
 
 	[self chooseFolder: message
 		didEndSelector: @selector(exportPanelDidEnd:returnCode:contextInfo:)
-		   contextInfo: NULL];
+		   contextInfo: [selectedObjects retain]];
 }
 
 
@@ -798,15 +1159,15 @@ svnInfoReceiver (void*       baton,
 - (IBAction) svnCheckout: (id) sender
 {
 	#pragma unused(sender)
-	NSDictionary* selection = [self selectedItemOrNil];
-	if (!selection || ![[selection valueForKey: @"isDir"] boolValue])
+	RepoItem* selection = [self selectedItemOrNil];
+	if (!selection || ![selection isDir])
 	{
 		[self svnError: @"Please select exactly one folder to checkout."];
 	}
 	else
 	{
 		NSString* message = [NSString stringWithFormat: @"Checkout %C%@%C into folder:",
-														0x201C, [selection valueForKey: @"name"], 0x201D];
+														0x201C, [selection name], 0x201D];
 		[self chooseFolder: message
 			didEndSelector: @selector(checkoutPanelDidEnd:returnCode:contextInfo:)
 			   contextInfo: selection];
@@ -822,21 +1183,8 @@ svnInfoReceiver (void*       baton,
 {
 	if (returnCode == NSOKButton)
 	{
-        NSString* destinationPath = [[sheet filenames] objectAtIndex:0];
-		[self setDisplayedTaskObj:
-			[MySvn    checkout: [self pathAtCurrentRevision: (id) contextInfo]
-				   destination: destinationPath
-				generalOptions: [self svnOptionsInvocation]
-					   options: [NSArray arrayWithObjects: @"-r", fRevision, nil]
-					  callback: [self makeCallbackInvocationOfKind:SVNXCallbackExtractedToFileSystem]
-				  callbackInfo: destinationPath
-					  taskInfo: [self documentNameDict]]];
-
-		// TL : Creating new working copy for the checked out path.
-		if (GetPreferenceBool(@"addWorkingCopyOnCheckout"))
-		{
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"newWorkingCopy" object:destinationPath];
-		}
+		[self checkout: (RepoItem*) contextInfo
+			  toFolder: [[sheet filenames] objectAtIndex: 0]];
 	}
 }
 
@@ -844,63 +1192,69 @@ svnInfoReceiver (void*       baton,
 //----------------------------------------------------------------------------------------
 // Private:
 
-- (void) exportFiles:   (NSArray*) validatedFiles
-		 toDestination: (NSURL*)   destinationURL
+- (NSArray*) exportFiles: (NSArray*) fileObjs
+			 toFolder:    (NSURL*)   folderURL
+			 includeRev:  (BOOL)     includeRev
+			 openAfter:   (BOOL)     openAfter
 {
-	NSString* const destPath = [destinationURL path];
-
-	NSMutableArray *shellScriptArguments = [NSMutableArray array];
+	NSString* const destPath = [folderURL path];
+	NSMutableArray* arguments = [NSMutableArray arrayWithObject: openAfter ? GetDiffAppName() : @""];
+	NSMutableArray* fileNames = [NSMutableArray array];
 
 	// We use a single shell script to do all because we want to
 	// handle it as a single task (that will be easier to terminate)
 
-	for_each(enumerator, item, validatedFiles)
+	includeRev = includeRev && GetPreferenceBool(@"includeRevisionInName");
+	for_each(enumerator, item, fileObjs)
 	{
-		NSString *destinationPath = [destPath stringByAppendingPathComponent:[item valueForKey:@"name"]];
-		NSString *sourcePath = [self pathAtCurrentRevision: item];
-		NSString* operation = [[item valueForKey: @"isDir"] boolValue]
-									? @"e"		// folder => svn export (see svnextract.sh)
-									: @"c";		// file   => svn cat
-
-		[shellScriptArguments addObjectsFromArray:
-				[NSArray arrayWithObjects: operation, sourcePath, destinationPath, nil]];
+		// operation, sourcePath, destinationPath
+		[arguments addObject: [item isDir] ? @"e"		// folder => svn export (see svnextract.sh)
+										   : @"c"];		// file   => svn cat
+		[arguments addObject: [self pathAtCurrentRevision: item]];
+		NSString* name = [item name];
+		if (includeRev)		// name.ext => name-r#.ext
+		{
+			NSString* const ext = [name pathExtension];
+			name = [NSString stringWithFormat: [ext length] ? @"%@-r%@.%@" : @"%@-r%@",
+											   [name stringByDeletingPathExtension], fRevision, ext];
+		}
+		[arguments addObject: [destPath stringByAppendingPathComponent: name]];
+		[fileNames addObject: name];
 	}
 
 	[self setDisplayedTaskObj:
-		[MySvn	extractItems: shellScriptArguments
+		[MySvn	extractItems: arguments
 			  generalOptions: [self svnOptionsInvocation]
 					 options: [NSArray arrayWithObjects: @"-r", fRevision, nil]
-					callback: [self makeCallbackInvocationOfKind: SVNXCallbackExtractedToFileSystem]
+					callback: [self makeExtractedCallback]
 				callbackInfo: destPath
 					taskInfo: [self documentNameDict]]
 	];
+
+	return fileNames;
 }
 
 
 //----------------------------------------------------------------------------------------
 // Private:
 
-- (void) checkoutFiles: (NSArray*) validatedFiles
-		 toDestination: (NSURL*)   destinationURL
+- (NSArray*) exportFiles:   (NSArray*) fileObjs
+			 toFolder:      (NSURL*)   folderURL
 {
-	id item = [validatedFiles objectAtIndex:0]; // one checks out no more than one directory
-	NSString *destinationPath = [[destinationURL path] stringByAppendingPathComponent:[item valueForKey:@"name"]];
+	return [self exportFiles: fileObjs toFolder: folderURL includeRev: NO openAfter: NO];
+}
 
-	[self setDisplayedTaskObj:
-		[MySvn    checkout: [self pathAtCurrentRevision: item]
-			   destination: destinationPath
-			generalOptions: [self svnOptionsInvocation]
-				   options: [NSArray arrayWithObjects: @"-r", fRevision, nil]
-				  callback: [self makeCallbackInvocationOfKind:SVNXCallbackExtractedToFileSystem]
-			  callbackInfo: destinationPath
-				  taskInfo: [self documentNameDict]]
-	];
 
-	// TL : Creating new working copy for the checked out path.
-	if (GetPreferenceBool(@"addWorkingCopyOnCheckout"))
-	{
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"newWorkingCopy" object:destinationPath];
-	}
+//----------------------------------------------------------------------------------------
+// Private:
+
+- (void) checkoutFiles: (NSArray*) repoItems
+		 toFolder:      (NSURL*)   folderURL
+{
+	RepoItem* repoItem = [repoItems objectAtIndex: 0]; // one checks out no more than one directory
+
+	[self checkout: repoItem
+		  toFolder: [[folderURL path] stringByAppendingPathComponent: [repoItem name]]];
 }
 
 
@@ -910,27 +1264,25 @@ svnInfoReceiver (void*       baton,
 		 returnCode:        (int)          returnCode
 		 contextInfo:       (void*)        contextInfo
 {
-	#pragma unused(contextInfo)
+	NSArray* selectedObjects = contextInfo;
 
 	if (returnCode == NSOKButton)
 	{
-		NSURL *destinationURL = [NSURL fileURLWithPath:[[sheet filenames] objectAtIndex:0]];
-		NSArray *validatedFiles = [self userValidatedFiles: [svnBrowserView selectedItems]
-										forDestination:     destinationURL];
-
-		[self exportFiles: validatedFiles toDestination: destinationURL];
+		NSURL* folderURL = [NSURL fileURLWithPath: [[sheet filenames] objectAtIndex: 0]];
+		[self exportFiles: [self userValidatedFiles: selectedObjects forDestination: folderURL]
+			  toFolder:    folderURL];
 	}
+
+	[selectedObjects release];
 }
 
 
 //----------------------------------------------------------------------------------------
 
-- (void) extractedItemsCallback: (NSDictionary*) taskObj
+- (void) extract_Completed: (id) taskObj
 {
-	NSString* extractDestinationPath = [taskObj valueForKey: @"callbackInfo"];
-
 	// let the Finder know about the operation (required for Panther)
-	[[NSWorkspace sharedWorkspace] noteFileSystemChanged: extractDestinationPath];
+	[[NSWorkspace sharedWorkspace] noteFileSystemChanged: [taskObj objectForKey: @"callbackInfo"]];
 
 	[self svnErrorIf: taskObj];
 }
@@ -944,62 +1296,166 @@ svnInfoReceiver (void*       baton,
 	NSArray* validatedFiles = [self userValidatedFiles: filesDicts forDestination: destinationURL];
 	BOOL isCheckout = FALSE;	// -> export by default
 
-	if ( [validatedFiles count] == 1 )
+	if ([validatedFiles count] == 1 && [[validatedFiles lastObject] isDir])
 	{
-		if ( [[[validatedFiles objectAtIndex:0] valueForKey:@"isDir"] boolValue] )
-		{
-			NSAlert *alert = [[NSAlert alloc] init];
-			
-			[alert addButtonWithTitle:@"Export"];
-			[alert addButtonWithTitle:@"Checkout"];
-			
-			[alert setMessageText:@"Do you want to extract the folder versioned (checkout) or unversioned (export)?"];
-//			[alert setInformativeText:@"Hum ?"];
-			[alert setAlertStyle:NSWarningAlertStyle];
+		NSAlert* alert =
+			[NSAlert alertWithMessageText: @"Extract the folder versioned (checkout) or unversioned (export)?"
+					 defaultButton:        @"Export"
+					 alternateButton:      @"Cancel"
+					 otherButton:          @"Checkout"
+					 informativeTextWithFormat: @""];
+		[alert setAlertStyle: NSWarningAlertStyle];
 
-			int alertResult = [alert runModal];
-			
-			if ( alertResult == NSAlertFirstButtonReturn) // Unversioned -> export
-			{
+		switch ([alert runModal])
+		{
+			case NSAlertDefaultReturn:		// Unversioned -> export
 				isCheckout = FALSE;
-			} 
-			else if ( alertResult == NSAlertSecondButtonReturn) // Versioned -> checkout
-			{
+				break;
+
+			case NSAlertOtherReturn:		// Versioned -> checkout
 				isCheckout = TRUE;
-			} 
-			
-			[alert release];
+				break;
+
+			default:						// Cancel
+				return;
 		}
 	}
 
 	if (isCheckout)		// => checkout
 	{
-		[self checkoutFiles: validatedFiles toDestination: destinationURL];
+		[self checkoutFiles: validatedFiles toFolder: destinationURL];
 	}
 	else				// => export
 	{
-		[self exportFiles: validatedFiles toDestination: destinationURL];
+		[self exportFiles: validatedFiles toFolder: destinationURL];
 	}
 }
 
 
 //----------------------------------------------------------------------------------------
 
-- (void) dragExternalFiles: (NSArray*)      files
-		 ToRepositoryAt:    (NSDictionary*) representedObject
+- (NSArray*) deliverFiles: (NSArray*) fileObjs
+			 toFolder:     (NSURL*)   folderURL
+			 isTemporary:  (BOOL)     isTemporary
 {
-	NSString *filePath = [files objectAtIndex:0];
+	NSArray* fileNames = nil;
+	if (isTemporary)
+	{
+		fileNames = [self exportFiles: fileObjs toFolder: folderURL includeRev: YES openAfter: NO];
+		// Try and wait for export to finish before returning so that dropping on an app icon
+		// or in an app window will succeed.  If the files don't exist those drags will fail.
+		if (displayedTaskObj)
+		{
+			NSTask* const task = [displayedTaskObj objectForKey: @"task"];
+			// Wait up to 30 seconds but exit asap.
+			for (int i = 0; [task isRunning] && i < 30 * 16; ++i)
+				[NSThread sleepUntilDate: [NSDate dateWithTimeIntervalSinceNow: 1.0 / 16]];
+		}
+	}
+	else
+		[self dragOutFilesFromRepository: fileObjs toURL: folderURL];
+	return fileNames;
+}
 
-	[importCommitPanel setTitle:@"Import"];
-	[fileNameTextField setStringValue:[filePath lastPathComponent]];
 
-	[NSApp	beginSheet:importCommitPanel
-			modalForWindow:[self windowForSheet] 
-			modalDelegate:self 
-			didEndSelector:@selector(importCommitPanelDidEnd:returnCode:contextInfo:) 
-			contextInfo:[[NSDictionary dictionaryWithObjectsAndKeys:
-										TrimSlashes(representedObject), @"destination",
-										filePath, @"filePath", nil] retain] ];
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	Import
+//----------------------------------------------------------------------------------------
+
+enum {
+	vImportSource	=	10,
+	vImportDest,
+	vImportName,
+	vImportRecursive
+};
+
+
+//----------------------------------------------------------------------------------------
+
+- (IBAction) svnImport: (id) sender
+{
+	#pragma unused(sender)
+	RepoItem* destDir = [self selectedDirectory];
+	Assert(destDir != nil);
+	if (destDir != nil)
+	{
+		[self chooseAny:    [NSString stringWithFormat: @"Import into %C%@%C:", 0x201C,
+														UnEscapeURL([destDir url]), 0x201D]
+			allowFiles:     YES
+			didEndSelector: @selector(importPanelDidEnd:returnCode:contextInfo:)
+			contextInfo:    [destDir retain]];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) importPanelDidEnd: (NSOpenPanel*) sheet
+		 returnCode:        (int)          returnCode
+		 contextInfo:       (void*)        contextInfo
+{
+	RepoItem* destDir = contextInfo;
+
+	if (returnCode == NSOKButton)
+	{
+		[sheet orderOut: self];
+		[self importFiles: [sheet filenames] intoFolder: destDir];
+	}
+
+	[destDir release];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) importFiles: (NSArray*)  files
+		 intoFolder:  (RepoItem*) destRepoDir
+{
+	// Abort if any sheet already open
+	if ([[self window] attachedSheet] != nil)
+	{
+		NSBeep();
+		return;
+	}
+
+	// Setup name, source & destination fields
+	NSString* const filePath = [files objectAtIndex: 0];
+	[fileNameTextField setStringValue: [filePath lastPathComponent]];
+	WSetViewString(importCommitPanel, vImportSource, GetPreferenceBool(@"abbrevWCFilePaths")
+													 ? [filePath stringByAbbreviatingWithTildeInPath] : filePath);
+	WSetViewString(importCommitPanel, vImportDest, [[destRepoDir path] stringByAppendingString: @"/"]);
+
+	// Recursive checkbox only shown for directories
+	BOOL isDir = FALSE;
+	NSButton* const recursive = WGetView(importCommitPanel, vImportRecursive);
+	if (recursive)
+	{
+		[recursive setHidden: !([[NSFileManager defaultManager]
+									fileExistsAtPath: filePath isDirectory: &isDir] && isDir)];
+		if (isDir)
+			[recursive setState: NSOnState];
+	}
+
+	[NSApp beginSheet:     importCommitPanel
+		   modalForWindow: [self windowForSheet] 
+		   modalDelegate:  self 
+		   didEndSelector: @selector(importCommitPanelDidEnd:returnCode:contextInfo:) 
+		   contextInfo:    [[NSDictionary dictionaryWithObjectsAndKeys:
+										TrimSlashes(destRepoDir), @"destination",
+										filePath,                 @"filePath",
+										NSBool(isDir),            @"isDir",
+										nil] retain]
+	];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) receiveFiles:   (NSArray*)  files
+		 toRepositoryAt: (RepoItem*) destRepoDir
+{
+	[self importFiles: files intoFolder: destRepoDir];
 }
 
 
@@ -1015,14 +1471,17 @@ svnInfoReceiver (void*       baton,
 
 	if (returnCode == NSOKButton)
 	{
+		id recursive = ([dict objectForKey: @"isDir"] == kNSTrue &&
+						WGetViewInt(sheet, vImportRecursive) == NSOffState) ? @"-N" : nil;
 		[self setDisplayedTaskObj:
 			[MySvn		import: [dict objectForKey: @"filePath"]
 				   destination: [NSString stringWithFormat: @"%@/%@",
-									[dict objectForKey:@"destination"], [fileNameTextField stringValue]]
+									[dict objectForKey: @"destination"], [fileNameTextField stringValue]]
 											// stringByAppendingPathComponent would eat svn:// into svn:/ !
 				generalOptions: [self svnOptionsInvocation]
-					   options: [NSArray arrayWithObjects: @"-m", MessageString([commitTextView string]), nil]
-					  callback: [self makeCallbackInvocationOfKind: SVNXCallbackImport]
+					   options: [NSArray arrayWithObjects: @"-m", MessageString([commitTextView string]),
+														   recursive, nil]
+					  callback: [self makeCommandCallback]
 				  callbackInfo: nil
 					  taskInfo: [self documentNameDict]]
 			];
@@ -1059,7 +1518,7 @@ svnInfoReceiver (void*       baton,
 
 		if (operation == kSvnCopy || operation == kSvnMove)
 		{
-			sourceUrl = [[[self selectedItemOrNil] valueForKey: @"url"] absoluteString];
+			sourceUrl = [[[self selectedItemOrNil] url] absoluteString];
 			targetUrl = [[controller getTargetUrl] absoluteString];
 		}
 		if (operation != kSvnDiff)
@@ -1072,7 +1531,7 @@ svnInfoReceiver (void*       baton,
 				   destination: targetUrl
 				generalOptions: [self svnOptionsInvocation]
 					   options: [NSArray arrayWithObjects: @"-r", fRevision, @"-m", commitMessage, nil]
-					  callback: [self makeCallbackInvocationOfKind: SVNXCallbackCopy]
+					  callback: [self makeCommandCallback]
 				  callbackInfo: nil
 					  taskInfo: [self documentNameDict]];
 			break;
@@ -1082,7 +1541,7 @@ svnInfoReceiver (void*       baton,
 				   destination: targetUrl
 				generalOptions: [self svnOptionsInvocation]
 					   options: [NSArray arrayWithObjects: @"-m", commitMessage, nil]
-					  callback: [self makeCallbackInvocationOfKind: SVNXCallbackMove]
+					  callback: [self makeCommandCallback]
 				  callbackInfo: nil
 					  taskInfo: [self documentNameDict]];
 			break;
@@ -1091,7 +1550,7 @@ svnInfoReceiver (void*       baton,
 			[MySvn		 mkdir: [[controller getTargets] mutableArrayValueForKeyPath: @"url.absoluteString"]
 				generalOptions: [self svnOptionsInvocation]
 					   options: [NSArray arrayWithObjects: @"-m", commitMessage, nil]
-					  callback: [self makeCallbackInvocationOfKind: SVNXCallbackMkdir]
+					  callback: [self makeCommandCallback]
 				  callbackInfo: nil
 					  taskInfo: [self documentNameDict]];
 			break;
@@ -1100,7 +1559,7 @@ svnInfoReceiver (void*       baton,
 			[MySvn		delete: [[controller getTargets] mutableArrayValueForKeyPath: @"url.absoluteString"]
 				generalOptions: [self svnOptionsInvocation]
 					   options: [NSArray arrayWithObjects: @"-m", commitMessage, nil]
-					  callback: [self makeCallbackInvocationOfKind: SVNXCallbackDelete]
+					  callback: [self makeCommandCallback]
 				  callbackInfo: nil
 					  taskInfo: [self documentNameDict]];
 			break;
@@ -1116,14 +1575,44 @@ svnInfoReceiver (void*       baton,
 
 //----------------------------------------------------------------------------------------
 
-- (void) svnCommandComplete: (id) taskObj
+- (void) svnCommand_Completed: (id) taskObj
 {
 	if (isCompleted(taskObj))
 	{
-		[svnLogView fetchSvnLog];
+		[self fetchSvnInfo: @selector(svnCommand_InfoCompleted:)];
 	}
 
 	[self svnErrorIf: taskObj];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnCommand_InfoCompleted: (id) taskObj
+{
+	if (fHeadRevision > fLogRevision)
+	{
+		[self fetchSvnLog: @selector(svnCommand_LogCompleted:)];
+	}
+	else
+	{
+		[self updateLog_InfoCompleted: taskObj];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+// Select HEAD item in log (after a copy, move, mkdir, delete or import)
+
+- (void) svnCommand_LogCompleted: (id) taskObj
+{
+	[self svnLogCompleted: taskObj];
+
+	if (isCompleted(taskObj) && [fLog count] > 0)
+	{
+		[self setRevision: getRevision([fLog objectAtIndex: 0])];
+		[svnLogView setCurrentRevision: fRevision];
+	}
 }
 
 
@@ -1183,7 +1672,7 @@ svnInfoReceiver (void*       baton,
 			continue;
 		}
 
-		NSString* const name = [item valueForKey: @"name"];
+		NSString* const name = [item name];
 		if ([[NSFileManager defaultManager]
 					fileExistsAtPath: [[destinationURL path] stringByAppendingPathComponent: name]])
 		{
@@ -1236,11 +1725,15 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (NSMutableDictionary*) getSvnOptions
 {
 	return [NSMutableDictionary dictionaryWithObjectsAndKeys: user, @"user", pass, @"pass", nil];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (NSInvocation*) makeSvnOptionInvocation
 {
@@ -1248,40 +1741,26 @@ svnInfoReceiver (void*       baton,
 }
 
 
-- (NSInvocation*) makeCallbackInvocationOfKind: (int) callbackKind
+//----------------------------------------------------------------------------------------
+
+- (NSInvocation*) makeCommandCallback
 {
-	SEL callbackSelector = nil;
+	return MakeCallbackInvocation(self, @selector(svnCommand_Completed:));
+}
 
-	switch ( callbackKind )
-	{
-		case SVNXCallbackExtractedToFileSystem:
-			callbackSelector = @selector(extractedItemsCallback:);
-			break;
 
-		case SVNXCallbackCopy:
-		case SVNXCallbackMove:
-		case SVNXCallbackMkdir:
-		case SVNXCallbackDelete:
-		case SVNXCallbackImport:
-			callbackSelector = @selector(svnCommandComplete:);
-			break;
+//----------------------------------------------------------------------------------------
 
-		case SVNXCallbackSvnInfo:
-			callbackSelector = @selector(svnInfoCompletedCallback:);
-			break;
-
-		case SVNXCallbackGetOptions:
-			callbackSelector = @selector(getSvnOptions);
-			break;
-	}
-
-	return MakeCallbackInvocation(self, callbackSelector);
+- (NSInvocation*) makeExtractedCallback
+{
+	return MakeCallbackInvocation(self, @selector(extract_Completed:));
 }
 
 
 //----------------------------------------------------------------------------------------
 #pragma mark	-
 #pragma mark	Document delegate
+//----------------------------------------------------------------------------------------
 
 - (void) canCloseDocumentWithDelegate: (id)    delegate
 		 shouldCloseSelector:          (SEL)   shouldCloseSelector
@@ -1297,8 +1776,22 @@ svnInfoReceiver (void*       baton,
 
 
 //----------------------------------------------------------------------------------------
+// Disable Copy, Move, Mkdir & Delete toolbar items if root URL is a file
+
+- (BOOL) validateToolbarItem: (NSToolbarItem*) theItem
+{
+	static NSSet* ids = nil;
+	if (ids == nil)
+		ids = [[NSSet setWithObjects: @"svnCopy", @"svnMove", @"svnMkdir", @"svnDelete", nil] retain];
+
+	return !fIsFile || ![ids containsObject: [theItem itemIdentifier]];
+}
+
+
+//----------------------------------------------------------------------------------------
 #pragma mark	-
 #pragma mark	Accessors
+//----------------------------------------------------------------------------------------
 
 - (NSString*) user	{ return user; }
 
@@ -1346,6 +1839,8 @@ svnInfoReceiver (void*       baton,
 	id old = fURL;
 	fURL = [anUrl retain];
 	[old release];
+	NSString* const str = [anUrl relativeString];
+	fIsFile = ([str characterAtIndex: [str length] - 1] != '/');
 }
 
 
@@ -1404,9 +1899,9 @@ svnInfoReceiver (void*       baton,
 
 - (NSString*) browsePath
 {
-	NSDictionary* selection = [self selectedItemOrNil];
+	RepoItem* selection = [self selectedItemOrNil];
 
-	return [(selection ? [selection valueForKey: @"url"] : fURL) absoluteString];
+	return [(selection ? [selection url] : fURL) absoluteString];
 }
 
 

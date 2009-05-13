@@ -7,6 +7,7 @@
 #import "MySvnLogView.h"
 #import "MyWorkingCopy.h"
 #import "NSString+MyAdditions.h"
+#import "RepoItem.h"
 #import "Tasks.h"
 #import "CommonUtils.h"
 
@@ -30,7 +31,7 @@
 	[objectController setValue: PathWithRevision(descPath, descRev) forKeyPath: @"content.desc"];
 	[svnLogView setRevision: descRev];
 	[svnLogView setSvnOptionsInvocation: options];
-	[svnLogView fetchSvnLog];
+	[svnLogView fetchSvn];
 }
 
 
@@ -38,13 +39,15 @@
 
 - (void) setupUrl:   (NSURL*)        url
 		 options:    (NSInvocation*) options
-		 sourceItem: (NSDictionary*) sourceItem
+		 sourceItem: (RepoItem*)     sourceItem
 {
-//	NSLog(@"MyFileMergeController::setupUrl(url=<%@> sourceItem=%@) objectController=0x%X", url, sourceItem, objectController);
-	[svnLogView setUrl: url];
+//	dprintf("(url=<%@> sourceItem=%@) objectController=0x%X", url, sourceItem, objectController);
+	[svnLogView setPath: [url absoluteString]];
 	[objectController setValue: url forKeyPath: @"content.itemUrl"];
-	[self setupWithOptions: options sourceItem: sourceItem
-		  descPath: url descRev: [sourceItem objectForKey: @"revision"]];
+	[self setupWithOptions: options
+		  sourceItem:       [NSDictionary dictionaryWithObject: url forKey: @"url"]		// content.sourceItem.url
+		  descPath:         url
+		  descRev:          [sourceItem revision]];
 }
 
 
@@ -71,8 +74,8 @@
 				   didEndSelector: @selector(sheetDidEnd:returnCode:contextInfo:)
 				   contextInfo:    self];
 		}	
-		else if (qDebug)
-			NSLog(@"initDiffSheet: loadNibNamed FAILED");
+		else
+			dprintf("loadNibNamed FAILED");
 	}
 
 	return self;
@@ -126,13 +129,14 @@
 - (void) comparePath:   (NSString*) path
 		 toWorkingCopy: (BOOL)      toWorkingCopy
 {
-	NSString* revOption = toWorkingCopy ? @"-r%@"			// Compare selected to working copy
-										: @"-r%@:%@";		// Compare selected to marked
+	id revOption = [NSString stringWithFormat:
+						toWorkingCopy ? @"-r%@"			// Compare selected to working copy
+									  : @"-r%@:%@",		// Compare selected to marked
+						[svnLogView selectedRevision], [svnLogView currentRevision]];
 
 	[MySvn      diffItems: [NSArray arrayWithObject: path]
 		   generalOptions: svnOptionsInvocation
-				  options: [NSArray arrayWithObject: [NSString stringWithFormat: revOption,
-														[svnLogView selectedRevision], [svnLogView currentRevision]]]
+				  options: [NSArray arrayWithObject: revOption]
 				 callback: MakeCallbackInvocation(self, @selector(fileMergeCallback:))
 			 callbackInfo: nil
 				 taskInfo: [NSDictionary dictionaryWithObject: @"svnDiff" forKey: @"documentName"]];
@@ -164,13 +168,11 @@
 
 - (void) fileMergeCallback: (id) taskObj
 {
-	if (isCompleted(taskObj))
+	if (!isCompleted(taskObj))
 	{
-		;
-	}
-	else if (taskObj = stdErr(taskObj))
-	{
-		[svnLogView svnError: taskObj];
+		NSString* errorString = stdErr(taskObj);
+		if (errorString)
+			[svnLogView svnError: taskObj];
 	}
 }
 

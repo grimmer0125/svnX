@@ -2611,8 +2611,7 @@
 			<integer>1</integer>
 		</dict>
 		<string>Commit</string>
-		<string>
-</string>
+		<string></string>
 		<dict>
 			<key>$class</key>
 			<dict>

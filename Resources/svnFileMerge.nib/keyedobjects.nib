@@ -556,8 +556,7 @@
 			</dict>
 		</dict>
 		<string>Working Copy</string>
-		<string>
-</string>
+		<string></string>
 		<dict>
 			<key>$class</key>
 			<dict>

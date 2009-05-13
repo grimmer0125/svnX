@@ -69,7 +69,7 @@ enum {
 		 callbackInfo: (id)            callbackInfo;
 
 - (void) svnCommit: (NSString*) message;
-
+- (void) svnMerge:  (NSArray*) options;
 - (void) svnSwitch: (NSArray*) options;
 
 - (void) svnCommand: (NSString*)     command

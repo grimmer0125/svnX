@@ -21,6 +21,7 @@
 		831A7ABD0D7B0F86006A81F0 /* ModeFlat.png in Resources */ = {isa = PBXBuildFile; fileRef = 831A7ABA0D7B0F86006A81F0 /* ModeFlat.png */; };
 		832B702E0DDA881000B0E95D /* svnReport.png in Resources */ = {isa = PBXBuildFile; fileRef = 832B702D0DDA881000B0E95D /* svnReport.png */; };
 		833B71E20D91ABB3006E242E /* SvnInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 833B71E00D91ABB3006E242E /* SvnInterface.m */; };
+		833ED6510FA558BE00B7C862 /* RepoItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 833ED64C0FA558B900B7C862 /* RepoItem.m */; };
 		836CEA220DD930E600DB72C8 /* Refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = 836CEA210DD930E600DB72C8 /* Refresh.png */; };
 		83909D4D0DA4C94C00C3DAE5 /* FileMerge.png in Resources */ = {isa = PBXBuildFile; fileRef = 83909D4C0DA4C94C00C3DAE5 /* FileMerge.png */; };
 		83909D510DA4CA0F00C3DAE5 /* Repository.png in Resources */ = {isa = PBXBuildFile; fileRef = 83909D500DA4CA0F00C3DAE5 /* Repository.png */; };
@@ -36,6 +37,8 @@
 		83DBD3910DBF7F9500264348 /* ReviewCommit.m in Sources */ = {isa = PBXBuildFile; fileRef = 83DBD38F0DBF7F9500264348 /* ReviewCommit.m */; };
 		83E5B93C0D905C130024AA50 /* DbgUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 83E5B93A0D905C130024AA50 /* DbgUtils.m */; };
 		83E863AA0DB674E4004CE070 /* CommonUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 83E863A90DB674E4004CE070 /* CommonUtils.m */; };
+		83EA6AF70F9C2A150025F2BC /* import.png in Resources */ = {isa = PBXBuildFile; fileRef = 83EA6AF60F9C2A150025F2BC /* import.png */; };
+		83EDF4230F9E1E4200838E58 /* open.png in Resources */ = {isa = PBXBuildFile; fileRef = 83EDF4220F9E1E4200838E58 /* open.png */; };
 		83EE48880DD226C100542832 /* ViewUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 83EE48860DD226C100542832 /* ViewUtils.m */; };
 		8D15AC2C0486D014006FF6A4 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 2A37F4B9FDCFA73011CA2CEA /* Credits.rtf */; };
 		8D15AC2F0486D014006FF6A4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165FFE840EACC02AAC07 /* InfoPlist.strings */; };
@@ -160,6 +163,8 @@
 		832B702D0DDA881000B0E95D /* svnReport.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = svnReport.png; sourceTree = "<group>"; };
 		833B71DF0D91ABB3006E242E /* SvnInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SvnInterface.h; sourceTree = "<group>"; };
 		833B71E00D91ABB3006E242E /* SvnInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SvnInterface.m; sourceTree = "<group>"; };
+		833ED64C0FA558B900B7C862 /* RepoItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RepoItem.m; sourceTree = "<group>"; };
+		833ED64D0FA558B900B7C862 /* RepoItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RepoItem.h; sourceTree = "<group>"; };
 		836CEA210DD930E600DB72C8 /* Refresh.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Refresh.png; sourceTree = "<group>"; };
 		83909D4C0DA4C94C00C3DAE5 /* FileMerge.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = FileMerge.png; sourceTree = "<group>"; };
 		83909D500DA4CA0F00C3DAE5 /* Repository.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Repository.png; sourceTree = "<group>"; };
@@ -180,6 +185,8 @@
 		83E5B9390D905C130024AA50 /* DbgUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DbgUtils.h; sourceTree = "<group>"; };
 		83E5B93A0D905C130024AA50 /* DbgUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DbgUtils.m; sourceTree = "<group>"; };
 		83E863A90DB674E4004CE070 /* CommonUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommonUtils.m; sourceTree = "<group>"; };
+		83EA6AF60F9C2A150025F2BC /* import.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = import.png; sourceTree = "<group>"; };
+		83EDF4220F9E1E4200838E58 /* open.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = open.png; sourceTree = "<group>"; };
 		83EE48860DD226C100542832 /* ViewUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewUtils.m; sourceTree = "<group>"; };
 		83EE48870DD226C100542832 /* ViewUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewUtils.h; sourceTree = "<group>"; };
 		8D15AC360486D014006FF6A4 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = Info.plist; path = ../Info.plist; sourceTree = "<group>"; };
@@ -434,6 +441,7 @@
 				83CFE69C0FAFE01200EDFC88 /* svnx */,
 				F2C2001206008AE0004C843B /* Add.png */,
 				F230FC77080596A50000E35F /* checkout2.png */,
+				83EA6AF60F9C2A150025F2BC /* import.png */,
 				F230FC8D08059A9B0000E35F /* export.png */,
 				F2C2002506008B49004C843B /* Remove.png */,
 				F2C202930600A94D004C843B /* EditorProjectMode.tiff */,
@@ -444,6 +452,7 @@
 				8314B1A50DB9769900C6F545 /* svnBlame.png */,
 				F23B3C9D06A998DD0021E613 /* svnCopy.png */,
 				F233A39F06C3C32E00F77B90 /* svnMove.png */,
+				83EDF4220F9E1E4200838E58 /* open.png */,
 				832B702D0DDA881000B0E95D /* svnReport.png */,
 				F26353FC06B17C98009C5ADF /* checkout.png */,
 				F22AFF1605F7440900D4ED0D /* Card.tiff */,
@@ -532,6 +541,8 @@
 				F2A62C4906A2BEDD00EC533F /* MyRadioButtonTableColumn.m */,
 				F2E4D7680803ECE500C13681 /* MyDragSupportMatrix.m */,
 				F23B3C6A06A997100021E613 /* MyRepositoryToolbar.m */,
+				833ED64C0FA558B900B7C862 /* RepoItem.m */,
+				833ED64D0FA558B900B7C862 /* RepoItem.h */,
 				8314E6680D79165C005538EF /* SvnLogReport.m */,
 				8314E6690D79165C005538EF /* SvnLogReport.h */,
 			);
@@ -730,6 +741,8 @@
 				832B702E0DDA881000B0E95D /* svnReport.png in Resources */,
 				830B23150DE67B0E0080B2FD /* Review.js in Resources */,
 				83929B660F68CFD2002D2A6E /* open.sh in Resources */,
+				83EA6AF70F9C2A150025F2BC /* import.png in Resources */,
+				83EDF4230F9E1E4200838E58 /* open.png in Resources */,
 				83CFE69D0FAFE01200EDFC88 /* svnx in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -847,6 +860,7 @@
 				83DBD3910DBF7F9500264348 /* ReviewCommit.m in Sources */,
 				83EE48880DD226C100542832 /* ViewUtils.m in Sources */,
 				83CD86CC0F54588E00512219 /* MyDragSupportWindow.m in Sources */,
+				833ED6510FA558BE00B7C862 /* RepoItem.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

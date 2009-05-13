@@ -3,6 +3,8 @@
 #import <Cocoa/Cocoa.h>
 #import "MySvnView.h"
 
+@class RepoItem;
+
 @interface MySvnRepositoryBrowserView : MySvnView
 {
 	IBOutlet NSBrowser*		browser;
@@ -32,8 +34,9 @@
 		 allowsLeaves:            (BOOL) allowsLeaves
 		 allowsMultipleSelection: (BOOL) allowsMultiSel;
 
-- (NSArray*) selectedItems;
-- (void) reset;
+- (NSArray*)  selectedItems;
+- (RepoItem*) selectedItemOrNil;
+- (void)      reset;
 
 - (NSString*) browserPath;
 - (void)      setBrowserPath:     (NSString*) aBrowserPath;

@@ -1,30 +1,24 @@
-#! /bin/sh
-#echo "$@" > /tmp/svntest.txt
-svn=$1
-shift;
-options=$1
-shift;
+#! /bin/sh -f
+# svnextract.sh <svn-tool> <options> <diff-app-or-empty> [<op> <source> <dest>]...
+svn="$1"; options="$2"; diff="$3"; n=0
+shift 3
 
 until [ -z "$1" ]
 do
-	operation=$1
-	shift
+	op="$1"; source="$2"; dest="$3"
+	shift 3
 
-	source=$1
-	shift
-
-	destination=$1
-	shift
-
-	if [ "$operation" == "e" ]
-	then
-		# it's important to leave $options without surrounding quotes because $options contains an arbitrary number of options that should be seen as several items
-		"$svn" export $options --force "$source" "$destination"
-		
+	# Leave $options unquoted because it may contain multiple options
+	if [ $op == 'e' ]; then
+		"$svn" export $options --force "$source" "$dest"
 	else
-
-		"$svn" cat $options  "$source" > "$destination"
+		"$svn" cat $options "$source" > "$dest"
 	fi
+	eval "f$n=\$dest"
+	n=$(($n + 1))
 done
 
-exit 0
+if [ -n "$diff" -a "$n" -gt 0 ]; then
+	"${0%/*}/open.sh" "$diff" "$f0" "$f1" "$f2" "$f3" "$f4" "$f5" "$f6" "$f7" "$f8" "$f9"
+fi
+

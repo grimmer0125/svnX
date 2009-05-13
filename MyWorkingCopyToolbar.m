@@ -3,16 +3,16 @@
 #import "CommonUtils.h"
 
 
-//----------------------------------------------------------------------------------------
-
 @implementation MyWorkingCopyToolbar
 
 
 //----------------------------------------------------------------------------------------
+// Private:
 
 - (NSToolbarItem*) createItem: (NSString*) itsID
-				   view:       (NSView*)   itsView, GCoord minWidth, GCoord minHeight,
-													GCoord maxWidth, GCoord maxHeight
+				   view:       (NSView*)   itsView,
+							   GCoord minWidth, GCoord minHeight,
+							   GCoord maxWidth, GCoord maxHeight
 {
 	NSToolbarItem* item = [[NSToolbarItem alloc] initWithItemIdentifier: itsID];
 	[item setPaletteLabel: itsID];
@@ -29,6 +29,7 @@
 
 
 //----------------------------------------------------------------------------------------
+// Private:
 
 - (NSToolbarItem*) createItem: (NSString*) itsID
 				   label:      (NSString*) itsLabel
@@ -94,6 +95,9 @@
 	[toolbar release];
 }
 
+
+//----------------------------------------------------------------------------------------
+
 - (void) dealloc
 {
 	[items release];
@@ -111,25 +115,29 @@
 	return [items objectForKey: itemIdentifier];
 }
 
+
+//----------------------------------------------------------------------------------------
+
 - (NSArray*) toolbarDefaultItemIdentifiers: (NSToolbar*) toolbar
 {
 	#pragma unused(toolbar)
 	return [NSArray arrayWithObjects:
 				@"View",
-				NSToolbarSeparatorItemIdentifier,
+				@"Filter",
+				@"Search",
 				@"revealInFinder",
 				@"svnDiff",
-				NSToolbarFlexibleSpaceItemIdentifier,
-				@"Search",
 				NSToolbarSeparatorItemIdentifier,
 				@"svnUpdate",
-				NSToolbarSeparatorItemIdentifier,
 				@"openRepository",
 				@"refresh",
-				NSToolbarSeparatorItemIdentifier,
+				NSToolbarFlexibleSpaceItemIdentifier,
 				@"toggleSidebar",
 				nil];
 }
+
+
+//----------------------------------------------------------------------------------------
 
 - (NSArray*) toolbarAllowedItemIdentifiers: (NSToolbar*) toolbar
 {
@@ -150,6 +158,9 @@
 				NSToolbarFlexibleSpaceItemIdentifier,
 				nil];
 }
+
+
+//----------------------------------------------------------------------------------------
 
 @end
 

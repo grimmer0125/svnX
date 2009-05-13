@@ -5,7 +5,7 @@
 #import "MySvnOperationController.h"
 #import "MySvnRepositoryBrowserView.h"
 #import "NSString+MyAdditions.h"
-#import "CommonUtils.h"
+#import "RepoItem.h"
 
 
 @implementation MySvnOperationController
@@ -15,7 +15,7 @@
 
 - (void) setupUrl:   (NSURL*)        url
 		 options:    (NSInvocation*) options
-		 sourceItem: (NSDictionary*) sourceItem
+		 sourceItem: (RepoItem*)     sourceItem
 {
     if (svnOptionsInvocation != options)
 	{
@@ -30,8 +30,15 @@
 	[objectController setValue: url forKeyPath: @"content.itemUrl"];
 	if (sourceItem != nil)
 	{
-		[objectController setValue: sourceItem forKeyPath: @"content.sourceItem"];
-		[targetName setStringValue:[[sourceItem objectForKey: @"path"] lastPathComponent]];
+		id revision = (svnOperation == kSvnMove) ? @"HEAD" : [sourceItem revision];
+		id dict = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+										[sourceItem name],		@"name",
+										[sourceItem author],	@"author",
+										[sourceItem path],		@"path",
+										revision,				@"revision",
+										nil];
+		[objectController setValue: dict forKeyPath: @"content.sourceItem"];
+		[targetName setStringValue: [sourceItem name]];
 	}
 
 	if (svnOperation == kSvnDelete)
@@ -41,8 +48,6 @@
 	else
 	{
 		Assert(svnOperation != kSvnDiff);
-		if (svnOperation == kSvnMove)
-			[objectController setValue: @"HEAD" forKeyPath: @"content.sourceItem.revision"];
 
 		[targetBrowser setupForSubBrowser: YES allowsLeaves: NO allowsMultipleSelection: NO];
 	}
@@ -55,13 +60,13 @@
 - (id) initSheet:  (SvnOperation)  operation
 	   repository: (MyRepository*) repository
 	   url:        (NSURL*)        url
-	   sourceItem: (NSDictionary*) sourceItem
+	   sourceItem: (RepoItem*)     sourceItem
 {
 	Assert(operation >= kSvnCopy && operation <= kSvnDiff);
 
 	if (self = [super init])
 	{
-	//	NSLog(@"MySvnOperationController::initSheet: 0x%X operation=%d", self, operation);
+	//	dprintf("0x%X operation=%d", self, operation);
 		static NSString* const nibNames[] = {
 			// kSvnCopy, kSvnMove, kSvnDelete, kSvnMkdir, kSvnDiff
 			@"svnCopy", @"svnCopy", @"svnDelete", @"svnMkdir", @"svnFileMergeFromRepository"
@@ -71,6 +76,7 @@
 		svnOperation = operation;
 		if ([NSBundle loadNibNamed: nibName owner: self])
 		{
+			// TO_DO: retain sourceItem for use by copy or move
 			if (targetBrowser != nil)
 				[targetBrowser setRepository: repository];
 			[self setupUrl: url options: [repository svnOptionsInvocation]
@@ -82,8 +88,8 @@
 				   didEndSelector: @selector(sheetDidEnd:returnCode:contextInfo:)
 				   contextInfo:    self];
 		}
-		else if (qDebug)
-			NSLog(@"initSheet: loadNibNamed '%@' FAILED", nibName);
+		else
+			dprintf("loadNibNamed '%@' FAILED", nibName);
 	}
 
 	return self;
@@ -95,7 +101,7 @@
 + (void) runSheet:   (SvnOperation)  operation
 		 repository: (MyRepository*) repository
 		 url:        (NSURL*)        url
-		 sourceItem: (NSDictionary*) sourceItem
+		 sourceItem: (RepoItem*)     sourceItem
 {
 	[[self alloc] initSheet: operation repository: repository url: url sourceItem: sourceItem];
 }
@@ -105,7 +111,7 @@
 
 - (void) dealloc
 {
-//	NSLog(@"MySvnOperationController::dealloc: 0x%X operation=%d", self, svnOperation);
+//	dprintf("0x%X operation=%d", self, svnOperation);
 	[svnOptionsInvocation release];
 	[super dealloc];
 }
@@ -124,6 +130,14 @@
 	[objectController release];
 
 	[self release];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (RepoItem*) selectedItem
+{
+	return [[targetBrowser selectedItems] objectAtIndex: 0];
 }
 
 
@@ -160,15 +174,15 @@
 
 - (NSString*) getTargetPath
 {
-	return [[[[targetBrowser selectedItems] objectAtIndex: 0] objectForKey: @"path"]
+	return [[[self selectedItem] path]
 				stringByAppendingPathComponent: [self getTargetName]];
 }
 
 
 - (NSURL*) getTargetUrl
 {
-	NSURL* url = [[[targetBrowser selectedItems] objectAtIndex: 0] objectForKey: @"url"];
-	return [NSURL URLWithString: [[self getTargetName] escapeURL] relativeToURL: url];
+	return [NSURL URLWithString: EscapeURL([self getTargetName])
+				  relativeToURL: [[self selectedItem] url]];
 }
 
 
@@ -185,6 +199,7 @@
 
 
 //----------------------------------------------------------------------------------------
+// For svn mkdir
 
 - (IBAction) addDirectory: (id) sender
 {
@@ -203,12 +218,13 @@
 			[arrayController addObject: dir];
 		else
 			NSBeep();
-	//	NSLog(@"addDirectory: %@", dir);
+	//	dprintf("dir=%@", dir);
 	}
 }
 
 
 //----------------------------------------------------------------------------------------
+// For svn delete
 
 - (IBAction) addItems: (id) sender
 {

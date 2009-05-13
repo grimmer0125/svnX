@@ -4,10 +4,12 @@
 #import "MyWorkingCopyController.h"
 #import "MyWorkingCopy.h"
 #import "MyApp.h"
+#import "MyDragSupportWindow.h"
 #import "MyFileMergeController.h"
 #import "DrawerLogView.h"
 #import "NSString+MyAdditions.h"
 #import "ReviewCommit.h"
+#import "RepoItem.h"
 #import "SvnInterface.h"
 #import "CommonUtils.h"
 #import "ViewUtils.h"
@@ -109,6 +111,28 @@ getRecursiveOption (NSString* cmd, bool isRecursive)
 
 
 //----------------------------------------------------------------------------------------
+
+static NSString*
+getPathPegRevision (RepoItem* repoItem)
+{
+	return repoItem ? PathPegRevision([repoItem url], [repoItem revision]) : @"";
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSString*
+WCItemDesc (NSDictionary* item, BOOL isDir)
+{
+	NSString* name;
+	if (item == nil || [(name = [item objectForKey: @"path"]) isEqualToString: @"."])
+		return isDir ? @"This working copy" : nil;
+	return [NSString stringWithFormat: @"%@ %C%@%C",
+			(isDir ? @"Directory" : @"File"), 0x201C, name, 0x201D];
+}
+
+
+//----------------------------------------------------------------------------------------
 #pragma mark	-
 //----------------------------------------------------------------------------------------
 
@@ -118,6 +142,7 @@ getRecursiveOption (NSString* cmd, bool isRecursive)
 	- (IBAction) commitPanelCancel:   (id) sender;
 	- (IBAction) renamePanelValidate: (id) sender;
 	- (IBAction) switchPanelValidate: (id) sender;
+	- (IBAction) mergeSheetDoClick:   (id) sender;
 
 	- (void) resetStatusMessage;
 	- (void) runAlertBeforePerformingAction: (NSDictionary*) command;
@@ -130,6 +155,11 @@ getRecursiveOption (NSString* cmd, bool isRecursive)
 	- (void) updateSheetDidEnd:  (NSWindow*) sheet
 			 returnCode:         (int)       returnCode
 			 contextInfo:        (void*)     contextInfo;
+
+	- (int)  mergeSheetSetKind: (id) mergeKindView;
+	- (void) mergeSheetDidEnd:  (NSWindow*) sheet
+			 returnCode:        (int)       returnCode
+			 contextInfo:       (void*)     contextInfo;
 
 	- (NSArray*) selectedFilePaths;
 
@@ -1290,13 +1320,361 @@ enum {
 
 //----------------------------------------------------------------------------------------
 // called from MyDragSupportWindow
+#pragma mark	svn merge
+
+enum {
+	vMergeURL1			=	2,
+	vMergeURL2			=	3,
+	vMergeKind			=	4,
+	vMergeReverse		=	5,
+	vMergeRecursive		=	6,
+	vMergeTarget		=	7,
+	vMergeRevNum		=	11,
+	vMergeRevStep		=	12,
+
+	kMergeKind1Change	=	101,
+	kMergeKindRevRange	=	102,
+	kMergeKind2URLs		=	103
+};
+
+/*
+	merge: Apply the differences between two sources to a working copy path.
+	usage: 1. merge sourceURL1[@N] sourceURL2[@M] [WCPATH]
+		   2. merge sourceWCPATH1@N sourceWCPATH2@M [WCPATH]
+		   3. merge [-c M | -r N:M] SOURCE[@REV] [WCPATH]
+
+	  1. In the first form, the source URLs are specified at revisions N and M.  These
+		 are the two sources to be compared.  The revisions default to HEAD if omitted.
+
+	  2. In the second form, the URLs corresponding to the source working copy paths
+		 define the sources to be compared.  The revisions must be specified.
+
+	  3. In the third form, SOURCE can be a URL, or working copy item in which case the
+		 corresponding URL is used.  This URL in revision REV is compared as it existed
+		 between revisions N and M.  If REV is not specified, HEAD is assumed.
+		 The '-c M' option is equivalent to '-r N:M' where N = M-1.
+		 Using '-c -M' does the reverse: '-r M:N' where N = M-1.
+
+	  WCPATH is the working copy path that will receive the changes. If WCPATH is omitted,
+	  a default value of '.' is assumed, unless the sources have identical basenames that
+	  match a file within '.': in which case, the differences will be applied to that file.
+
+	Valid options:
+	  -r [--revision] arg      : ARG (some commands also take ARG1:ARG2 range)
+	  -c [--change] arg        : the change made by revision ARG (like -r ARG-1:ARG)
+								 If ARG is negative this is like -r ARG:ARG-1
+	  -N [--non-recursive]     : operate on single directory only
+	  -q [--quiet]             : print as little as possible
+	  --force                  : force operation to run
+	  --dry-run                : try operation but make no changes
+	  --diff3-cmd arg          : use ARG as merge command
+	  -x [--extensions] arg    : Default: '-u'.
+	  --ignore-ancestry        : ignore ancestry when calculating merges
+	  --username arg           : specify a username ARG
+	  --password arg           : specify a password ARG
+	  --no-auth-cache          : do not cache authentication tokens
+	  --non-interactive        : do no interactive prompting
+	  --config-dir arg         : read user configuration files from directory ARG
+*/
+
+//----------------------------------------------------------------------------------------
+/*
+	Options are:
+		Reverse direction checkbox.
+		Recursive checkbox.
+		1. No additional options:
+				merge --change <revision> <path>@<revision> <working-copy-target>
+		2. Additional revision number:
+				merge --revision <revision2>:<revision> <path>@<revision> <working-copy-target>
+		2. Additional URL:
+				merge <path2>@<revision2> <path1>@<revision1> <working-copy-target>
+	Supports dragging of URLs into the merge sheet.
+	Chooses the most appropriate merge target based on the URLs kind (file or dir),
+	the selected items in the WC window, and the name of the URLs file.
+*/
+
+- (void) requestMergeFrom: (RepoItem*) repositoryPathObj
+{
+	NSString* const revision = [repositoryPathObj revision];
+
+	[WGetView(mergeSheet, vMergeURL1) setRepoItem: repositoryPathObj];
+	[WGetView(mergeSheet, vMergeURL2) setRepoItem: nil];
+	[self mergeSheetSetKind: nil];
+	WSetViewString(mergeSheet, vMergeRevNum, revision);
+	WSetViewString(mergeSheet, vMergeRevStep, revision);
+
+	// If we couldn't find a suitable target then alert the user & bail
+	if ([WGetView(mergeSheet, vMergeURL1) repoItem] == nil)
+	{
+		NSAlert* alert =
+			[NSAlert alertWithMessageText: @"Could not find a target for this item."
+							defaultButton: @"OK"
+						  alternateButton: nil
+							  otherButton: nil
+				informativeTextWithFormat: @"Select a suitable target to receive the changes then try again."];
+
+		[alert setAlertStyle: NSWarningAlertStyle];
+		[alert	beginSheetModalForWindow: window
+						   modalDelegate: nil
+						  didEndSelector: NULL
+						     contextInfo: nil];
+		return;
+	}
+
+	[NSApp beginSheet:     mergeSheet
+		   modalForWindow: [self window]
+		   modalDelegate:  self
+		   didEndSelector: @selector(mergeSheetDidEnd:returnCode:contextInfo:)
+		   contextInfo:    NULL];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (int) mergeSheetSetKind: (id) mergeKindView
+{
+	NSWindow* const aWindow = mergeSheet;
+	if (mergeKindView == nil)
+		mergeKindView = WGetView(aWindow, vMergeKind);
+	const int kind = SelectedTag(mergeKindView);
+	bool showRevRange = (kind == kMergeKindRevRange),
+		 showURL2     = (kind == kMergeKind2URLs);
+
+	WViewEnable(aWindow, vMergeRevNum,   showRevRange);
+	WViewEnable(aWindow, vMergeRevStep,  showRevRange);
+	WViewEnable(aWindow, vMergeURL2,     showURL2);
+
+	[aWindow makeFirstResponder: aWindow];
+	[aWindow selectNextKeyView: self];
+
+	return kind;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (IBAction) mergeSheetDoClick: (id) sender
+{
+	const int tag = [sender tag];
+	switch (tag)
+	{
+		case NSOKButton:
+		{
+			int kind = SelectedTag(WGetView(mergeSheet, vMergeKind));
+			if ([WGetView(mergeSheet, vMergeURL1) repoItem] == nil ||
+				(kind == kMergeKindRevRange && ![mergeSheet makeFirstResponder: nil]) ||
+				(kind == kMergeKind2URLs && [WGetView(mergeSheet, vMergeURL2) repoItem] == nil))
+			{
+				NSBeep();
+				break;
+			}
+		}
+			// Fall through
+		case NSCancelButton:
+			[NSApp endSheet: mergeSheet returnCode: tag];
+			break;
+
+		case vMergeKind:
+			[self mergeSheetSetKind: sender];
+			break;
+
+		case vMergeRevNum:
+		case vMergeRevStep:
+			[WGetView(mergeSheet, tag ^ vMergeRevNum ^ vMergeRevStep) takeIntValueFrom: sender];
+			break;
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+// Find a suitable target for the merge.
+
+- (NSDictionary*) mergeSheetTarget: (RepoItem*) repoItem dstIsDir: (BOOL*) outIsDir
+{
+	Assert(repoItem != nil);
+	const BOOL srcIsDir = [repoItem isDir];
+	*outIsDir = srcIsDir;
+
+	BOOL dstIsDir;
+	NSFileManager* const fileManager = [NSFileManager defaultManager];
+
+	// Look for a suitable match in the selection
+	for_each(en, it, [svnFilesAC selectedObjects])
+	{
+		if (![[it objectForKey: @"new"] boolValue] &&
+			[fileManager fileExistsAtPath: [it objectForKey: @"fullPath"]
+						 isDirectory: &dstIsDir] && srcIsDir == dstIsDir)
+		{
+			return it;
+		}
+	}
+
+	// Look for a matching name in the WC arranged objects
+	NSString* const srcName = [repoItem name];
+	for_each(en2, it, [svnFilesAC arrangedObjects])
+	{
+		if (![[it objectForKey: @"new"] boolValue] &&
+			[srcName isEqualToString: [[it objectForKey: @"displayPath"] lastPathComponent]] &&
+			[fileManager fileExistsAtPath: [it objectForKey: @"fullPath"]
+						 isDirectory: &dstIsDir] && srcIsDir == dstIsDir)
+		{
+			return it;
+		}
+	}
+
+	// Look for a matching name in the WC
+	for_each(en3, it, [svnFilesAC content])
+	{
+		if (![[it objectForKey: @"new"] boolValue] &&
+			[srcName isEqualToString: [[it objectForKey: @"displayPath"] lastPathComponent]] &&
+			[fileManager fileExistsAtPath: [it objectForKey: @"fullPath"]
+						 isDirectory: &dstIsDir] && srcIsDir == dstIsDir)
+		{
+			return it;
+		}
+	}
+
+	return nil;		// => Working copy root
+}
+
+
+//----------------------------------------------------------------------------------------
+// The RepoItemViews send this message when changed.
+
+- (IBAction) mergeSheetURLChanged: (id) sender
+{
+	const int tag = [sender tag];
+	if (tag == vMergeURL1)
+	{
+		RepoItem* const repoItem = [sender repoItem];
+		if (repoItem == nil)
+			return;
+
+		BOOL isDir;
+		NSString* value = WCItemDesc([self mergeSheetTarget: repoItem dstIsDir: &isDir], isDir);
+
+		WSetViewString(mergeSheet, vMergeTarget, value ? value : @"");
+		if (value == nil)	// Source file doesn't match any file in WC
+		{
+			[sender setRepoItem: nil];
+			NSBeep();
+		}
+		WViewEnable(mergeSheet, vMergeRecursive, isDir);
+
+		// Clear URL 2 if not same kind
+		RepoItemView* repoItemView2 = WGetView(mergeSheet, vMergeURL2);
+		RepoItem* repoItem2 = [repoItemView2 repoItem];
+		if (repoItem2 != nil && isDir != [repoItem2 isDir])
+			[repoItemView2 setRepoItem: nil];
+	}
+	else if (tag == vMergeURL2)
+	{
+		RepoItem* const repoItem1 = [WGetView(mergeSheet, vMergeURL1) repoItem],
+				* const repoItem2 = [sender repoItem];
+		if (repoItem2 == nil)
+			return;
+		if (repoItem1 == nil || [repoItem1 isDir] != [repoItem2 isDir])
+		{
+			[sender setRepoItem: nil];
+			NSBeep();
+		}
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) mergeSheetDidEnd: (NSWindow*) sheet
+		 returnCode:       (int)       returnCode
+		 contextInfo:      (void*)     contextInfo
+{
+	#pragma unused(contextInfo)
+	if (returnCode == NSOKButton)
+	{
+		RepoItem* const repoItem1 = [WGetView(sheet, vMergeURL1) repoItem],
+				* const repoItem2 = [WGetView(sheet, vMergeURL2) repoItem];
+		Assert(repoItem1 != nil);
+		NSString* const url1 = getPathPegRevision(repoItem1),
+				* const rev1 = [repoItem1 revision];
+		const int kind = SelectedTag(WGetView(sheet, vMergeKind));
+		const bool reverse = (WGetViewInt(sheet, vMergeReverse) == NSOnState);
+
+		BOOL isDir;
+		NSDictionary* targetItem = [self mergeSheetTarget: repoItem1 dstIsDir: &isDir];
+		Assert(targetItem != nil || isDir);
+		NSString* const targetPath = targetItem ? [targetItem objectForKey: @"fullPath"]
+												: [document workingCopyPath];
+
+	//	NSLog(@"\n    repoItem1=<%@>\n    repoItem2=<%@>", url1, getPathPegRevision(repoItem2));
+
+		id objs[10];
+		int count = 0;
+		objs[count++] = @"--force";
+		if (isDir && WGetViewInt(sheet, vMergeRecursive) == NSOffState)
+			objs[count++] = @"--non-recursive";
+	//	objs[count++] = @"--dry-run";
+	//	objs[count++] = @"--ignore-ancestry";
+
+		switch (kind)
+		{
+			case kMergeKind1Change:
+				// svn merge --force -c [-]<rev1> <url1@rev1> <targetPath>
+	//			NSLog(@"\n  svn merge -c %s%@ '%@' '%@'", (reverse ? "-" : ""), rev1, url1, targetPath);
+				objs[count++] = @"-c";
+				objs[count++] = reverse ? [NSString stringWithFormat: @"-%@", rev1] : rev1;
+				objs[count++] = url1;
+				objs[count++] = targetPath;
+				break;
+
+			case kMergeKindRevRange:
+			{	// svn merge --force -r <rev1>:<rev2> <url1@rev1> <targetPath>
+				const id rev2 = SvnRevNumToString(WGetViewInt(sheet, vMergeRevNum));
+	//			NSLog(@"\n  svn merge -r %@:%@ '%@' '%@'", reverse ? rev1 : rev2,
+	//													   reverse ? rev2 : rev1, url1, targetPath);
+				objs[count++] = @"-r";
+				objs[count++] = [NSString stringWithFormat: @"%@:%@", reverse ? rev1 : rev2,
+																	  reverse ? rev2 : rev1];
+				objs[count++] = url1;
+				objs[count++] = targetPath;
+				break;
+			}
+
+			case kMergeKind2URLs:
+			{	// svn merge --force <url1@rev1> <url2@rev2> <targetPath>
+				Assert(repoItem2 != nil);
+				const id url2 = getPathPegRevision(repoItem2);
+	//			NSLog(@"\n  svn merge '%@' '%@' '%@'", reverse ? url1 : url2, reverse ? url2 : url1, targetPath);
+				objs[count++] = reverse ? url1 : url2;
+				objs[count++] = reverse ? url2 : url1;
+				objs[count++] = targetPath;
+				break;
+			}
+
+			default:
+				count = 0;
+				break;
+		}
+
+		Assert(count < sizeof(objs) / sizeof(objs[0]));
+		if (count > 0)
+			[document performSelector: @selector(svnMerge:)
+						   withObject: [NSArray arrayWithObjects: objs count: count]
+						   afterDelay: 0.1];
+	}
+
+	[sheet orderOut: self];		// Here because it can change the selection
+}
+
+
+//----------------------------------------------------------------------------------------
+// called from MyDragSupportWindow
 #pragma mark	svn switch
 
-- (void) requestSwitchToRepositoryPath: (NSDictionary*) repositoryPathObj
+- (void) requestSwitchToRepositoryPath: (RepoItem*) repositoryPathObj
 {
 //	NSLog(@"%@", repositoryPathObj);
-	NSString* path = [repositoryPathObj valueForKeyPath: @"url.absoluteString"];
-	NSString* revision = [repositoryPathObj valueForKey: @"revision"];
+	NSString* path = [[repositoryPathObj url] absoluteString];
+	NSString* revision = [repositoryPathObj revision];
 
 	NSMutableDictionary* action = makeCommandDict(@"switch", path);
 	[action setObject: revision forKey: @"revision"];

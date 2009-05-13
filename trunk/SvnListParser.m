@@ -1,21 +1,24 @@
-//
-//  SvnListParser.m
-//  svnX
+//----------------------------------------------------------------------------------------
+//  SvnListParser.m - Parse the XML output of `svn list`.
 //
 //  Created by Dominique PERETTI on 05/01/06.
-//  Copyright 2006 __MyCompanyName__. All rights reserved.
-//
+//  Copyright 2006 Dominique PERETTI. All rights reserved.
+//	Copyright © Chris, 2008 - 2009.  All rights reserved.
+//----------------------------------------------------------------------------------------
 
+#import "CommonUtils.h"
+#import "NSString+MyAdditions.h"
+#import "RepoItem.h"
 #import "SvnListParser.h"
-#include "CommonUtils.h"
 
 
 @implementation SvnListParser
 
+//----------------------------------------------------------------------------------------
+
 - (id) init
 {
-	self = [super init];
-	if (self)
+	if (self = [super init])
 	{
 		bufString = [[NSMutableString string] retain];
 	}
@@ -24,6 +27,8 @@
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) dealloc
 {
 	[bufString release];
@@ -31,6 +36,8 @@
 	[super dealloc];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 + (NSArray*) parseData: (NSData*) data
 {
@@ -42,11 +49,15 @@
 }
 
 
+//----------------------------------------------------------------------------------------
+
 + (NSArray*) parseString: (NSString*) string
 {
 	return [self parseData: [string dataUsingEncoding: NSUTF8StringEncoding allowLossyConversion: YES]];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (NSArray*) parseXML: (NSData*) data
 {
@@ -59,7 +70,7 @@
 	[parser parse];
 	if ([parser parserError] != nil)
 	{
-		NSLog(@"Error while parsing list xml: %@", [[parser parserError] localizedDescription]);
+		dprintf("Error while parsing list xml: %@", [[parser parserError] localizedDescription]);
 	}
 	[parser release];
 
@@ -67,11 +78,15 @@
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (NSArray*) parseXMLString: (NSString*) string
 {
 	return [self parseXML: [string dataUsingEncoding: NSUTF8StringEncoding allowLossyConversion: YES]];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) parser:          (NSXMLParser*)  parser
 		 didStartElement: (NSString*)     elementName
@@ -79,6 +94,7 @@
 		 qualifiedName:   (NSString*)     qualifiedName
 		 attributes:      (NSDictionary*) attributeDict
 {
+	#pragma unused(parser, namespaceURI, qualifiedName)
 	[bufString setString: @""];
 
 	switch ([elementName characterAtIndex: 0])
@@ -86,74 +102,78 @@
 		case 'e':
 			if ([elementName isEqualToString: @"entry"])
 			{
-				NSMutableDictionary* dict = [NSMutableDictionary dictionary];
-				curEntry = dict;
-				[entries addObject: dict];
-				BOOL isDir = [[attributeDict objectForKey: @"kind"] isEqual: @"dir"];
-				[dict setObject: NSBool(isDir) forKey: @"isDir"];
-				[dict setObject: @"" forKey: @"author"];	// Somtimes it's missing from the XML
+				curEntry = [RepoItem repoItem: [[attributeDict objectForKey: @"kind"] isEqual: @"dir"]];
+				[entries addObject: curEntry];
+				[curEntry release];		// Was retained by addObject:
 			}
 			break;
 
 		case 'c':
 			if ([elementName isEqualToString: @"commit"])
 			{
-				[curEntry setObject: [attributeDict objectForKey: @"revision"] forKey: @"revision"];
+				[curEntry setModRev: [[attributeDict objectForKey: @"revision"] intValue]];
 			}
 			break;
 	}
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) parser:        (NSXMLParser*) parser
 		 didEndElement: (NSString*)    elementName
 		 namespaceURI:  (NSString*)    namespaceURI
-		 qualifiedName: (NSString*)    qName
+		 qualifiedName: (NSString*)    qualifiedName
 {
-	NSMutableDictionary* dict = curEntry;
+	#pragma unused(parser, namespaceURI, qualifiedName)
+	RepoItem* repoItem = curEntry;
 
 	switch ([elementName characterAtIndex: 0])
 	{
 		case 'a':
 			if ([elementName isEqualToString: @"author"])
 			{
-				[dict setObject: [NSString stringWithString: bufString] forKey: @"author"];
+				[repoItem setAuthor: [NSString stringWithString: bufString]];
 			}
 			break;
 
 		case 'd':
 			if ([elementName isEqualToString: @"date"])
 			{
-				NSString* date = bufString;		// YYYY-MM-DDTHH:MM:SS.sss
-				[dict setObject: [date substringWithRange: NSMakeRange(11, 8)] forKey: @"time"];
-				[dict setObject: [date substringWithRange: NSMakeRange(0, 10)] forKey: @"date"];
+				[repoItem setTime: ParseDateTime([bufString substringToIndex: 10],
+												 [bufString substringWithRange: NSMakeRange(11, 8)])];
 			}
 			break;
 
 		case 'n':
 			if ([elementName isEqualToString: @"name"])
 			{
-				NSString* name = [NSString stringWithString: bufString];
-				[dict setObject: name forKey: @"name"];
+				[repoItem setName: [NSString stringWithString: bufString]];
 			}
 			break;
 
 		case 's':
 			if ([elementName isEqualToString: @"size"])
 			{
-				[dict setObject: [NSString stringWithString: bufString] forKey: @"size"];
+				[repoItem setSize: (SInt64) [bufString doubleValue]];
 			}
 			break;
 	}
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) parser:          (NSXMLParser*) parser
 		 foundCharacters: (NSString*)    string
 {
+	#pragma unused(parser)
 	[bufString appendString: string];
 }
 
 
 @end
 
+
+//----------------------------------------------------------------------------------------
+// End of SvnListParser.m

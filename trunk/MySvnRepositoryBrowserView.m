@@ -7,10 +7,12 @@
 #import "MyApp.h"
 #import "MySvn.h"
 #import "MyRepository.h"
+#import "RepoItem.h"
 #import "SvnListParser.h"
 #import "NSString+MyAdditions.h"
 #import "Tasks.h"
 #import "CommonUtils.h"
+#import "SvnInterface.h"
 
 
 @class IconCache;
@@ -43,6 +45,73 @@ makeMiniIcon (NSImage* image)
 	[icon unlockFocus];
 
 	return icon;
+}
+
+
+//----------------------------------------------------------------------------------------
+// Compare names alphabetically & case insensitively.
+
+static int
+compareNames (id obj1, id obj2, void* context)
+{
+	#pragma unused(context)
+	return [[obj1 name] compare: [obj2 name] options: kSortOptions];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Returns an array of RepoItems
+
+static NSArray*
+ToRepoItems (NSArray* dicts, NSString* revision)
+{
+	NSMutableArray* result = [NSMutableArray array];
+	const SvnRevNum revNum = SvnRevNumFromString(revision);
+
+	for_each(en, it, dicts)
+	{
+		id obj = [RepoItem repoItem: it revision: revNum];
+		[result addObject: obj];
+		[obj release];
+	}
+
+	[result sortUsingFunction: compareNames context: NULL];
+
+	return result;
+}
+
+
+//----------------------------------------------------------------------------------------
+// Returns an array of dicts
+
+static NSArray*
+FromRepoItems (NSArray* repoItems)
+{
+	NSMutableArray* result = [NSMutableArray array];
+
+	for_each(en, it, repoItems)
+	{
+		[result addObject: [it dictionary]];
+	}
+
+	return result;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSArray*
+RepoItemsSetRevision (NSArray* repoItems, id revision)
+{
+	const SvnRevNum revNum = SvnRevNumFromString(revision);
+	for_each(en, it, repoItems)
+	{
+		[(RepoItem*) it setRevision: revNum];
+	}
+
+	[(NSMutableArray*) repoItems sortUsingFunction: compareNames context: NULL];
+
+	return repoItems;
 }
 
 
@@ -141,6 +210,19 @@ makeMiniIcon (NSImage* image)
 #pragma mark	-
 //----------------------------------------------------------------------------------------
 
+@interface MySvnRepositoryBrowserView (Private)
+
+	- (void) displayDirCache: info;
+	- (void) displayDirNoCache: info;
+	- (void) displayDirList: (NSArray*)      dirList
+			 info:           (NSDictionary*) info
+			 shouldCache:    (BOOL)          shouldCache;
+
+@end	// MySvnRepositoryBrowserView (Private)
+
+
+//----------------------------------------------------------------------------------------
+
 @implementation MySvnRepositoryBrowserView
 
 - (id) initWithFrame: (NSRect) frameRect
@@ -174,7 +256,7 @@ makeMiniIcon (NSImage* image)
 
 - (void) dealloc
 {
-//	NSLog(@"dealloc repository browser view");
+//	dprintf("0x%X", self);
 	[self setBrowserPath: nil];
 	[gIconCache release];
 
@@ -201,7 +283,9 @@ makeMiniIcon (NSImage* image)
 {
 	AssertClass(sender, NSCell);
 	if (!isSubBrowser)
-		[[self repository] changeRepositoryUrl: [[sender representedObject] objectForKey: @"url"]];
+	{
+		[fRepository openItem: [sender representedObject] revision: [self revision]];
+	}
 }
 
 
@@ -214,6 +298,17 @@ makeMiniIcon (NSImage* image)
 - (NSArray*) selectedItems
 {
 	return [[browser selectedCells] valueForKey: @"representedObject"];
+}
+
+
+//----------------------------------------------------------------------------------------
+// If there is a single selected item then return it else return nil.
+
+- (RepoItem*) selectedItemOrNil
+{
+	NSArray* cells = [browser selectedCells];
+
+	return (cells != nil && [cells count] == 1) ? [[cells lastObject] representedObject] : nil;
 }
 
 
@@ -262,8 +357,7 @@ makeMiniIcon (NSImage* image)
 	else if (column == 0 && showRoot)
 	{
 		[self setIsFetching: NO];
-		const id repository = [self repository];
-		const BOOL isDir = ![repository rootIsFile];
+		const BOOL isDir = ![fRepository rootIsFile];
 		NSURL* const    url = [self url];
 		NSString* const name = isDir ? @"root" : [UnEscapeURL(url) lastPathComponent];
 		NSString* const fileType = isDir ? NSFileTypeDirectory : [name pathExtension];
@@ -276,15 +370,10 @@ makeMiniIcon (NSImage* image)
 												initWithString: name attributes: gStyle] autorelease]];
 		[cell setLeaf: !isDir];
 		[cell setLineBreakMode: NSLineBreakByTruncatingTail];
-		[cell setRepresentedObject:
-			[NSDictionary dictionaryWithObjectsAndKeys: kNSTrue,		@"isRoot",
-														name,			@"name",
-														@"",			@"path",
-														url,			@"url",
-														revision,		@"revision",
-														fileType,		@"fileType",
-														NSBool(isDir),	@"isDir",
-														nil]];
+		id repoItem = [RepoItem repoRoot: isDir name: name
+								revision: SvnRevNumFromString(revision) url: url];
+		[cell setRepresentedObject: repoItem];
+		[repoItem release];
 
 		[matrix addRowWithCells: [NSArray arrayWithObject: cell]];
 		[matrix putCell: cell atRow: 0 column: 0];
@@ -319,6 +408,149 @@ makeMiniIcon (NSImage* image)
 
 
 //----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	svn list
+//----------------------------------------------------------------------------------------
+
+typedef const svn_dirent_t*	SvnListEntry;
+typedef const svn_lock_t*	SvnLock;
+
+const UInt32		kListFlags = SVN_DIRENT_KIND | SVN_DIRENT_SIZE | SVN_DIRENT_CREATED_REV |
+								 SVN_DIRENT_TIME | SVN_DIRENT_LAST_AUTHOR;
+
+const NSPropertyListFormat kListCacheFormat = NSPropertyListBinaryFormat_v1_0;
+
+
+//----------------------------------------------------------------------------------------
+
+struct SvnListEnv
+{
+	SvnRevNum		fRevision;
+	NSMutableArray*	fList;
+//	UInt64			fT0;
+	id				fSelf;
+};
+
+typedef struct SvnListEnv SvnListEnv;
+
+
+//----------------------------------------------------------------------------------------
+// Repo 'svn list' callback.  Appends to fList in (SvnListEnv*) baton.
+
+static SvnError
+svnListReceiver (void*        baton,
+				 const char*  path,
+				 SvnListEntry dirent,
+				 SvnLock      lock,
+				 const char*  abs_path,
+				 SvnPool      pool)
+{
+	#pragma unused(lock, abs_path, pool)
+	/*dprintf("rev=%d kind=%d time=%qi author=%s path=<%s>",
+			dirent->created_rev, dirent->kind, dirent->time, dirent->last_author, path);*/
+	SvnListEnv* const env = (SvnListEnv*) baton;
+	if ([env->fSelf pendingTask] == nil)
+		return svn_error_create(SVN_ERR_CANCELLED, NULL, NULL);
+	if (*path != 0)
+	{
+		const char* str = strrchr(path, '/');
+		if (str != NULL)
+			path = str + 1;
+		id obj = [RepoItem repoItem: (dirent->kind == svn_node_dir)
+						   name:     UTF8(path)
+						   author:   UTF8(dirent->last_author)
+						   revision: env->fRevision
+						   modRev:   dirent->created_rev
+						   time:     dirent->time * 1e-6 - kCFAbsoluteTimeIntervalSince1970
+						   size:     dirent->size];
+		[env->fList addObject: obj];
+		[obj release];
+	#if 0
+		if (env->fT0 && microseconds() - env->fT0 > 500 * 1000)
+		{
+			env->fT0 = 0;
+			[env->fSelf setIsFetching: YES];
+		}
+	#endif
+	}
+
+	return SVN_NO_ERROR;
+}
+
+
+//----------------------------------------------------------------------------------------
+// svn list of info.url via SvnInterface (called by separate thread)
+
+- (void) svnDoList: (NSDictionary*) info
+{
+	Assert(fRepository);
+//	NSLog(@"svn list - begin");
+//	NSLog(@"svnDoList: rev=%@ url=<%@>", [self revision], [[info objectForKey: @"url"] absoluteString]);
+	[self retain];
+	NSAutoreleasePool* const autoPool = [[NSAutoreleasePool alloc] init];
+	const SvnPool pool = SvnNewPool();	// Create top-level memory pool.
+	@try
+	{
+		UInt64 t0 = microseconds();
+		SvnClient ctx = [fRepository svnClient];
+
+		char path[PATH_MAX * 2];
+		if (ToUTF8([[info objectForKey: @"url"] absoluteString], path, sizeof(path)))
+		{
+			int len = strlen(path);
+			if (len > 0 && path[len - 1] == '/')
+				path[len - 1] = 0;
+			NSString* const revision = [self revision];
+			const BOOL isHead = [revision isEqualToString: @"HEAD"];
+			svn_opt_revision_t rev_opt = { svn_opt_revision_head };
+			if (!isHead)
+			{
+				rev_opt.kind         = svn_opt_revision_number;
+				rev_opt.value.number = [revision intValue];
+			}
+			SvnListEnv env = { SvnRevNumFromString(revision), [info objectForKey: @"result"], /*t0,*/ self };
+
+			// Retrive directory list from repository.
+			SvnThrowIf(svn_client_list(path, &rev_opt, &rev_opt, !kSvnRecurse,
+									   kListFlags, false,
+									   svnListReceiver, &env,
+									   ctx, pool));
+			[env.fList sortUsingFunction: compareNames context: NULL];
+
+			const double t = microseconds() - t0;
+		/*	dprintf("results=%d column=%@ matrix=%@",
+					[env.fList count], [info objectForKey: @"column"], [info objectForKey: @"matrix"]);
+			dprintf("rev=%@ results=%d column=%@ '%s'",
+					revision, [env.fList count], [info objectForKey: @"column"], strrchr(path, '/'));*/
+		#if qTime
+			dprintf("svn_client_list: time=%g ms", t * 1e-3);
+		#endif
+
+			[self performSelectorOnMainThread: (!isHead && t > 50e3 && GetPreferenceBool(@"cacheSvnQueries"))
+													? @selector(displayDirCache:)
+													: @selector(displayDirNoCache:)
+				  withObject: info waitUntilDone: YES];
+		}
+	}
+	@catch (SvnException* ex)
+	{
+		SvnReportCatch(ex);
+		[self setIsFetching: NO];
+		if ([ex error]->apr_err != SVN_ERR_CANCELLED)
+			[self performSelectorOnMainThread: @selector(svnError:) withObject: [ex message] waitUntilDone: NO];
+	}
+	@finally
+	{
+		SvnDeletePool(pool);
+		[autoPool release];
+		[self setPendingTask: nil];
+		[self release];
+//		NSLog(@"svn list - end");
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
 
 - (void) fetchSvnListForUrl: (NSString*) theURL
 		 column:             (int)       column
@@ -337,8 +569,18 @@ makeMiniIcon (NSImage* image)
 		![revision isEqualToString: @"HEAD"] &&
 		(cachedData = [NSData dataWithContentsOfFile: [self getCachePathForUrl: cleanUrl]]))
 	{
-		NSArray* resultArray = [SvnListParser parseData: cachedData];
-
+		NSString* errorString = nil;
+		NSArray* resultArray = ToRepoItems(
+			[NSPropertyListSerialization propertyListFromData: cachedData
+										 mutabilityOption:     NSPropertyListMutableContainers
+										 format:               NULL
+										 errorDescription:     &errorString], revision);
+		if (errorString != nil)
+		{
+			dprintf("WARNING: Could not parse plist cache: %@\n    data=%@ error=%@",
+					cleanUrl, cachedData, errorString);
+			[errorString release];
+		}
 		[self displayResultArray: resultArray column: column matrix: matrix];
 	}
 	else
@@ -351,6 +593,15 @@ makeMiniIcon (NSImage* image)
 												nil];
 		[self setIsFetching: YES];
 
+		if (SvnWantAndHave())
+		{
+		//	dprintf("svnDoList url='%@'", cleanUrl);
+			[self setPendingTask: info];	// Use any old dict
+			[NSThread detachNewThreadSelector: @selector(svnDoList:)
+					  toTarget:                self
+					  withObject:              info];
+		}
+		else
 		{
 			[self setPendingTask:
 				[MySvn	list: PathPegRevision(cleanUrl, revision)
@@ -383,23 +634,59 @@ makeMiniIcon (NSImage* image)
 
 - (void) fetchSvnReceiveDataFinished: (id) taskObj
 {
-	[super fetchSvnReceiveDataFinished:taskObj];
+	NSArray* const resultArray = [SvnListParser parseData: stdOutData(taskObj)];
+	NSString* const revision = [self revision];
+	[self displayDirList: RepoItemsSetRevision(resultArray, revision)
+		  info:           [taskObj objectForKey: @"callbackInfo"]
+		  shouldCache:    ![revision isEqualToString: @"HEAD"]];
+}
 
-	id info = [taskObj objectForKey:@"callbackInfo"];
-	NSData* result = stdOutData(taskObj);
 
-	NSURL *fetchedUrl = [info objectForKey:@"url"];
-	NSMatrix *matrix = [info objectForKey:@"matrix"];
-	int column = [[info objectForKey:@"column"] intValue];
-	NSArray* resultArray = [SvnListParser parseData: result];
-	[self displayResultArray:resultArray column:column matrix:matrix];
+//----------------------------------------------------------------------------------------
 
-	if ( ![[self revision] isEqualToString:@"HEAD"] )
+- (void) displayDirCache: info
+{
+	[self displayDirList: [info objectForKey: @"result"]
+		  info:           info
+		  shouldCache:    YES];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) displayDirNoCache: info
+{
+	[self displayDirList: [info objectForKey: @"result"]
+		  info:           info
+		  shouldCache:    NO];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) displayDirList: (NSArray*)      dirList
+		 info:           (NSDictionary*) info
+		 shouldCache:    (BOOL)          shouldCache
+{
+	[super fetchSvnReceiveDataFinished: nil];
+
+	[self displayResultArray: dirList
+		  column:             [[info objectForKey: @"column"] intValue]
+		  matrix:             [info objectForKey: @"matrix"]];
+
+	if (shouldCache)
 	{
-		if ( ![result writeToFile: [self getCachePathForUrl: fetchedUrl] atomically: YES] )
+		NSString* errorString = nil;
+		NSData* data = [NSPropertyListSerialization dataFromPropertyList: FromRepoItems(dirList)
+													format:               kListCacheFormat
+													errorDescription:     &errorString];
+
+		NSURL* fetchedUrl = [info objectForKey: @"url"];
+		if (data == nil || ![data writeToFile: [self getCachePathForUrl: fetchedUrl] atomically: YES])
 		{
-			NSLog(@"Could not cache: %@", fetchedUrl);
+			dprintf("WARNING: Could not cache: %@\n    data=%@ error=%@", fetchedUrl, data, errorString);
 		}
+		[errorString release];
 	}
 }
 
@@ -432,55 +719,20 @@ makeMiniIcon (NSImage* image)
 	const int count = [resultArray count];
 	for (int i = 0; i < count; ++i)
 	{
-		NSMutableDictionary* row  = [resultArray objectAtIndex: i];
-		NSString* const name      = [row objectForKey: @"name"];
-		const BOOL isDir          = [[row objectForKey: @"isDir"] boolValue];
-		NSBrowserCell* const cell = [[NSBrowserCell alloc] initTextCell: name];
+		RepoItem* const item = [resultArray objectAtIndex: i];
+		const BOOL isDir = [item setUp: pathToColumn url: url];
 
-		NSString* path = [[pathToColumn stringByAppendingPathComponent: name] trimSlashes];
-		NSString* urlPath = [path escapeURL];
-		if (isDir)
-			urlPath = [urlPath stringByAppendingString: @"/"];
-		NSURL* theURL = [NSURL URLWithString: urlPath relativeToURL: url];
-
-		NSString* fileType = isDir ? NSFileTypeDirectory : [name pathExtension];
-		NSImage* icon = isDir ? dirIcon : [gIconCache iconForFileType: fileType];
-		[row setObject: fileType forKey: @"fileType"];
-		[row setObject: path     forKey: @"path"];
-		[row setObject: theURL   forKey: @"url"];
-
-		if (isDir)	// set the contextual menu on folders
-		{
-	#if 0 // contextual menu replaced with onDoubleClick
-			NSMenu* m = [browserContextMenu copy];
-			[[m itemAtIndex: 0] setRepresentedObject: row];
-			[cell setMenu: m];
-	#endif
-		}
-		else if (disallowLeaves)	// !isDir
-		{
+		NSBrowserCell* const cell = [[NSBrowserCell alloc] initTextCell: [item name]];
+		if (!isDir && disallowLeaves)
 			[cell setEnabled: NO];
-		}
-
 		[cell setFont: gFont];
-		[cell setImage: icon];
+		[cell setImage: isDir ? dirIcon : [item icon: gIconCache]];
 		[cell setLeaf: !isDir];
-		[cell setRepresentedObject: row];
-	//	NSLog(@"row=%@", row);
+		[cell setRepresentedObject: item];
+	//	NSLog(@"item=%@", item);
 
 		[matrix addRowWithCells: [NSArray arrayWithObject: cell]];
-
-		NSString* const revisionStr = [row objectForKey: @"revision"];
-		NSString* const authorStr   = [row objectForKey: @"author"];
-		NSString* const dateStr     = [row objectForKey: @"date"];
-		NSString* const timeStr     = [row objectForKey: @"time"];
-		NSString* const helpStr     = isDir
-			? [NSString stringWithFormat: @"Revision: %@\nAuthor: %@\nDate: %@\nTime: %@",
-										  revisionStr, authorStr, dateStr, timeStr]
-			: [NSString stringWithFormat: @"Revision: %@\nAuthor: %@\nSize: %@ bytes\nDate: %@\nTime: %@",
-										  revisionStr, authorStr, [row objectForKey: @"size"],
-										  dateStr, timeStr];
-		[matrix setToolTip: helpStr forCell: cell];
+		[matrix setToolTip: [item toolTip] forCell: cell];
 
 		[matrix putCell: cell atRow: i column: 0];
 		[cell release];
@@ -519,7 +771,7 @@ makeMiniIcon (NSImage* image)
 
 - (NSString*) getCachePathForUrl: (NSURL*) theURL
 {
-	return [MySvn cachePathForKey: [NSString stringWithFormat: @"%@::%@ list",
+	return [MySvn cachePathForKey: [NSString stringWithFormat: @"%@::%@ list3",
 															   [theURL absoluteString], [self revision]]];
 }
 

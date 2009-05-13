@@ -1465,6 +1465,22 @@ svnInfoReceiver (void*       baton,
 
 
 //----------------------------------------------------------------------------------------
+#pragma mark	svn merge
+
+- (void) svnMerge: (NSArray*) options
+{
+	id taskObj = [MySvn genericCommand: @"merge"
+							 arguments: [NSArray array]
+						generalOptions: [self svnOptionsInvocation]
+							   options: options
+							  callback: [self genericCompletedCallback]
+						  callbackInfo: nil
+							  taskInfo: [self documentNameDict]];
+	[self setDisplayedTaskObj: taskObj];
+}
+
+
+//----------------------------------------------------------------------------------------
 #pragma mark	svn switch
 
 - (void) svnSwitch: (NSArray*) options

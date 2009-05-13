@@ -2,7 +2,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class MyRepository, MySvnRepositoryBrowserView;
+@class MyRepository, MySvnRepositoryBrowserView, RepoItem;
 
 typedef enum SvnOperation { kSvnCopy = 0, kSvnMove, kSvnDelete, kSvnMkdir, kSvnDiff } SvnOperation;
 
@@ -28,7 +28,7 @@ typedef enum SvnOperation { kSvnCopy = 0, kSvnMove, kSvnDelete, kSvnMkdir, kSvnD
 + (void) runSheet:   (SvnOperation)  operation
 		 repository: (MyRepository*) repository
 		 url:        (NSURL*)        url
-		 sourceItem: (NSDictionary*) sourceItem;
+		 sourceItem: (RepoItem*)     sourceItem;
 
 - (NSString*) getTargetPath;
 - (NSURL*)    getTargetUrl;

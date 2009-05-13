@@ -63,17 +63,18 @@
             ACTIONS = {
                 changeFilter = id; 
                 changeMode = id; 
-                commitPanelCancel = id; 
-                commitPanelValidate = id; 
+                doubleClickInTableView = id; 
+                mergeSheetDoClick = id; 
+                mergeSheetURLChanged = id; 
                 openAWorkingCopy = id; 
                 openRepository = id; 
                 performAction = id; 
                 refresh = id; 
-                renamePanelValidate = id; 
                 revealInFinder = id; 
                 svnDiff = id; 
                 svnUpdate = id; 
-                switchPanelValidate = id; 
+                togglePropsView = id; 
+                toggleSidebar = id; 
                 updateSheetDoClick = id; 
             }; 
             CLASS = MyWorkingCopyController; 
@@ -84,6 +85,7 @@
                 document = MyWorkingCopy; 
                 drawerLogView = DrawerLogView; 
                 filterView = NSPopUpButton; 
+                mergeSheet = NSWindow; 
                 modeView = NSControl; 
                 outliner = id; 
                 progressIndicator = id; 
@@ -126,24 +128,12 @@
             OUTLETS = {controller = id; document = id; }; 
             SUPERCLASS = NSObject; 
         }, 
+        {CLASS = RepoItemView; LANGUAGE = ObjC; SUPERCLASS = NSTextField; }, 
         {
             CLASS = SplitViewDelegate; 
             LANGUAGE = ObjC; 
             OUTLETS = {document = id; splitView = id; }; 
             SUPERCLASS = NSObject; 
-        }, 
-        {
-            CLASS = TableViewDelegate; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {document = MyDocument; svnFilesAC = svnFilesArrayController; }; 
-            SUPERCLASS = NSObject; 
-        }, 
-        {
-            ACTIONS = {search = id; }; 
-            CLASS = svnFilesArrayController; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {document = id; searchField = id; }; 
-            SUPERCLASS = NSArrayController; 
         }
     ); 
     IBVersion = 1; 

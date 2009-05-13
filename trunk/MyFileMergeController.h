@@ -20,7 +20,7 @@
 
 - (void) setupUrl:   (NSURL*)        url
 		 options:    (NSInvocation*) options
-		 sourceItem: (NSDictionary*) sourceItem;
+		 sourceItem: (RepoItem*)     sourceItem;
 
 @end
 

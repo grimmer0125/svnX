@@ -564,8 +564,7 @@
 			<integer>1</integer>
 		</dict>
 		<string>Compare selected to marked</string>
-		<string>
-</string>
+		<string></string>
 		<dict>
 			<key>$class</key>
 			<dict>

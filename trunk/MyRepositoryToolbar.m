@@ -57,10 +57,14 @@
 				help: @"Delete items in the repository."];
 	[self createItem: @"svnCheckout"   label: @"Checkout" image: @"checkout2"
 				help: @"Checkout items from the repository."];
+	[self createItem: @"svnImport"     label: @"Import"   image: @"import"
+				help: @"Import a file or folder into the repository."];
 	[self createItem: @"svnExport"     label: @"Export"   image: @"export"
 				help: @"Export items from the repository."];
 	[self createItem: @"svnFileMerge"  label: @"Diff"     image: @"FileMerge"
 				help: @"Compare revisions of an item in the repository."];
+	[self createItem: @"svnOpen"       label: @"Open"     image: @"open"
+				help: @"Open the selected repository items."];
 	[self createItem: @"svnBlame"      label: @"Blame"
 				help: @"Show the content of files with revision and author information in-line."];
 	[self createItem: @"svnReport"     label: @"Report"
@@ -109,13 +113,15 @@
 					@"svnMove",
 					@"svnMkdir",
 					@"svnDelete",
-					@"svnFileMerge",
 					NSToolbarSeparatorItemIdentifier,
+					@"svnOpen",
+					@"svnFileMerge",
 					@"svnBlame",
 					@"svnReport",
 					NSToolbarFlexibleSpaceItemIdentifier,
 					@"svnCheckout",
 					@"svnExport",
+					@"svnImport",
 					NSToolbarSeparatorItemIdentifier,
 					@"toggleSidebar",
 					nil];
@@ -135,11 +141,13 @@
 					@"svnMove",
 					@"svnMkdir",
 					@"svnDelete",
+					@"svnOpen",
 					@"svnFileMerge",
 					@"svnBlame",
 					@"svnReport",
 					@"svnCheckout",
 					@"svnExport",					
+					@"svnImport",					
 					@"toggleSidebar",
 					nil];
 }

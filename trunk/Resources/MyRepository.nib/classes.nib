@@ -23,6 +23,9 @@
             ACTIONS = {
                 importCommitPanelValidate = id; 
                 pickedAFolderInBrowserView = id; 
+                reportCancelled = id; 
+                reportLimit = id; 
+                reportOKed = id; 
                 svnBlame = id; 
                 svnCheckout = id; 
                 svnCopy = id; 
@@ -31,6 +34,7 @@
                 svnFileMerge = id; 
                 svnMkdir = id; 
                 svnMove = id; 
+                svnOpen = id; 
                 svnReport = id; 
                 toggleSidebar = id; 
             }; 
@@ -39,6 +43,7 @@
             OUTLETS = {
                 commitTextView = NSTextView; 
                 drawerLogView = DrawerLogView; 
+                fLogReportSheet = NSWindow; 
                 fileNameTextField = NSTextField; 
                 importCommitPanel = NSPanel; 
                 sidebar = NSDrawer; 

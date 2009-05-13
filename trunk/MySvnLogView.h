@@ -25,10 +25,8 @@
 - (void) unload;
 
 - (void) resetUrl: (NSURL*) anUrl;
-- (void) fetchSvnLog;
+- (void) fetchSvn: (NSInvocation*) callback;
 - (void) fetchSvn;
-- (void) fetchSvnLogForUrl;
-- (void) fetchSvnLogForPath;
 
 - (NSString*) selectedRevision;
 - (NSString*) currentRevision;

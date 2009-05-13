@@ -175,6 +175,8 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) dealloc
 {
 //	NSLog(@"dealloc logview");
@@ -186,6 +188,8 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 	[super dealloc];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) unload
 {
@@ -235,13 +239,26 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 - (void) resetUrl: (NSURL*) anUrl
 {
 	[self setUrl: anUrl];
-	[self setMostRecentRevision: 0];
 	[self setLogArray: nil];
 }
 
 
 //----------------------------------------------------------------------------------------
 #pragma mark	-
+//----------------------------------------------------------------------------------------
+
+- (IBAction) doubleClickPath: (id) sender
+{
+	#pragma unused(sender)
+	MyRepository* repository = [self repository];
+	if (repository)
+	{
+		[repository openLogPath: [[logsACSelection arrangedObjects] objectAtIndex: [pathsTable clickedRow]]
+					forLogEntry: [[logsAC selectedObjects] objectAtIndex: 0]];
+	}
+}
+
+
 //----------------------------------------------------------------------------------------
 
 - (IBAction) copy: (id) sender
@@ -314,8 +331,9 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 #pragma mark	svn related methods
 //----------------------------------------------------------------------------------------
 
-- (void) doSvnLog:    (NSString*) aPath
-		 pegRevision: (NSString*) pegRev
+- (void) doSvnLog:    (NSString*)     aPath
+		 pegRevision: (NSString*)     pegRev
+		 callback:    (NSInvocation*) callback
 {
 	if (pegRev)
 		aPath = PathPegRevision(aPath, pegRev);
@@ -327,7 +345,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 										[NSString stringWithFormat: @"-r%@:%d", pegRev, [self mostRecentRevision]],
 										isVerbose ? @"-v" : nil,
 										nil]
-					   callback: [self makeCallbackInvocationOfKind: 0]
+					   callback: callback ? callback : MakeCallbackInvocation(self, @selector(svnCommandComplete:))
 				   callbackInfo: nil
 					   taskInfo: [self documentNameDict]];
 	[self setPendingTask: taskInfo];
@@ -336,27 +354,18 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 
 //----------------------------------------------------------------------------------------
 
-- (void) fetchSvnLog
+- (void) doSvnLog:    (NSString*) aPath
+		 pegRevision: (NSString*) pegRev
 {
-	[self fetchSvn];
+	[self doSvnLog:    aPath
+		  pegRevision: pegRev
+		  callback:    nil];
 }
 
 
-// Triggers the fetching
-- (void) fetchSvn
-{
-	[super fetchSvn];
+//----------------------------------------------------------------------------------------
 
-	if ( [self path] != nil )
-	{
-		[self fetchSvnLogForPath];  // when called from the working copy window, the fileMerge operation (svn diff)
-	}								// takes a filesystem path, not an url+revision
-	else
-		[self fetchSvnLogForUrl];
-}
-
-
-- (void) fetchSvnLogForUrl
+- (void) fetchSvnLogForUrl: (NSInvocation*) callback
 {
 	NSDictionary* cacheDict = nil;
 	BOOL useCache = GetPreferenceBool(@"cacheSvnQueries");
@@ -375,17 +384,47 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 	}
 	if (cacheDict)
 	{
-		[self setMostRecentRevision:[[cacheDict objectForKey:@"revision"] intValue]];
-		[self setLogArray:[cacheDict objectForKey:@"logArray"]];
+		[self setLogArray: [cacheDict objectForKey: @"logArray"]];
 	}
 
-	[self doSvnLog: [[self url] absoluteString] pegRevision: [self revision]];
+	[self doSvnLog: [[self url] absoluteString] pegRevision: [self revision] callback: callback];
 }
 
 
-- (void) fetchSvnLogForPath
+//----------------------------------------------------------------------------------------
+
+- (void) fetchSvnLogForUrl
 {
-	[self doSvnLog: [self path] pegRevision: nil];
+	[self fetchSvnLogForUrl: nil];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Triggers the fetching
+
+- (void) fetchSvn: (NSInvocation*) callback
+{
+	[super fetchSvn];
+
+	if ([self path])	// when called from the working copy window, the fileMerge operation
+	{					// (svn diff) takes a filesystem path, not an url+revision
+		Assert(!fRepository);
+		[self doSvnLog: [self path] pegRevision: nil callback: callback];
+	}
+	else
+	{
+		Assert(fRepository);
+		[self fetchSvnLogForUrl: callback];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+// Triggers the fetching
+
+- (void) fetchSvn
+{
+	[self fetchSvn: nil];
 }
 
 
@@ -393,27 +432,23 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 
 - (void) fetchSvnReceiveDataFinished: (id) taskObj
 {
-	[super fetchSvnReceiveDataFinished:taskObj];
+	[super fetchSvnReceiveDataFinished: taskObj];
 
 	NSData* data = stdOutData(taskObj);
 	if (data != nil && [data length] != 0)
 	{
-		NSMutableArray* parsedArray = [MySvnLogParser parseData: data];
-
-		[self setMostRecentRevision: [parsedArray count] ? [getRevisionAtIndex(parsedArray, 0) intValue] : 0];
-
-		NSMutableArray* array = [self logArray];
-		const int count = [array count];
-		if (count > 0)
+		NSMutableArray* newEntries = [MySvnLogParser parseData: data];
+		NSMutableArray* array = logArray;
+		if (array)
 		{
-			[array removeObjectAtIndex: 0];
-
-			if (count > 1)
-				[parsedArray addObjectsFromArray: array];
+			if (newEntries)
+				[array addObjectsFromArray: newEntries];
 		}
+		else
+			array = newEntries;
 
-		[self setLogArray: parsedArray];
-		array = parsedArray;
+		[MyRepository cleanUpLog: array];
+		[self setLogArray: array];
 
 		if (currentRevision == nil)
 		{
@@ -436,7 +471,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 			}
 			else
 			{
-				NSLog(@"fetchSvnReceiveDataFinished: ERROR: %@", errorString);
+				dprintf("ERROR: %@", errorString);
 				[errorString release];
 			}
 		}
@@ -465,6 +500,8 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) tableView:      (NSTableView*)   aTableView
 		 setObjectValue: (id)             anObject
 		 forTableColumn: (NSTableColumn*) aTableColumn
@@ -478,13 +515,14 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 
 		if (currentRevision == nil || ![currentRevision isEqualToString: newRevision])
 		{
-			[self setCurrentRevision:newRevision];
+			[self setCurrentRevision: newRevision];
 			[aTableView setNeedsDisplay: YES];
 		}
 	}
 }
 
 
+//----------------------------------------------------------------------------------------
 // Sometimes required by the compiler, sometimes not.
 
 - (int) numberOfRowsInTableView: (NSTableView*) aTableView
@@ -538,6 +576,8 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 	id old = logArray;
 	logArray = [aLogArray retain];
 	[old release];
+
+	mostRecentRevision = [getRevisionAtIndex(aLogArray, 0) intValue];
 }
 
 

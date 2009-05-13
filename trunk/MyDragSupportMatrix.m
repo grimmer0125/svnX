@@ -6,6 +6,7 @@
 #import "MyDragSupportWindow.h"
 #import "MyRepository.h"
 #import "MySvnRepositoryBrowserView.h"
+#import "RepoItem.h"
 #import "ViewUtils.h"
 
 
@@ -149,10 +150,16 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 	srcRect.origin.x -= kDragImageOffset;
 	srcRect.origin.y -= kDragImageOffset;
 
-	// dragPromisedFilesOfTypes is meant for Finder. This will in turn call dragImage:at:offset... that we will override
-	// below to implement dragging to working copy (svn switch). See http://developer.apple.com/qa/qa2001/qa1300.html
+	// dragPromisedFilesOfTypes is meant for Finder. This will in turn call dragImage:at:offset...
+	// that we will override below to implement dragging to working copy (svn merge & switch).
+	// See http://developer.apple.com/qa/qa2001/qa1300.html
 
-	NSArray* types = [[self selectedCells] valueForKeyPath: @"representedObject.fileType"];	// key/value coding magic!
+	NSMutableArray* types = [NSMutableArray array];
+	for_each(en, it, [self selectedCells])
+	{
+		[types addObject: [(RepoItem*) [it representedObject] fileType]];
+	}
+
 	[self dragPromisedFilesOfTypes: types
 						  fromRect: srcRect
 						    source: self
@@ -175,17 +182,16 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 	const id cells = [self selectedCells];
 	if ([cells count] == 1)
 	{
-		id fileObj = [[cells lastObject] representedObject];
+		RepoItem* repoItem = [[cells lastObject] representedObject];
 		[pboard addTypes: [NSArray arrayWithObjects: kTypeRepositoryPathAndRevision, NSURLPboardType, nil]
 				owner:    self];
-		[pboard setData: [NSArchiver archivedDataWithRootObject: fileObj]
+		[pboard setData: [NSData dataWithBytes: &repoItem length: sizeof(repoItem)]
 				forType: kTypeRepositoryPathAndRevision];
-		[[fileObj objectForKey: @"url"] writeToPasteboard: pboard];
+		[[repoItem url] writeToPasteboard: pboard];
 
-		if ([[fileObj objectForKey: @"isRoot"] boolValue])
-			anImage = [NSImage imageNamed: @"Repository"];
-		else if ([[fileObj objectForKey: @"isDir"] boolValue])
-			anImage = GenericFolderImage32();
+		if ([repoItem isDir])
+			anImage = [repoItem isRoot] ? [NSImage imageNamed: @"Repository"]
+										: GenericFolderImage32();
 
 		sourceObject = self;
 	}
@@ -224,15 +230,37 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 }
 
 
+#if 0
+//----------------------------------------------------------------------------------------
+// This does not work even though the following doc claims it should!
+// <http://developer.apple.com/documentation/Cocoa/Conceptual/DragandDrop/Tasks/DraggingFiles.html>
+
+- (void) deliverPromise: (NSDictionary*) args
+{
+	[[self document] deliverFiles: [args objectForKey: @"files"]
+					 toFolder:     [args objectForKey: @"url"]
+					 isTemporary:  NO];
+}
+#endif
+
+
 //----------------------------------------------------------------------------------------
 
 - (NSArray*) namesOfPromisedFilesDroppedAtDestination: (NSURL*) dropDestination
 {
-	[[self document]
-			dragOutFilesFromRepository: [[self selectedCells] valueForKey:@"representedObject"]
-			toURL: dropDestination];
-	
-	return NULL; // we're just interested in the dropDestination.
+	NSArray* const files = [[self selectedCells] valueForKey: @"representedObject"];
+#if 1
+	// TemporaryItems => drop on docked app, ChewableItems => drop into document window
+	const BOOL isTemp = (Folder_IsTemporaryItems(dropDestination) || Folder_IsChewableItems(dropDestination));
+	return [[self document] deliverFiles: files toFolder: dropDestination isTemporary: isTemp];
+#elif 0
+	// This does not work (see deliverPromise: above).
+	[self performSelector: @selector(deliverPromise:)
+			   withObject: [NSDictionary dictionaryWithObjectsAndKeys: files,           @"files",
+																	   dropDestination, @"url", nil]
+			   afterDelay: 0.5];
+	return [files valueForKey: @"name"];
+#endif
 }
 
 
@@ -266,9 +294,9 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 	if ([self getRow: &row column: &column forPoint: [self convertPoint: [sender draggingLocation] fromView: nil]])
 	{
 		NSCell* cell = [self cellAtRow: row column: column];
-		NSDictionary* obj = [cell representedObject];
+		RepoItem* obj = [cell representedObject];
 
-		if (![[obj objectForKey: @"isDir"] boolValue])
+		if (![obj isDir])
 		{
 			shouldDraw = NO;
 			newDrawRect = NSZeroRect;
@@ -320,10 +348,8 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 	oldDrawRect = NSZeroRect;
 	[self setNeedsDisplay: TRUE];
 
-	NSPasteboard* pboard = [sender draggingPasteboard];
-	NSArray *files = [pboard propertyListForType:NSFilenamesPboardType];
-
-	[[self document] dragExternalFiles:files ToRepositoryAt:[[self destinationCell] representedObject]];
+	[[self document] receiveFiles:   [[sender draggingPasteboard] propertyListForType: NSFilenamesPboardType]
+					 toRepositoryAt: [[self destinationCell] representedObject]];
 
 	return YES;
 }

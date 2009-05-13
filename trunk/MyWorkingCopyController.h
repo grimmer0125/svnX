@@ -1,6 +1,6 @@
 #import <Cocoa/Cocoa.h>
 
-@class MyWorkingCopy, MySvnFilesArrayController, DrawerLogView;
+@class MyWorkingCopy, MySvnFilesArrayController, DrawerLogView, RepoItem;
 
 /*" Controller of the working copy browser "*/
 @interface MyWorkingCopyController : NSResponder
@@ -28,7 +28,9 @@
 	IBOutlet NSPanel		*renamePanel;
 	IBOutlet NSTextField	*renamePanelTextField;
 
-	IBOutlet NSPanel		*switchPanel;
+	IBOutlet NSWindow*		mergeSheet;
+
+	IBOutlet NSWindow*		switchPanel;
 	IBOutlet NSTextField	*switchPanelSourceTextField;
 	IBOutlet NSTextField	*switchPanelDestinationTextField;
 	IBOutlet NSButton		*switchPanelRelocateButton;
@@ -58,6 +60,9 @@
 - (IBAction) openRepository: (id) sender;
 - (IBAction) toggleSidebar:  (id) sender;
 - (IBAction) changeMode:     (id) sender;
+- (IBAction) updateSheetDoClick:   (id) sender;
+- (IBAction) mergeSheetDoClick:    (id) sender;
+- (IBAction) mergeSheetURLChanged: (id) sender;
 - (int)      currentMode;
 - (void)     setCurrentMode: (int) mode;
 - (void)     setStatusMessage: (NSString*) message;
@@ -83,7 +88,8 @@
 
 - (MyWorkingCopy*) document;
 - (NSWindow*) window;
-- (void) requestSwitchToRepositoryPath: (NSDictionary*) repositoryPathObj;
+- (void) requestMergeFrom:              (RepoItem*) repositoryPathObj;
+- (void) requestSwitchToRepositoryPath: (RepoItem*) repositoryPathObj;
 - (void) requestSvnRenameSelectedItemTo:           (NSString*) destination;
 - (void) requestSvnMoveSelectedItemsToDestination: (NSString*) destination;
 - (void) requestSvnCopySelectedItemsToDestination: (NSString*) destination;

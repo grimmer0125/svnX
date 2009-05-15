@@ -135,11 +135,12 @@ ParseDateTime (NSString* date, NSString* time)
 #pragma mark	-
 //----------------------------------------------------------------------------------------
 // Open one or more files using open.sh given their full paths.
+// Fork: open.sh <diff-app-name> '2' <files-to-open...>
 
 void
 OpenFiles (id fileOrFiles)
 {
-	NSMutableArray* arguments = [NSMutableArray arrayWithObject: GetDiffAppName()];
+	NSMutableArray* arguments = [NSMutableArray arrayWithObjects: GetDiffAppName(), @"2", nil];
 	if ([fileOrFiles isKindOfClass: [NSArray class]])
 		[arguments addObjectsFromArray: fileOrFiles];
 	else
@@ -227,6 +228,14 @@ Folder_IsChewableItems (NSURL* url)
 
 @implementation Message
 
++ (id) message: (SEL) message
+{
+	return [[[Message alloc] initWithMessage: message] autorelease];
+}
+
+
+//----------------------------------------------------------------------------------------
+
 - (id) initWithMessage: (SEL) message
 {
 	if (self = [super init])
@@ -234,6 +243,14 @@ Folder_IsChewableItems (NSURL* url)
 		fMessage = message;
 	}
 	return self;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (SEL) message
+{
+	return fMessage;
 }
 
 

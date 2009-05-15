@@ -93,10 +93,9 @@ addTransform (Class itsClass, NSString* itsName)
 	[dictionary setObject: kNSFalse forKey: @"compactWCColumns"];
 
 	// Review & Commit
-	id obj = [NSDictionary dictionaryWithObjectsAndKeys:
-									@"Simple File List",                    @"name",
-									@"Files:\n\t(<FILES>)\n\t(</FILES>)\n", @"body", nil];
-	[dictionary setObject: [NSArray arrayWithObject: obj] forKey: @"msgTemplates"];
+	[dictionary setObject: [NSArray arrayWithContentsOfFile:
+										[[NSBundle mainBundle] pathForResource: @"Templates" ofType: @"plist"]]
+				forKey:    @"msgTemplates"];
 	[dictionary setObject: @"5"    forKey: @"diffContextLines"];
 	[dictionary setObject: kNSTrue forKey: @"diffShowFunction"];
 	[dictionary setObject: kNSTrue forKey: @"diffShowCharacters"];

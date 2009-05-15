@@ -9,15 +9,6 @@
 #import "SvnInterface.h"
 
 
-enum {
-	SVNXCallbackSvnStatus,
-	SVNXCallbackSvnUpdate,
-	SVNXCallbackSvnInfo,
-	SVNXCallbackGeneric,
-	SVNXCallbackFileMerge
-};
-
-
 //----------------------------------------------------------------------------------------
 
 static BOOL
@@ -267,9 +258,6 @@ GenericFolderImage32 ()
 	- (void) setDisplayedTaskObj: (NSMutableDictionary*) aDisplayedTaskObj;
 	- (void) setSvnDirectories:   (WCTreeEntry*)         aSvnDirectories;
 
-	- (NSInvocation*) makeCallbackInvocation:       (SEL) selector;
-	- (NSInvocation*) makeCallbackInvocationOfKind: (int) callbackKind;
-
 @end	// MyWorkingCopy (Private)
 
 
@@ -324,15 +312,13 @@ GenericFolderImage32 ()
 		[self setSvnFiles: [NSArray array]];
 		svnDirectories = [[WCTreeEntry alloc] init];
 
-		[self setOutlineSelectedPath:@""];
+		[self setOutlineSelectedPath: @""];
 
 		// register self as an observer for bound variables
-		[self   addObserver:self forKeyPath:@"smartMode"
-				options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:nil];
-		[self   addObserver:self forKeyPath:@"flatMode"
-				options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:nil];
-		[self   addObserver:self forKeyPath:@"filterMode"
-				options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:nil];
+		const NSKeyValueObservingOptions kOptions = NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld;
+		[self addObserver: self forKeyPath: @"smartMode"  options: kOptions context: NULL];
+		[self addObserver: self forKeyPath: @"flatMode"   options: kOptions context: NULL];
+		[self addObserver: self forKeyPath: @"filterMode" options: kOptions context: NULL];
 		initIconCache();
 	}
 
@@ -868,7 +854,7 @@ svnInfoReceiver (void*       baton,
 		[MySvn    statusAtWorkingCopyPath: [self workingCopyPath]
 						   generalOptions: [self svnOptionsInvocation]
 								  options: options
-								 callback: [self makeCallbackInvocation: @selector(svnStatusCompletedCallback:)]
+								 callback: MakeCallbackInvocation(self, @selector(svnStatusCompletedCallback:))
 							 callbackInfo: nil
 								 taskInfo: [self documentNameDict]];
 	}
@@ -1339,7 +1325,7 @@ svnInfoReceiver (void*       baton,
 				   arguments: [NSArray arrayWithObject:[self workingCopyPath]]
               generalOptions: [self svnOptionsInvocation]
 					 options: nil
-					callback: [self makeCallbackInvocation: @selector(svnInfoCompletedCallback:)]
+					callback: MakeCallbackInvocation(self, @selector(svnInfoCompletedCallback:))
 				callbackInfo: nil
 					taskInfo: [self documentNameDict]];
 }
@@ -1375,6 +1361,8 @@ svnInfoReceiver (void*       baton,
 	[self svnError: taskObj];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) fetchSvnInfoReceiveDataFinished: (NSString*) result
 {
@@ -1415,6 +1403,7 @@ svnInfoReceiver (void*       baton,
 
 //----------------------------------------------------------------------------------------
 #pragma mark	svn commit
+//----------------------------------------------------------------------------------------
 
 - (void) svnCommit:    (NSArray*)      items
 		 message:      (NSString*)     message
@@ -1455,6 +1444,8 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) svnCommit: (NSString*) message
 {
 	[self svnCommit:    [svnFilesAC selectedObjects] 
@@ -1466,6 +1457,7 @@ svnInfoReceiver (void*       baton,
 
 //----------------------------------------------------------------------------------------
 #pragma mark	svn merge
+//----------------------------------------------------------------------------------------
 
 - (void) svnMerge: (NSArray*) options
 {
@@ -1482,6 +1474,7 @@ svnInfoReceiver (void*       baton,
 
 //----------------------------------------------------------------------------------------
 #pragma mark	svn switch
+//----------------------------------------------------------------------------------------
 
 - (void) svnSwitch: (NSArray*) options
 {
@@ -1499,6 +1492,7 @@ svnInfoReceiver (void*       baton,
 
 //----------------------------------------------------------------------------------------
 #pragma mark	svn generic command
+//----------------------------------------------------------------------------------------
 
 - (void) svnCommand: (NSString*)     command
 		 options:    (NSArray*)      options
@@ -1563,6 +1557,8 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) svnGenericCompletedCallback: (id) taskObj
 {
 	[controller stopProgressIndicator];
@@ -1578,6 +1574,7 @@ svnInfoReceiver (void*       baton,
 
 //----------------------------------------------------------------------------------------
 #pragma mark	svn update
+//----------------------------------------------------------------------------------------
 
 - (void) svnUpdateSelectedItems: (NSArray*) options
 {
@@ -1627,6 +1624,7 @@ svnInfoReceiver (void*       baton,
 
 //----------------------------------------------------------------------------------------
 #pragma mark	svn diff
+//----------------------------------------------------------------------------------------
 
 - (void) diffItems:    (NSArray*)      items
 		 callback:     (NSInvocation*) callback
@@ -1641,13 +1639,17 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) diffItems: (NSArray*) items
 {
-	[self diffItems: items callback: MakeCallbackInvocation(self, @selector(fileMergeCallback:)) callbackInfo: nil];
+	[self diffItems: items callback: MakeCallbackInvocation(self, @selector(diffCallback:)) callbackInfo: nil];
 }
 
 
-- (void) fileMergeCallback: (id) taskObj
+//----------------------------------------------------------------------------------------
+
+- (void) diffCallback: (id) taskObj
 {
 	if (isCompleted(taskObj))
 		;
@@ -1659,53 +1661,11 @@ svnInfoReceiver (void*       baton,
 //----------------------------------------------------------------------------------------
 #pragma mark	-
 #pragma mark	Helpers
+//----------------------------------------------------------------------------------------
 
 - (NSMutableDictionary*) getSvnOptions
 {
 	return [NSMutableDictionary dictionaryWithObjectsAndKeys:[self user], @"user", [self pass], @"pass", nil ];
-}
-
-
-- (NSInvocation*) makeSvnOptionInvocation
-{
-	return MakeCallbackInvocation(self, @selector(getSvnOptions));
-}
-
-
-- (NSInvocation*) makeCallbackInvocation: (SEL) selector
-{
-	return MakeCallbackInvocation(self, selector);
-}
-
-
-- (NSInvocation*) makeCallbackInvocationOfKind: (int) callbackKind
-{
-	SEL callbackSelector = nil;
-
-	switch ( callbackKind )
-	{
-		case SVNXCallbackSvnUpdate:
-			callbackSelector = @selector(svnUpdateCompletedCallback:);
-			break;
-
-		case SVNXCallbackSvnStatus:
-			callbackSelector = @selector(svnStatusCompletedCallback:);
-			break;
-
-		case SVNXCallbackSvnInfo:
-			callbackSelector = @selector(svnInfoCompletedCallback:);
-			break;
-
-		case SVNXCallbackGeneric:
-			callbackSelector = @selector(svnGenericCompletedCallback:);
-			break;
-
-		case SVNXCallbackFileMerge:
-			callbackSelector = @selector(fileMergeCallback:);
-			break;
-	}
-
-	return MakeCallbackInvocation(self, callbackSelector);
 }
 
 
@@ -1721,21 +1681,21 @@ svnInfoReceiver (void*       baton,
 	BOOL doRefresh = false,
 		 doRearrange = false;
 
-	if ( [keyPath isEqualToString:@"smartMode"] )
+	if ([keyPath isEqualToString: @"smartMode"])
 	{
 		doRefresh = YES;
 		if (smartMode)
 			flatMode = YES;
 		[controller adjustOutlineView];
 	}
-	else if ( [keyPath isEqualToString:@"flatMode"] )
+	else if ([keyPath isEqualToString: @"flatMode"])
 	{
 		doRefresh = YES;
 		if (!flatMode)
 			smartMode = NO;
 	//	[controller adjustOutlineView];
 	}
-	else if ( [keyPath isEqualToString:@"filterMode"] )
+	else if ([keyPath isEqualToString: @"filterMode"])
 	{
 		doRearrange = YES;
 	}
@@ -1751,25 +1711,30 @@ svnInfoReceiver (void*       baton,
 //----------------------------------------------------------------------------------------
 #pragma mark	-
 #pragma mark	Accessors
+//----------------------------------------------------------------------------------------
 
 - (NSInvocation*) svnOptionsInvocation
 {
-	return [self makeSvnOptionInvocation];
+	return MakeCallbackInvocation(self, @selector(getSvnOptions));
 }
 
 
+//----------------------------------------------------------------------------------------
 // get/set displayedTaskObj 
+
 - (NSMutableDictionary*) displayedTaskObj { return displayedTaskObj; }
 
-- (void) setDisplayedTaskObj: (NSMutableDictionary*) aDisplayedTaskObj
+- (void) setDisplayedTaskObj: (NSMutableDictionary*) taskObj
 {
 	id old = displayedTaskObj;
-	displayedTaskObj = [aDisplayedTaskObj retain];
+	displayedTaskObj = [taskObj retain];
 	[old release];
 }
 
 
+//----------------------------------------------------------------------------------------
 // get/set user name
+
 - (NSString*) user { return user; }
 
 - (void) setUser: (NSString*) aUser
@@ -1780,7 +1745,9 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
 // get/set user password
+
 - (NSString*) pass { return pass; }
 
 - (void) setPass: (NSString*) aPass
@@ -1791,7 +1758,9 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
 // get/set svnFiles
+
 - (NSArray*) svnFiles { return svnFiles; }
 
 - (void) setSvnFiles: (NSArray*) aSvnFiles
@@ -1804,7 +1773,9 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
 // get/set revision
+
 - (NSString*) revision { return revision; }
 
 - (void) setRevision: (NSString*) aRevision
@@ -1815,7 +1786,9 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
 // get/set workingCopyPath
+
 - (NSString*) workingCopyPath { return workingCopyPath; }
 
 - (void) setWorkingCopyPath: (NSString*) str
@@ -1826,7 +1799,9 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
 // get/set svnDirectories
+
 - (WCTreeEntry*) svnDirectories { return svnDirectories; }
 
 - (void) setSvnDirectories: (WCTreeEntry*) aSvnDirectories
@@ -1837,7 +1812,9 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
 // filterMode: set by the toolbar pop-up menu
+
 - (int) filterMode { return filterMode; }
 
 - (void) setFilterMode: (int) aFilterMode
@@ -1847,7 +1824,9 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
 // get/set windowTitle
+
 - (NSString*) windowTitle { return windowTitle; }
 
 - (void) setWindowTitle: (NSString*) aWindowTitle
@@ -1858,7 +1837,9 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
 // get/set flatMode
+
 - (BOOL) flatMode { return flatMode; }
 
 - (void) setFlatMode: (BOOL) flag
@@ -1867,7 +1848,9 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
 // get/set smartMode
+
 - (BOOL) smartMode { return smartMode; }
 
 - (void) setSmartMode: (BOOL) flag
@@ -1889,13 +1872,17 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (NSString*) treeSelectedFullPath
 {
 	return [workingCopyPath stringByAppendingPathComponent: outlineSelectedPath];
 }
 
 
+//----------------------------------------------------------------------------------------
 // get/set outlineSelectedPath
+
 - (NSString*) outlineSelectedPath { return outlineSelectedPath; }
 
 - (void) setOutlineSelectedPath: (NSString*) anOutlineSelectedPath
@@ -1917,7 +1904,9 @@ svnInfoReceiver (void*       baton,
 }
 
 
+//----------------------------------------------------------------------------------------
 // get/set repositoryUrl
+
 - (NSURL*) repositoryUrl { return repositoryUrl; }
 
 - (void) setRepositoryUrl: (NSURL*) aRepositoryUrl

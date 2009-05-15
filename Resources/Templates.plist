@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+	<dict>
+		<key>name</key>	<string>Files &amp; Functions</string>
+		<key>body</key>	<string>&lt;SCRIPT&gt;#!/bin/sh
+alias svn="$1/svn"; cd "$2"; shift $3
+until [ -z "$1" ]; do
+  echo "* $1"
+  # List the names of the modified functions
+  svn diff --diff-cmd diff -x '-U0 -p --show-function-line=[[:blank:]]*[-+][[:blank:]]*([[:alpha:]_]' "$1" \
+    | sed -E -e 's/(^@@ [^@]* @@ )((.*([[:&lt;:]][[:alnum:]_]+) *\()|(([[:blank:]]*[-+][[:blank:]]*\([^\)]+\)[[:blank:]]*))([[:alnum:]_]+)).*/  (\4\7): /' -e "t" -e "d" \
+    | uniq
+  echo ""; shift
+done
+&lt;/SCRIPT&gt;</string>
+	</dict>
+	<dict>
+		<key>name</key>	<string>Simple File List</string>
+		<key>body</key>	<string>Files:
+	(&lt;FILES&gt;)
+	(&lt;/FILES&gt;)
+</string>
+	</dict>
+</array>
+</plist>

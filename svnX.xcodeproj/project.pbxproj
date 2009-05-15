@@ -27,6 +27,7 @@
 		83909D510DA4CA0F00C3DAE5 /* Repository.png in Resources */ = {isa = PBXBuildFile; fileRef = 83909D500DA4CA0F00C3DAE5 /* Repository.png */; };
 		83929B660F68CFD2002D2A6E /* open.sh in Resources */ = {isa = PBXBuildFile; fileRef = 83929B650F68CFD1002D2A6E /* open.sh */; };
 		8394A96B0DA5E702007EDB92 /* PlusTopRight.png in Resources */ = {isa = PBXBuildFile; fileRef = 8394A96A0DA5E702007EDB92 /* PlusTopRight.png */; };
+		83BCF01E0FBCAD25007E9B6B /* Templates.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83BCF01D0FBCAD25007E9B6B /* Templates.plist */; };
 		83CCCE390D78D7E900237C1E /* EditListResponder.m in Sources */ = {isa = PBXBuildFile; fileRef = 83CCCE370D78D7E900237C1E /* EditListResponder.m */; };
 		83CD86CC0F54588E00512219 /* MyDragSupportWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F2E114B10830A7E20026EEBF /* MyDragSupportWindow.m */; };
 		83CFE69D0FAFE01200EDFC88 /* svnx in Resources */ = {isa = PBXBuildFile; fileRef = 83CFE69C0FAFE01200EDFC88 /* svnx */; };
@@ -170,6 +171,7 @@
 		83909D500DA4CA0F00C3DAE5 /* Repository.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Repository.png; sourceTree = "<group>"; };
 		83929B650F68CFD1002D2A6E /* open.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; lineEnding = 0; path = open.sh; sourceTree = "<group>"; };
 		8394A96A0DA5E702007EDB92 /* PlusTopRight.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = PlusTopRight.png; sourceTree = "<group>"; };
+		83BCF01D0FBCAD25007E9B6B /* Templates.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; fileEncoding = 4; path = Templates.plist; sourceTree = "<group>"; };
 		83C5137E0DA7B07F00A238DD /* CommonUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommonUtils.h; sourceTree = "<group>"; };
 		83CCCE370D78D7E900237C1E /* EditListResponder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EditListResponder.m; sourceTree = "<group>"; };
 		83CCCE380D78D7E900237C1E /* EditListResponder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EditListResponder.h; sourceTree = "<group>"; };
@@ -494,6 +496,7 @@
 				F293DCB306B46ABF00B81B86 /* svnResult.nib */,
 				F2830130082BE371008E002A /* DrawerLogView.nib */,
 				83D61C150DBA4C5000D8E74E /* Advanced.icns */,
+				83BCF01D0FBCAD25007E9B6B /* Templates.plist */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -744,6 +747,7 @@
 				83EA6AF70F9C2A150025F2BC /* import.png in Resources */,
 				83EDF4230F9E1E4200838E58 /* open.png in Resources */,
 				83CFE69D0FAFE01200EDFC88 /* svnx in Resources */,
+				83BCF01E0FBCAD25007E9B6B /* Templates.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

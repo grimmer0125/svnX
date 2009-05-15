@@ -68,11 +68,12 @@ BOOL			Folder_IsChewableItems	(NSURL* url);
 	SEL		fMessage;
 }
 
-- (id) initWithMessage: (SEL) message;
-//- (SEL) message;
-- (void) sendTo:     (id) target;
-- (void) sendTo:     (id) target
-		 withObject: (id) object;
++ (id)   message:            (SEL)   message;
+- (id)   initWithMessage:    (SEL)   message;
+- (SEL)  message;
+- (void) sendTo:             (id)   target;
+- (void) sendTo:             (id)   target
+		 withObject:         (id)   object;
 - (void) sendToOnMainThread: (id)   target;
 - (void) sendToOnMainThread: (id)   target
 		 withObject:         (id)   object

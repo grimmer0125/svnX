@@ -60,15 +60,6 @@ addGeneralOptions (NSMutableArray* arguments, NSInvocation* generalOptions)
 
 //----------------------------------------------------------------------------------------
 
-static NSString*
-shellScriptPath (NSString* script)
-{
-	return [[NSBundle mainBundle] pathForResource: script ofType: @"sh"];
-}
-
-
-//----------------------------------------------------------------------------------------
-
 NSString*
 SvnPath ()
 {
@@ -90,7 +81,7 @@ SvnCmdPath ()
 NSString*
 ShellScriptPath (NSString* script)
 {
-	return shellScriptPath(script);
+	return [[NSBundle mainBundle] pathForResource: script ofType: @"sh"];
 }
 
 
@@ -129,7 +120,7 @@ GetDiffAppName ()
 						 taskInfo:       (id)            taskInfo
 {
 	NSMutableArray* arguments = [NSMutableArray arrayWithObjects:
-										@"diff", @"--diff-cmd", shellScriptPath(@"svndiff"),
+										@"diff", @"--diff-cmd", ShellScriptPath(@"svndiff"),
 										@"--extensions", GetDiffAppName(),
 										nil];
 	addGeneralOptions(arguments, generalOptions);
@@ -180,7 +171,7 @@ GetDiffAppName ()
 						 taskInfo:       (id)            taskInfo
 {
 	#pragma unused(generalOptions)
-	NSString *taskLaunchPath		= shellScriptPath(@"svnmove");
+	NSString *taskLaunchPath		= ShellScriptPath(@"svnmove");
 	NSMutableArray *arguments       = [NSMutableArray arrayWithObject: SvnCmdPath()];
 	
 	[arguments addObject: [options componentsJoinedByString:@" "]]; // see svnmove.sh
@@ -203,7 +194,7 @@ GetDiffAppName ()
 						 taskInfo:      (id)            taskInfo
 {
 	#pragma unused(generalOptions)
-	NSString *taskLaunchPath		= shellScriptPath(@"svncopy");
+	NSString *taskLaunchPath		= ShellScriptPath(@"svncopy");
 	NSMutableArray *arguments       = [NSMutableArray arrayWithObject: SvnCmdPath()];
 
 	[arguments addObject: [options componentsJoinedByString:@" "]]; // see svncopy.sh
@@ -337,7 +328,7 @@ GetDiffAppName ()
 						 callbackInfo:   (id)            callbackInfo
 						 taskInfo:       (id)            taskInfo
 {
-	NSString *taskLaunchPath		= shellScriptPath(@"svnextract");
+	NSString *taskLaunchPath		= ShellScriptPath(@"svnextract");
 	NSMutableArray *arguments       = [NSMutableArray array];
 
 	[arguments           addObject: SvnCmdPath()];
@@ -477,15 +468,14 @@ GetDiffAppName ()
 						 callbackInfo:   (id)            callbackInfo
 						 taskInfo:       (id)            taskInfo
 {
-	NSString* openWithApp = @"-a Xcode";	// TO_DO: Make settable in Preferences window
 	NSMutableArray* arguments = [NSMutableArray arrayWithObjects:
-						SvnCmdPath(), openWithApp, revision, concatOptions(generalOptions, options), nil];
+						SvnCmdPath(), GetDiffAppName(), revision, concatOptions(generalOptions, options), nil];
 	[arguments addObjectsFromArray: files];
 
-	NSString* taskLaunchPath = shellScriptPath(@"svnblame");
+	NSString* taskLaunchPath = ShellScriptPath(@"svnblame");
 	id additionalTaskInfo = makeTaskInfo(@"svn blame", taskLaunchPath, arguments);
 
-	// svnblame.sh <svn-tool> <open-app> <revision> <options> <url> ...
+	// svnblame.sh <svn-tool> <diff-app> <revision> <options> <url...>
 	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
 				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
 }

@@ -49,6 +49,13 @@ function openRepoWindow ()	# [wc-path-or-URL]
 	doFn 'openRepository' "$f"
 }
 
+function diffFiles ()	# files...
+{
+	for f; {
+		osascript -e 'on run args' -e 'tell app "svnX" to diffFiles args' -e 'end' "`fullPath \"$f\"`"
+	}
+}
+
 function openFiles ()	# files...
 {
 	for f; {
@@ -58,11 +65,12 @@ function openFiles ()	# files...
 
 function usage ()
 {
-	echo 'svnx <command> [path-or-URL]   - the svnX command line tool'
+	echo 'svnx <command> [path-or-URL]   - the svnX command line tool.'
 	echo '     help                      - display this usage text.'
 	echo '     log|-l <file-path>        - open log sheet for file-path.'
 	echo '     wc|-w [working-copy-path] - open window for working-copy-path (defaults to ".").'
 	echo '     rep|-r [wc-path-or-URL]   - open repository window for wc-path-or-URL (defaults to ".").'
+	echo '     diff|-d <file-path...>    - compare the files with their base revisions.'
 	echo '     open|-o <file-path...>    - open the files and/or folders in appropriate applications.'
 }
 
@@ -73,6 +81,7 @@ case "$1" in
 	log|-l)			openLogWindow "$2";;
 	wc|-w)			openWCWindow "$2";;
 	rep|-r)			openRepoWindow "$2";;
+	diff|-d)		shift; diffFiles "$@";;
 	open|-o)		shift; openFiles "$@";;
 	help|*)			usage;;
 esac

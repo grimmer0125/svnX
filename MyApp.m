@@ -239,6 +239,15 @@ addTransform (Class itsClass, NSString* itsName)
 
 
 //----------------------------------------------------------------------------------------
+// Compare one or more files with their base revisions.
+
+- (void) diffFiles: (id) fileOrFiles
+{
+	[favoriteWorkingCopies diffFiles: fileOrFiles];
+}
+
+
+//----------------------------------------------------------------------------------------
 #pragma mark	-
 //----------------------------------------------------------------------------------------
 
@@ -437,7 +446,7 @@ static BOOL gCanFocus = YES;
 
 - (void) newTaskWithDictionary: (NSMutableDictionary*) taskObj
 {
-	[tasksManager newTaskWithDictionary:taskObj];
+	[tasksManager newTaskWithDictionary: taskObj];
 }
 
 

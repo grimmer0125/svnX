@@ -23,6 +23,7 @@
 - (void) openWorkingCopy: (NSString*) path;	// Open a working copy window.
 - (void) openRepository:  (NSString*) url;	// Open a repository window.
 - (void) openFiles:       (id) fileOrFiles;	// Open files in appropriate applications.
+- (void) diffFiles:       (id) fileOrFiles;	// Compare files against BASE.
 
 - (IBAction)  openPreferences:  (id) sender;
 - (IBAction)  closePreferences: (id) sender;

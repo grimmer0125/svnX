@@ -439,7 +439,7 @@ WriteXMLLog (NSArray* logItems, bool includePaths, int limit, bool reverseOrder,
 	[[doc XMLData/*WithOptions: NSXMLNodePrettyPrint*/] writeToFile: xmlPath atomically: false];
 #elif 1
 	#define	WRITE(cstr)		write(os, cstr, sizeof(cstr) - 1)
-	NSAutoreleasePool* const autoPool = [[NSAutoreleasePool alloc] init];
+	const id autoPool = [[NSAutoreleasePool alloc] init];
   #if qUseNSOutputStream
 	const OS os = [NSOutputStream outputStreamToFileAtPath: xmlPath append: NO];
 	[os open];
@@ -449,6 +449,9 @@ WriteXMLLog (NSArray* logItems, bool includePaths, int limit, bool reverseOrder,
 	const OS os = [file fileDescriptor];
   #endif
 
+	const id sortDescriptors = includePaths ? [NSArray arrayWithObject:
+						[[[AlphaNumSortDesc alloc] initWithKey: @"path" ascending: YES] autorelease]]
+											: nil;
 	WRITE("<?xml version=\"1.0\"?><log>");
 	NSEnumerator* en = reverseOrder ? [logItems reverseObjectEnumerator]
 									: [logItems objectEnumerator];
@@ -466,8 +469,9 @@ WriteXMLLog (NSArray* logItems, bool includePaths, int limit, bool reverseOrder,
 			NSArray* const pathObjs = [it objectForKey: @"paths"];
 			if (pathObjs != nil)
 			{
+				const id autoPool = [[NSAutoreleasePool alloc] init];
 				WRITE("<paths>");
-				for_each(en2, obj, pathObjs)
+				for_each(en2, obj, [pathObjs sortedArrayUsingDescriptors: sortDescriptors])
 				{
 					ToUTF8([obj objectForKey: @"action"], act, sizeof(act));
 					NSString* value;
@@ -486,6 +490,7 @@ WriteXMLLog (NSArray* logItems, bool includePaths, int limit, bool reverseOrder,
 					WRITE("</path>");
 				}
 				WRITE("</paths>");
+				[autoPool release];
 			}
 		}
 		WRITE("</logentry>");

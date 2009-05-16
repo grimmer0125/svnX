@@ -47,6 +47,11 @@
 		if (string0)
 			[target openFiles: directParam];
 	}
+	else if ([commandName isEqualToString: @"diffFiles"])
+	{
+		if (string0)
+			[target diffFiles: directParam];
+	}
 
 	return nil;
 }

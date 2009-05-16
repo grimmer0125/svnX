@@ -39,6 +39,11 @@
 			</array>
 		-->
 		</dict>
+		<key>diffFiles</key>
+		<dict>
+			<key>AppleEventCode</key>		<string>Diff</string>
+			<key>CommandClass</key>			<string>Scripting</string>
+		</dict>
 	</dict>
 </dict>
 </plist>

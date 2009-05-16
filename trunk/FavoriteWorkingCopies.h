@@ -17,5 +17,8 @@
 // Open a compare revisions sheet for <aPath> on an appropriate Working Copy window.
 - (void) fileHistoryOpenSheetForItem: (NSString*) aPath;
 
+// Compare one or more files with their base revisions.
+- (void) diffFiles: (id) fileOrFiles;
+
 @end
 

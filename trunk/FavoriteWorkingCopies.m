@@ -5,6 +5,7 @@
 #import "FavoriteWorkingCopies.h"
 #import "MyRepository.h"
 #import "MyWorkingCopy.h"
+#import "MySvn.h"
 #import "CommonUtils.h"
 
 
@@ -233,7 +234,8 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 // Private:
 // Find an extant MyWorkingCopy for <aPath> or find a working copy dict & create a MyWorkingCopy
 
-- (MyWorkingCopy*) findWorkingCopy: (NSString*) aPath
+- (id) findWorkingCopy: (NSString*) aPath
+	   openIt:          (BOOL)      openIt
 {
 	int bestMatchScore = 0;
 
@@ -267,8 +269,11 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 		}
 	}
 
+	if (!openIt)
+		return wcEntry ? wcEntry : (id) wcDocument;
+
 	// if we found a matching working copy that is not currently open, then let's open it
-	if (wcDocument == nil && wcEntry != nil)
+	if (wcEntry != nil)
 		wcDocument = [self openNewDocument: wcEntry];
 
 	return wcDocument;
@@ -280,7 +285,7 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 
 - (void) openWorkingCopy: (NSString*) aPath
 {
-	MyWorkingCopy* wcDocument = [self findWorkingCopy: aPath];
+	MyWorkingCopy* wcDocument = [self findWorkingCopy: aPath openIt: TRUE];
 	if (wcDocument != nil)
 		[wcDocument showWindows];
 	else
@@ -293,8 +298,7 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 
 - (void) fileHistoryOpenSheetForItem: (NSString*) aPath
 {
-	MyWorkingCopy* wcDocument = [self findWorkingCopy: aPath];
-
+	MyWorkingCopy* wcDocument = [self findWorkingCopy: aPath openIt: TRUE];
 	if (wcDocument != nil)
 	{
 		[[wcDocument controller] fileHistoryOpenSheetForItem: [self newObjectWithName: @"" path: aPath]];
@@ -309,6 +313,43 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 								 0x201C, aPath, 0x201D],
 						@"Cancel", nil, nil);
 	}
+}
+
+
+//----------------------------------------------------------------------------------------
+// Invoked from AppleScript.
+
+- (void) diffFiles: (id) fileOrFiles
+{
+	NSString* aPath;
+	if ([fileOrFiles isKindOfClass: [NSArray class]])
+		aPath = [fileOrFiles objectAtIndex: 0];
+	else
+		fileOrFiles = [NSArray arrayWithObject: (aPath = fileOrFiles)];
+
+	const id wcObj = [self findWorkingCopy: aPath openIt: FALSE];
+	if (wcObj && [wcObj isKindOfClass: [MyWorkingCopy class]])
+	{
+		[wcObj diffItems: fileOrFiles];
+	}
+	else	// Working Copy dict or unknown
+	{
+		[MySvn	diffItems: fileOrFiles
+		   generalOptions: wcObj ? MakeCallbackInvocation(wcObj, @selector(self)) : nil
+				  options: nil
+				 callback: MakeCallbackInvocation(self, @selector(doNothing:))
+			 callbackInfo: nil
+				 taskInfo: [NSDictionary dictionaryWithObject:
+								wcObj ? [wcObj objectForKey: @"name"] : @"" forKey: @"documentName"]];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) doNothing: (id) ignored
+{
+	#pragma unused(ignored)
 }
 
 

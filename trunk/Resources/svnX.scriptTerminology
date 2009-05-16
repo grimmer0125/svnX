@@ -64,6 +64,13 @@
 				</dict>
 			</dict>
 		</dict>
+
+		<key>diffFiles</key>
+		<dict>
+			<key>Name</key>			<string>diffFiles</string>
+			<key>Description</key>
+				<string>compare files with their base revisions</string>
+		</dict>
 	</dict>
 	<key>Name</key>
 	<string>svnX</string>

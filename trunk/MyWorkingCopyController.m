@@ -394,6 +394,7 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 	DrawerLogView* obj = drawerLogView;
 	drawerLogView = nil;
 	[obj unload];
+	window = nil;
 }
 
 
@@ -701,11 +702,12 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 	}
 
 	// Save the paths of the selected item
-	NSString* selPath = [[outliner itemAtRow: selectedRow] path];
+	NSString* selPath = outlineInited ? [[outliner itemAtRow: selectedRow] path] : nil;
 
 	NSMutableArray* expanded = nil;
 	if (outlineInited && selPath != nil)	// Save the paths of the expanded items
 	{
+		[selPath retain];
 		expanded = [NSMutableArray array];
 		for (index = 0; index < rowCount; ++index)
 		{
@@ -745,9 +747,11 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 			if (selPath != nil && [selPath isEqualToString: path])
 			{
 				selectedRows = [NSIndexSet indexSetWithIndex: index];
+				[selPath release];
 				selPath = nil;
 			}
 		}
+		[selPath release];
 	}
 
 	[outliner selectRowIndexes: selectedRows byExtendingSelection: NO];
@@ -1836,6 +1840,8 @@ enum {
 
 
 //----------------------------------------------------------------------------------------
+// Commit Sheet
+//----------------------------------------------------------------------------------------
 
 - (void) startCommitMessage: (NSString*) selectedOrAll
 {
@@ -1852,40 +1858,52 @@ enum {
 		 contextInfo:       (void*)     contextInfo
 {
 	if (returnCode == NSOKButton)
-	{
-#if 1
 		[document svnCommit: [commitPanelText string]];
-#else
-		[document performSelector: @selector(svnCommit:)
-				  withObject:      [commitPanelText string]
-				  afterDelay:      0.1];
-#endif
-	}
+
 	[(id) contextInfo release];	
 	[sheet close];
 }
 
 
+- (IBAction) commitPanelValidate: (id) sender
+{
+	#pragma unused(sender)
+	[NSApp endSheet: commitPanel returnCode: NSOKButton];
+}
+
+
+- (IBAction) commitPanelCancel: (id) sender
+{
+	#pragma unused(sender)
+	[NSApp endSheet: commitPanel returnCode: NSCancelButton];
+}
+
+
 //----------------------------------------------------------------------------------------
 // Error Sheet
+//----------------------------------------------------------------------------------------
 
 - (void) doSvnError: (NSString*) errorString
 {
+	Assert(errorString != nil);
 	// close any existing sheet that is not an svnError sheet (workaround a "double sheet" effect
 	// that can occur because svn info and svn status are launched simultaneously)
-	if ( !isDisplayingErrorSheet && [window attachedSheet] != nil )
+	if (!isDisplayingErrorSheet && [window attachedSheet] != nil)
 		[NSApp endSheet: [window attachedSheet]];
 
 	svnStatusPending = NO;
  	[self stopProgressIndicator];
 
-	if (!isDisplayingErrorSheet)
+	if (!isDisplayingErrorSheet && [window isVisible])
 	{
+		// Allow user to prevent repeated 'not working copy' & 'client too old' alerts.
+		BOOL canClose = ([errorString rangeOfString: @" is not a working copy"].location != NSNotFound ||
+						 [errorString rangeOfString: @" client is too old"].location != NSNotFound);
 		isDisplayingErrorSheet = YES;
 
 		NSAlert* alert = [NSAlert alertWithMessageText: @"Error"
 										 defaultButton: @"OK"
-									   alternateButton: nil
+									   alternateButton: canClose ? @"Close Working Copy" : nil
 										   otherButton: nil
 							 informativeTextWithFormat: @"%@", errorString];
 
@@ -1894,10 +1912,12 @@ enum {
 		[alert	beginSheetModalForWindow: window
 						   modalDelegate: self
 						  didEndSelector: @selector(svnErrorSheetEnded:returnCode:contextInfo:)
-						     contextInfo: nil];
+							 contextInfo: nil];
 	}
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) svnError: (NSString*) errorString
 {
@@ -1905,30 +1925,23 @@ enum {
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) svnErrorSheetEnded: (NSAlert*) alert
 		 returnCode:         (int)      returnCode
 		 contextInfo:        (void*)    contextInfo
 {
-	#pragma unused(alert, returnCode, contextInfo)
+	#pragma unused(alert, contextInfo)
 	isDisplayingErrorSheet = NO;
+	if (returnCode == NSAlertAlternateReturn)
+	{
+		suppressAutoRefresh = true;
+		[window performSelector: @selector(performClose:) withObject: self afterDelay: 0];
+	}
 }
 
 
 //----------------------------------------------------------------------------------------
-
-- (IBAction) commitPanelValidate: (id) sender
-{
-	#pragma unused(sender)
-	[NSApp endSheet:commitPanel returnCode:1];
-}
-
-
-- (IBAction) commitPanelCancel: (id) sender
-{
-	#pragma unused(sender)
-	[NSApp endSheet:commitPanel returnCode:0];
-}
-
 
 - (void) startProgressIndicator
 {

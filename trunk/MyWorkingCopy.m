@@ -310,7 +310,7 @@ GenericFolderImage32 ()
 		// initialize svnFiles:
 		// svnFilesAC is bound in Interface Builder to this variable.
 		[self setSvnFiles: [NSArray array]];
-		svnDirectories = [[WCTreeEntry alloc] init];
+		svnDirectories = [WCTreeEntry alloc];
 
 		[self setOutlineSelectedPath: @""];
 
@@ -668,7 +668,7 @@ svnStatusReceiver (void*       baton,
 		addDirToTree(env, itemFullPath, icon);
 	}
 
-	NSString* const revisionCurrent     = entry ? SvnRevNumToString(entry->revision) : @"";
+	NSString* const revisionCurrent     = entry && !entry->copied ? SvnRevNumToString(entry->revision) : @"";
 	NSString* const revisionLastChanged = entry ? SvnRevNumToString(entry->cmt_rev)  : @"";
 	NSString* const theUser             = entry ? UTF8(entry->cmt_author)            : @"";
 	NSString* const dirPath = [itemPath stringByDeletingLastPathComponent];
@@ -792,10 +792,7 @@ svnInfoReceiver (void*       baton,
 									  ctx, pool));
 
 		if (treeDirs)
-		{
 			[self setSvnDirectories: treeDirs];
-			[treeDirs release];
-		}
 		[controller saveSelection];
 		[self setSvnFiles: env.newSvnFiles];
 		[controller fetchSvnStatusVerboseReceiveDataFinished];
@@ -813,7 +810,7 @@ svnInfoReceiver (void*       baton,
 	if (SvnWantAndHave())
 	{
 	//	NSLog(@"svn status - begin");
-		NSAutoreleasePool* autoPool = [[NSAutoreleasePool alloc] init];
+		const id autoPool = [[NSAutoreleasePool alloc] init];
 		// Create top-level memory pool.
 		SvnPool pool = SvnNewPool();
 		@try
@@ -823,8 +820,7 @@ svnInfoReceiver (void*       baton,
 		@catch (SvnException* ex)
 		{
 			SvnReportCatch(ex);
-			[controller stopProgressIndicator];
-			[controller performSelector: @selector(svnError:) withObject: [ex message] afterDelay: 0.1];
+			[controller svnError: [ex message]];
 		}
 		@finally
 		{
@@ -837,29 +833,24 @@ svnInfoReceiver (void*       baton,
 	else
 	{
 		showUpdates = showUpdates_;
-		NSMutableArray *options = [NSMutableArray array];
+		NSString* options[4];
+		int count = 0;
 
-		if ( ![self smartMode] )
-		{
-			[options addObject:@"-v"];
-		}
+		if (![self smartMode])		options[count++] = @"-v";
+		if (showUpdates_)			options[count++] = @"-u";
+		options[count++] = @"--xml";
 
-		if (showUpdates_)
-		{
-			[options addObject:@"-u"];
-		}
-
-		[options addObject:@"--xml"];
-		
-		[MySvn    statusAtWorkingCopyPath: [self workingCopyPath]
-						   generalOptions: [self svnOptionsInvocation]
-								  options: options
-								 callback: MakeCallbackInvocation(self, @selector(svnStatusCompletedCallback:))
-							 callbackInfo: nil
-								 taskInfo: [self documentNameDict]];
+		[MySvn statusAtWorkingCopyPath: [self workingCopyPath]
+						generalOptions: [self svnOptionsInvocation]
+							   options: [NSArray arrayWithObjects: options count: count]
+							  callback: MakeCallbackInvocation(self, @selector(svnStatusCompletedCallback:))
+						  callbackInfo: nil
+							  taskInfo: [self documentNameDict]];
 	}
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) fetchSvnStatusVerbose
 {
@@ -888,7 +879,9 @@ svnInfoReceiver (void*       baton,
 {
     NSError* err = nil;
 	NSXMLDocument* xmlDoc = [[NSXMLDocument alloc] initWithXMLString: xmlString
-												   options: NSXMLDocumentTidyXML error: &err];
+															 options: NSXMLNodeOptionsNone error: &err];
+	if (xmlDoc == nil)
+		xmlDoc = [[NSXMLDocument alloc] initWithXMLString: xmlString options: NSXMLDocumentTidyXML error: &err];
 
 	if (err)
 		NSLog(@"Error parsing xml %@", err);
@@ -896,9 +889,11 @@ svnInfoReceiver (void*       baton,
 	if (xmlDoc == nil)
         return;
 
-	NSMutableArray *newSvnFiles = [NSMutableArray arrayWithCapacity: 100];
-	NSMutableArray* const rootChildren = [NSMutableArray array];
-	WCTreeEntry* outlineDirs = [WCTreeEntry create: rootChildren
+	NSMutableArray* const newSvnFiles = [NSMutableArray arrayWithCapacity: 100];
+	const BOOL kFlatMode = [self flatMode];
+	NSMutableArray* const rootChildren = kFlatMode ? nil : [NSMutableArray array];
+	WCTreeEntry* const outlineDirs =
+			 kFlatMode ? nil : [WCTreeEntry create: rootChildren
 											  name: [workingCopyPath lastPathComponent]
 											  path: @""
 											  icon: nil];
@@ -919,8 +914,7 @@ svnInfoReceiver (void*       baton,
 	const int targetPathLength = [targetPath length];
 	NSWorkspace* const workspace = [NSWorkspace sharedWorkspace];
 	NSFileManager* const fileManager = [NSFileManager defaultManager];
-	const BOOL kFlatMode    = [self flatMode],
-			   kShowUpdates = showUpdates;
+	const BOOL kShowUpdates = showUpdates;
 	const NSSize kIconSize = { 16, 16 };
 	NSString* const kCurrentDir = @".";
 
@@ -1294,9 +1288,10 @@ svnInfoReceiver (void*       baton,
 									nil]];
 	}
 	[pool release];
+	[xmlDoc release];
 
-	[self setSvnDirectories: outlineDirs];
-	[outlineDirs release];
+	if (outlineDirs)
+		[self setSvnDirectories: outlineDirs];
 	[self setSvnFiles: newSvnFiles];
 }
 
@@ -1366,12 +1361,12 @@ svnInfoReceiver (void*       baton,
 
 - (void) fetchSvnInfoReceiveDataFinished: (NSString*) result
 {
-	NSArray *lines = [result componentsSeparatedByString:@"\n"];
+	NSArray* lines = [result componentsSeparatedByString: @"\n"];
 
 	const int count = [lines count];
 	if (count < 5)
 	{
-		[controller svnError:result];
+		[controller svnError: result];
 	}
 	else
 	{
@@ -1806,9 +1801,12 @@ svnInfoReceiver (void*       baton,
 
 - (void) setSvnDirectories: (WCTreeEntry*) aSvnDirectories
 {
-	id old = [self svnDirectories];
-	svnDirectories = [aSvnDirectories retain];
-	[old release];
+	const id old = svnDirectories;
+	if (aSvnDirectories != old)
+	{
+		svnDirectories = aSvnDirectories;
+		[old release];
+	}
 }
 
 

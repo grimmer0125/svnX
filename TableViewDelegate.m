@@ -103,6 +103,7 @@ helpTagForWCFile (NSDictionary* wcFileInfo)
 		helpTags[7] = [NSDictionary dictionaryWithObjectsAndKeys:
 			@"Item is up-to-date.", @" ",
 			@"A newer revision of the item exists in the repository.", @"*",
+			@"A newer revision of the item exists in the repository.", @"M",
 			nil];
 
 		helpTags[8] = [NSDictionary dictionaryWithObjectsAndKeys:

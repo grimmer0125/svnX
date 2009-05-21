@@ -89,35 +89,29 @@ SvnDoReport (SvnError err)
 BOOL
 SvnInitialize ()
 {
-#ifndef SVN_LIBS
-	#define	SVN_LIBS	/opt/subversion/lib
-#endif
-#define	STR_STR(s)			#s
-#define	APR_LIB_PATH(dir)	(@"" STR_STR(dir) "/libapr-1.0.dylib")
-	NSString* const apr_lib_path = APR_LIB_PATH(SVN_LIBS);
-#undef	APR_LIB_PATH
-#undef	STR_STR
 	static BOOL inited = FALSE, exists = FALSE;
+	#define	VERS(a,b,c)		((a) * 1000000 + (b) * 1000 + (c))
+	const UInt32 kMinVersion = VERS(1,4,0), kMaxVersion = VERS(1,999,999);
+	const UInt32 svnVersion = [[NSApp delegate] svnVersionNum];
 
-	if (!inited)
+	if (svnVersion < kMinVersion || svnVersion > kMaxVersion)
+	{
+	//	dprintf("svnVersion=%u => FALSE", svnVersion);
+		return FALSE;
+	}
+	else if (!inited)
 	{
 		inited = TRUE;
+		// NOTE: Can't use the funcs directly in the following if as it crashes!
 		const intptr_t fn1 = (intptr_t) svn_fs_initialize,
 					   fn2 = (intptr_t) apr_initialize,
 					   fn3 = (intptr_t) svn_ver_check_list;
 
-	#if qDebug
-		if (![[NSFileManager defaultManager] fileExistsAtPath: apr_lib_path])
-			dprintf("missing lib '%s'", [apr_lib_path UTF8String]);
-	#endif
 		// Initialize the APR & SVN libraries.
-		if (fn1 != 0 && fn2 != 0 && fn3 != 0 &&
-			[[NSFileManager defaultManager] fileExistsAtPath: apr_lib_path])
+		if (fn1 != 0 && fn2 != 0 && fn3 != 0)
 		{
-		#if 0
-			setenv("LC_ALL", "en_GB.UTF-8", 1);
-			exists = (svn_cmdline_init(kAppName, qDebug ? stderr : NULL) == EXIT_SUCCESS);
-		#elif 1
+		//	setenv("LC_ALL", "en_GB.UTF-8", 1);
+		//	exists = (svn_cmdline_init(kAppName, qDebug ? stderr : NULL) == EXIT_SUCCESS);
 			NSLocale* locale = [NSLocale currentLocale];
 			char buf[32];
 			if (ToUTF8([NSString stringWithFormat: @"%@_%@.UTF-8",
@@ -138,27 +132,28 @@ SvnInitialize ()
 						{ NULL, NULL }
 					};
 
-				//	SVN_VERSION_DEFINE(my_version);
-					const UInt32 version = [[NSApp delegate] svnVersionNum];
-					const svn_version_t my_version = {
-						version / 1000000, (version / 1000) % 1000, version % 1000, ""
-					};
+					SVN_VERSION_DEFINE(myV);
+					Assert(kMinVersion <= VERS(myV.major, myV.minor, myV.patch));
+					Assert(kMaxVersion >= VERS(myV.major, myV.minor, myV.patch));
 
-					SvnError err = svn_ver_check_list(&my_version, checklist);
+					SvnError err = svn_ver_check_list(&myV, checklist);
 					exists = (err == NULL);
+				//	dprintf("myVersion=%u.%u.%u hasLib=%d", myV.major, myV.minor, myV.patch, exists);
 				#if qDebug
 					if (err)
 						DbgSvnPrint(err);
 				#endif
 				}
 				else
-					dprintf("lapr_initialize() != APR_SUCCESS", 0);
+					dprintf("apr_initialize() != APR_SUCCESS", 0);
 			}
-		#endif
 		}
 		if (!exists)
-			dprintf("svn_fs_initialize=0x%X apr_initialize=0x%X", fn1, fn2);
+			dprintf("svn_fs_initialize=0x%X apr_initialize=0x%X svn_ver_check_list=0x%X",
+					fn1, fn2, fn3);
 	}
+	//dprintf("svnVersion=%u => hasLib=%d", svnVersion, exists);
+	#undef	VERS
 
 	return exists;
 }

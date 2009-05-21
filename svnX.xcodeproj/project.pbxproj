@@ -779,7 +779,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"$APR_SVN\"\nif [ \"$APR_SVN.c\" -nt libapr.dylib ]; then\n\tLIBS=\"svn_client svn_subr svn_fs apr\" # svn_wc\n\n\tfunction CC () {\n\t#\techo \"  <$1> <$2>\"\n\t\tgcc -Iapr -iquotesvn -dynamiclib -nodefaultlibs -arch ${2} -install_name \\\n\t\t\t\"$SVN_LIBS/lib${1}-1.0.dylib\" -o lib${1}.${2} -DLIB_${1} \"$APR_SVN.c\"\n\t}\n\n\tfor LIB in $LIBS; {\n\t\techo \"Making $LIB\"\n\t\tCC \"$LIB\" 'ppc'\n\t\tCC \"$LIB\" 'i386'\n\t\tlipo -create lib${LIB}.ppc lib${LIB}.i386 -output lib${LIB}.dylib\n\t\trm lib${LIB}.ppc lib${LIB}.i386\n\t}\nfi\n";
+			shellScript = "cd \"$APR_SVN\"\nLIBS=\"svn_client svn_subr svn_fs apr\" # svn_wc\nif [ \"$APR_SVN.c\" -nt libapr.dylib ]; then\n\tfunction CC () {\n\t#\techo \"  <$1> <$2>\"\n\t\tgcc -Iapr -iquotesvn -dynamiclib -nodefaultlibs -arch ${2} -install_name \\\n\t\t\t\"@executable_path/../Frameworks/lib${1}.dylib\" -o lib${1}.${2} -DLIB_${1} \"$APR_SVN.c\"\n\t}\n\n\tfor LIB in $LIBS; {\n\t\techo \"Making $LIB\"\n\t\tCC \"$LIB\" 'ppc'\n\t\tCC \"$LIB\" 'i386'\n\t\tlipo -create lib${LIB}.ppc lib${LIB}.i386 -output lib${LIB}.dylib\n\t\trm lib${LIB}.ppc lib${LIB}.i386\n\t}\nfi\n\ncd \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/\"\nfor LIB in $LIBS; {\n\tln -sf \"$SVN_LIBS/lib${LIB}-1.0.dylib\" lib${LIB}.dylib\n}\n";
 		};
 		83F834E20D9DC42600AA13B1 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -805,7 +805,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#echo \"Patching Sparkle\"\ncd sparkle\n#patch -Np0 < ../fixSUUpdater.patch\necho \"Building Sparkle\"\nxcodebuild\ncd ..\n";
+			shellScript = "if [ -e \"$SRCROOT/sparkle/Sparkle.xcodeproj\" ]; then\n\tcd $SRCROOT/sparkle\n#\techo \"Patching Sparkle\"\n#\tpatch -Np0 < ../fixSUUpdater.patch\n\techo \"Building Sparkle\"\n\txcodebuild\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -939,7 +939,6 @@
 					"qDebug=0",
 					NDEBUG,
 				);
-				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = "SVN_LIBS=$SVN_LIBS";
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
@@ -991,7 +990,6 @@
 					$APP_NAME,
 					"qDebug=1",
 				);
-				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = "SVN_LIBS=$SVN_LIBS";
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;

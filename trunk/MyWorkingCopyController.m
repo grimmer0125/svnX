@@ -1738,26 +1738,58 @@ enum {
 #pragma mark	Common Methods
 //----------------------------------------------------------------------------------------
 
+- (NSString*) messageTextForCommand: (NSDictionary*) command
+{
+	NSString* const verb = [command objectForKey: @"verb"];
+	NSArray* const selection = [svnFilesAC selectedObjects];
+	const int count = [selection count];
+
+	if (count == 1)
+		return [NSString stringWithFormat: @"Are you sure you want to %@ the item %C%@%C?",
+							verb, 0x201C, [[selection lastObject] objectForKey: @"displayPath"], 0x201D];
+
+	return [NSString stringWithFormat: @"Are you sure you want to %@ the %u selected items?", verb, count];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (NSString*) infoTextForCommand: (NSString*) cmd
+{
+	if ([cmd isEqualToString: @"remove"])
+	{
+		NSArray* const selection = [svnFilesAC selectedObjects];
+		if ([[selection valueForKey: @"addable"    ] containsObject: kNSTrue] ||
+			[[selection valueForKey: @"committable"] containsObject: kNSTrue])
+		{
+			return @"WARNING: Removing modified or unversioned files may result in loss of data.";
+		}
+	}
+
+	return @"";
+}
+
+
+//----------------------------------------------------------------------------------------
+
 - (void) runAlertBeforePerformingAction: (NSDictionary*) command
 {
-	NSString* cmd = [command objectForKey: @"command"];
+	NSString* const cmd = [command objectForKey: @"command"];
 	if ([cmd isEqualToString: @"commit"])
 	{
 		[self startCommitMessage: @"selected"];
 	}
 	else
 	{
-		NSString* message = [NSString stringWithFormat: @"Are you sure you want to %@ the selected items?",
-														[command objectForKey: @"verb"]];
-		NSAlert* alert = [NSAlert alertWithMessageText: message
+		NSAlert* alert = [NSAlert alertWithMessageText: [self messageTextForCommand: command]
 										 defaultButton: @"OK"
 									   alternateButton: @"Cancel"
 										   otherButton: nil
-							 informativeTextWithFormat: @""];
+							 informativeTextWithFormat: [self infoTextForCommand: cmd]];
 
 		// Add recursive checkbox if supported by command:
 		// TO_DO: (possibly) check for folder
-		bool isDefaultRecursive = supportsNonRecursiveFlag(cmd);
+		const BOOL isDefaultRecursive = supportsNonRecursiveFlag(cmd);
 		if (isDefaultRecursive || supportsRecursiveFlag(cmd))
 		{
 			NSButton* recursive = [alert addButtonWithTitle: @"Recursive"];

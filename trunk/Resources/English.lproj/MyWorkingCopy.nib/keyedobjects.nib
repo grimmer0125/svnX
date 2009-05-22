@@ -5606,7 +5606,7 @@
 		<string>addable</string>
 		<string>removable</string>
 		<string>updatable</string>
-		<string>revertable</string>
+		<string>revertible</string>
 		<string>commitable</string>
 		<string>committable</string>
 		<string>renamable</string>
@@ -12287,8 +12287,8 @@
 				<integer>46</integer>
 			</dict>
 		</dict>
-		<string>enabled: selection.revertable</string>
-		<string>selection.revertable</string>
+		<string>enabled: selection.revertible</string>
+		<string>selection.revertible</string>
 		<dict>
 			<key>$class</key>
 			<dict>

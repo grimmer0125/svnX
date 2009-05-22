@@ -483,7 +483,7 @@ GenericFolderImage32 ()
 		addable:				(NSBool)
 		removable:				(NSBool)
 		updatable:				(NSBool)
-		revertable:				(NSBool)
+		revertible:				(NSBool)
 		committable:			(NSBool)
 		resolvable:				(NSBool)
 		lockable:				(NSBool)
@@ -601,14 +601,14 @@ svnStatusReceiver (void*       baton,
 	NSString* const column8 = (prop_status != svn_wc_status_none &&
 							   prop_status != svn_wc_status_normal) ? @"P" : @" ";
 
-	BOOL renamable = NO, addable = NO, removable = NO, updatable = NO, revertable = NO, committable = NO,
+	BOOL renamable = NO, addable = NO, removable = NO, updatable = NO, revertible = NO, committable = NO,
 		 copiable = NO, movable = NO, resolvable = NO, lockable = YES, unlockable = NO;
 
 	if (text_status == svn_wc_status_modified || prop_status == svn_wc_status_modified)
 	{
 		removable = YES;
 		updatable = YES;
-		revertable = YES;
+		revertible = YES;
 		committable = YES;
 	}
 	if (text_status == svn_wc_status_normal)
@@ -622,34 +622,41 @@ svnStatusReceiver (void*       baton,
 	else if (text_status == svn_wc_status_unversioned)
 	{
 		addable = YES;
+		removable = YES;
 		lockable = NO;
 	}
 	else if (text_status == svn_wc_status_missing ||
 			 text_status == svn_wc_status_incomplete)
 	{
-		revertable = YES;
+		revertible = YES;
 		updatable = YES;
 		removable = YES;
 		lockable = NO;			
 	}
-	else if (text_status == svn_wc_status_added || text_status == svn_wc_status_replaced)
+	else if (text_status == svn_wc_status_added ||
+			 text_status == svn_wc_status_replaced)
 	{
-		revertable = YES;
+		revertible = YES;
 		committable = YES;
 		lockable = NO;
 		updatable = YES;
+		removable = YES;
 	}
 	else if (text_status == svn_wc_status_deleted)
 	{
 		if ([env->fileManager fileExistsAtPath: itemFullPath])
 			addable = YES;
-		revertable = YES;
+		revertible = YES;
 		committable = YES;
 		updatable = YES;
 	}
+	else if (text_status == svn_wc_status_obstructed)
+	{
+		revertible = YES;
+	}
 	if (text_status == svn_wc_status_conflicted || prop_status == svn_wc_status_conflicted)
 	{
-		revertable = YES;
+		revertible = YES;
 		resolvable = YES;
 	}
 	if (column6 == kIsLocked)
@@ -701,7 +708,7 @@ svnStatusReceiver (void*       baton,
 									NSBool(addable    ), @"addable",
 									NSBool(removable  ), @"removable",
 									NSBool(updatable  ), @"updatable",
-									NSBool(revertable ), @"revertable",
+									NSBool(revertible ), @"revertible",
 									NSBool(committable), @"committable",
 									NSBool(resolvable ), @"resolvable",
 									NSBool(lockable   ), @"lockable",
@@ -1146,14 +1153,14 @@ svnInfoReceiver (void*       baton,
 			column8 = @"P";
 		}
 		
-		BOOL renamable=NO, addable=NO, removable=NO, updatable=NO, revertable=NO, committable=NO,
+		BOOL renamable=NO, addable=NO, removable=NO, updatable=NO, revertible=NO, committable=NO,
 			 copiable=NO, movable=NO, resolvable=NO, lockable=YES, unlockable=NO;
 
 		if (col1 == 'M' || col2 == 'M')
 		{
 			removable = YES;
 			updatable = YES;
-			revertable = YES;
+			revertible = YES;
 			committable = YES;
 		}
 		if (col1 == ' ')
@@ -1167,34 +1174,39 @@ svnInfoReceiver (void*       baton,
 		else if (col1 == '?')
 		{
 			addable = YES;
-		//	removable = YES;
+			removable = YES;
 			lockable = NO;
 		}
 		else if (col1 == '!')
 		{
-			revertable = YES;
+			revertible = YES;
 			updatable = YES;
 			removable = YES;
 			lockable = NO;			
 		}
 		else if (col1 == 'A' || col1 == 'R')
 		{
-			revertable = YES;
+			revertible = YES;
 			committable = YES;
 			lockable = NO;
 			updatable = YES;
+			removable = YES;
 		}
 		else if (col1 == 'D')
 		{
 			if ([fileManager fileExistsAtPath: itemFullPath])
 				addable = YES;
-			revertable = YES;
+			revertible = YES;
 			committable = YES;
 			updatable = YES;
 		}
+		else if (col1 == '~')	// obstructed
+		{
+			revertible = YES;
+		}
 		if (col1 == 'C'|| col2 == 'C')
 		{
-			revertable = YES;
+			revertible = YES;
 			resolvable = YES;
 		}
 		if ( [column6 isEqualToString:@"K"])
@@ -1279,7 +1291,7 @@ svnInfoReceiver (void*       baton,
 									NSBool(addable    ), @"addable",
 									NSBool(removable  ), @"removable",
 									NSBool(updatable  ), @"updatable",
-									NSBool(revertable ), @"revertable",
+									NSBool(revertible ), @"revertible",
 									NSBool(committable), @"committable",
 									NSBool(resolvable ), @"resolvable",
 									NSBool(lockable   ), @"lockable",

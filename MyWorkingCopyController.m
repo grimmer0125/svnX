@@ -121,6 +121,15 @@ getPathPegRevision (RepoItem* repoItem)
 
 //----------------------------------------------------------------------------------------
 
+static BOOL
+containsLocalizedString (NSString* container, NSString* str)
+{
+	return ([container rangeOfString: NSLocalizedString(str, nil)].location != NSNotFound);
+}
+
+
+//----------------------------------------------------------------------------------------
+
 static NSString*
 WCItemDesc (NSDictionary* item, BOOL isDir)
 {
@@ -688,6 +697,8 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 
 - (void) fetchSvnStatusVerboseReceiveDataFinished
 {
+	if (![window isVisible])
+		return;
 	[self stopProgressIndicator];
 
 //	NSOutlineView* const view = outliner;
@@ -1493,11 +1504,9 @@ enum {
 //----------------------------------------------------------------------------------------
 // Find a suitable target for the merge.
 
-- (NSDictionary*) mergeSheetTarget: (RepoItem*) repoItem dstIsDir: (BOOL*) outIsDir
+- (NSDictionary*) mergeSheetTarget: (RepoItem*) repoItem srcIsDir: (BOOL) srcIsDir
 {
 	Assert(repoItem != nil);
-	const BOOL srcIsDir = [repoItem isDir];
-	*outIsDir = srcIsDir;
 
 	BOOL dstIsDir;
 	NSFileManager* const fileManager = [NSFileManager defaultManager];
@@ -1554,8 +1563,8 @@ enum {
 		if (repoItem == nil)
 			return;
 
-		BOOL isDir;
-		NSString* value = WCItemDesc([self mergeSheetTarget: repoItem dstIsDir: &isDir], isDir);
+		const BOOL isDir = [repoItem isDir];
+		NSString* value = WCItemDesc([self mergeSheetTarget: repoItem srcIsDir: isDir], isDir);
 
 		WSetViewString(mergeSheet, vMergeTarget, value ? value : @"");
 		if (value == nil)	// Source file doesn't match any file in WC
@@ -1603,8 +1612,8 @@ enum {
 		const int kind = SelectedTag(WGetView(sheet, vMergeKind));
 		const bool reverse = (WGetViewInt(sheet, vMergeReverse) == NSOnState);
 
-		BOOL isDir;
-		NSDictionary* targetItem = [self mergeSheetTarget: repoItem1 dstIsDir: &isDir];
+		const BOOL isDir = [repoItem1 isDir];
+		NSDictionary* targetItem = [self mergeSheetTarget: repoItem1 srcIsDir: isDir];
 		Assert(targetItem != nil || isDir);
 		NSString* const targetPath = targetItem ? [targetItem objectForKey: @"fullPath"]
 												: [document workingCopyPath];
@@ -1918,6 +1927,8 @@ enum {
 - (void) doSvnError: (NSString*) errorString
 {
 	Assert(errorString != nil);
+	if (![window isVisible])
+		return;
 	// close any existing sheet that is not an svnError sheet (workaround a "double sheet" effect
 	// that can occur because svn info and svn status are launched simultaneously)
 	if (!isDisplayingErrorSheet && [window attachedSheet] != nil)
@@ -1926,11 +1937,13 @@ enum {
 	svnStatusPending = NO;
  	[self stopProgressIndicator];
 
-	if (!isDisplayingErrorSheet && [window isVisible])
+	if (!isDisplayingErrorSheet)
 	{
-		// Allow user to prevent repeated 'not working copy' & 'client too old' alerts.
-		BOOL canClose = ([errorString rangeOfString: @" is not a working copy"].location != NSNotFound ||
-						 [errorString rangeOfString: @" client is too old"].location != NSNotFound);
+		static UTCTime prevTime = 0;
+		// Allow user to prevent repeated alerts.
+		BOOL canClose = ((CFAbsoluteTimeGetCurrent() - prevTime) < 5.0 ||
+						 containsLocalizedString(errorString, @" is not a working copy") ||
+						 containsLocalizedString(errorString, @" client is too old"));
 		isDisplayingErrorSheet = YES;
 
 		NSAlert* alert = [NSAlert alertWithMessageText: @"Error"
@@ -1944,7 +1957,7 @@ enum {
 		[alert	beginSheetModalForWindow: window
 						   modalDelegate: self
 						  didEndSelector: @selector(svnErrorSheetEnded:returnCode:contextInfo:)
-							 contextInfo: nil];
+							 contextInfo: &prevTime];
 	}
 }
 
@@ -1963,8 +1976,9 @@ enum {
 		 returnCode:         (int)      returnCode
 		 contextInfo:        (void*)    contextInfo
 {
-	#pragma unused(alert, contextInfo)
+	#pragma unused(alert)
 	isDisplayingErrorSheet = NO;
+	*(UTCTime*) contextInfo = CFAbsoluteTimeGetCurrent();
 	if (returnCode == NSAlertAlternateReturn)
 	{
 		suppressAutoRefresh = true;

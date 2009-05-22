@@ -34,7 +34,7 @@ elif [ \( -z "${apps##*CodeWarrior*}" \) -o $DIFF = 'codewarrior' ]; then
 	CODE='CodeWarrior IDE'
 elif [ \( -z "${apps##*TextWrangler*}" \) -o $DIFF = 'textwrangler' ]; then
 	CODE='TextWrangler'
-elif [ \(-z "${apps##*BBEdit*}"\) -o $DIFF = 'bbedit' ]; then
+elif [ \( -z "${apps##*BBEdit*}" \) -o $DIFF = 'bbedit' ]; then
 	CODE='BBEdit'
 elif [ -z "${apps##*TextMate*}" ]; then
 	CODE='TextMate'

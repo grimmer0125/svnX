@@ -428,7 +428,9 @@ GenericFolderImage32 ()
 	[self removeObserver: self forKeyPath: @"flatMode"];
 	[self removeObserver: self forKeyPath: @"filterMode"];
 
-	[controller cleanup];
+	MyWorkingCopyController* con = controller;
+	controller = nil;
+	[con cleanup];
 
 	[super close];
 }

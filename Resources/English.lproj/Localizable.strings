@@ -1,0 +1,6 @@
+/* svnX Localized Strings */
+
+/* Fragments to compare against svn error messages */
+" is not a working copy" = " is not a working copy";
+" client is too old" = " client is too old";
+

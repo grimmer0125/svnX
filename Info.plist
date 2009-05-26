@@ -68,7 +68,7 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>SUFeedURL</key>
-	<string>http://code.google.com/p/svnx/wiki/svnX.rss.xml</string>
+	<string>http://svnx.googlecode.com/svn/wiki/svnX.rss.xml</string>
 	<key>CFBundleName</key>
 	<string>svnX</string>
 	<key>CFBundleShortVersionString</key>

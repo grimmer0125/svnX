@@ -271,7 +271,7 @@ GetDiffAppName ()
 	id additionalTaskInfo = makeTaskInfo(@"svn status", taskLaunchPath, arguments);
 
 	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
-				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: NO];
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: YES];
 }
 
 

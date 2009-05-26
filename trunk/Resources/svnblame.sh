@@ -7,7 +7,7 @@ shift 4
 
 until [ -z "$1" ]
 do
-	name=`"$svn" info "$1" | grep -m 1 '^Name: ' | colrm 1 6`
+	name=`("$svn" info "$1" | grep -m 1 '^Name: ' | colrm 1 6) 2> /dev/null`
 	if [ "${name##*.}" == "$name" ]; then
 		name="${name%.*}-r$revision"
 	else

@@ -255,6 +255,7 @@ GenericFolderImage32 ()
 
 @interface MyWorkingCopy (Private)
 
+	- (void) computesNewVerboseResultArray: (NSData*) xmlData;
 	- (void) setDisplayedTaskObj: (NSMutableDictionary*) aDisplayedTaskObj;
 	- (void) setSvnDirectories:   (WCTreeEntry*)         aSvnDirectories;
 
@@ -839,8 +840,9 @@ svnInfoReceiver (void*       baton,
 			[controller setStatusMessage: nil];
 		}
 	}
-	else
+	else if (!fStatusPending)
 	{
+		fStatusPending = TRUE;
 		showUpdates = showUpdates_;
 		NSString* options[4];
 		int count = 0;
@@ -871,26 +873,33 @@ svnInfoReceiver (void*       baton,
 
 - (void) svnStatusCompletedCallback: (NSMutableDictionary*) taskObj
 {
+	fStatusPending = FALSE;
 	if (isCompleted(taskObj))
 	{
-		[self computesVerboseResultArray: stdOut(taskObj)];
-
+		// Save old svnDirectories because fetchSvnStatusVerboseReceiveDataFinished accesses it!
+		const id oldDirectories = [svnDirectories retain];
+		[controller saveSelection];
+		[self computesNewVerboseResultArray: stdOutData(taskObj)];
+		[controller setStatusMessage: nil];
 		[controller fetchSvnStatusVerboseReceiveDataFinished];
+		[controller restoreSelection];
+		[oldDirectories release];
 	}
 
+	[taskObj removeObjectForKey: @"stdoutData"];
 	[self svnError: taskObj];
 }
 
 
 //----------------------------------------------------------------------------------------
 
-- (void) computesNewVerboseResultArray: (NSString*) xmlString
+- (void) computesNewVerboseResultArray: (NSData*) xmlData
 {
     NSError* err = nil;
-	NSXMLDocument* xmlDoc = [[NSXMLDocument alloc] initWithXMLString: xmlString
-															 options: NSXMLNodeOptionsNone error: &err];
+	NSXMLDocument*
+		xmlDoc = [[NSXMLDocument alloc] initWithData: xmlData options: NSXMLNodeOptionsNone error: &err];
 	if (xmlDoc == nil)
-		xmlDoc = [[NSXMLDocument alloc] initWithXMLString: xmlString options: NSXMLDocumentTidyXML error: &err];
+		xmlDoc = [[NSXMLDocument alloc] initWithData: xmlData options: NSXMLDocumentTidyXML error: &err];
 
 	if (err)
 		NSLog(@"Error parsing xml %@", err);
@@ -1311,25 +1320,15 @@ svnInfoReceiver (void*       baton,
 
 
 //----------------------------------------------------------------------------------------
-
-- (void) computesVerboseResultArray: (NSString*) svnStatusText
-{
-	[controller saveSelection];
-	[self computesNewVerboseResultArray: svnStatusText];
-	[controller setStatusMessage: nil];
-	[controller restoreSelection];
-}
-
-
-//----------------------------------------------------------------------------------------
 #pragma mark	svn info
 //----------------------------------------------------------------------------------------
 
 - (void) fetchSvnInfo
 {
-	if (!useOldParsingMethod())
+	if (fInfoPending || !useOldParsingMethod())
 		return;
 
+	fInfoPending = TRUE;
 	[MySvn    genericCommand: @"info"
 				   arguments: [NSArray arrayWithObject:[self workingCopyPath]]
               generalOptions: [self svnOptionsInvocation]
@@ -1362,6 +1361,7 @@ svnInfoReceiver (void*       baton,
 
 - (void) svnInfoCompletedCallback: (id) taskObj
 {
+	fInfoPending = FALSE;
 	if (isCompleted(taskObj))
 	{
 		[self fetchSvnInfoReceiveDataFinished: stdOut(taskObj)];

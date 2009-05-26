@@ -38,6 +38,7 @@ enum {
 
 	NSMutableDictionary*	displayedTaskObj;
 	struct SvnEnv*			fSvnEnv;		// The svn client environment
+	BOOL					fInfoPending, fStatusPending;
 }
 
 
@@ -58,7 +59,6 @@ enum {
 - (void) diffItems: (NSArray*) items;
 - (void) fetchSvnStatus: (BOOL) showUpdates;
 - (void) fetchSvnInfoReceiveDataFinished: (NSString*) result;
-- (void) computesVerboseResultArray: (NSString*) svnStatusText;
 
 - (void) svnInfo: (const struct svn_info_t*) info
 		 forPath: (const char*)              path;

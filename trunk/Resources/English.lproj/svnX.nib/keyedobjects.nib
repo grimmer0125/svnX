@@ -16839,7 +16839,7 @@
 				<integer>1059</integer>
 			</dict>
 		</dict>
-		<string>Usually “/usr/bin” or “/usr/local/bin”</string>
+		<string>Usually “/usr/bin”, “/usr/local/bin” or “/opt/subversion/bin”</string>
 		<dict>
 			<key>$class</key>
 			<dict>

@@ -89,19 +89,19 @@ SvnDoReport (SvnError err)
 BOOL
 SvnInitialize ()
 {
-	static BOOL inited = FALSE, exists = FALSE;
-	#define	VERS(a,b,c)		((a) * 1000000 + (b) * 1000 + (c))
-	const UInt32 kMinVersion = VERS(1,4,0), kMaxVersion = VERS(1,999,999);
-	const UInt32 svnVersion = [[NSApp delegate] svnVersionNum];
+	#define	VERS_NUM(a,b,c)		((a) * 1000000 + (b) * 1000 + (c))
+	#define	VERS_EQ(v1,v2)		(((v1) / 1) == ((v2) / 1))		// Could be '/ 1000'
+	static UInt32 libVersion = 0;
+	const UInt32 kMinVersion = VERS_NUM(1,4,0), kMaxVersion = VERS_NUM(1,999,999);
+	const UInt32 toolVersion = [[NSApp delegate] svnVersionNum];
 
-	if (svnVersion < kMinVersion || svnVersion > kMaxVersion)
+	if (toolVersion < kMinVersion || toolVersion > kMaxVersion)
 	{
-	//	dprintf("svnVersion=%u => FALSE", svnVersion);
+	//	dprintf("toolVersion=%u => FALSE", toolVersion);
 		return FALSE;
 	}
-	else if (!inited)
+	else if (!libVersion)
 	{
-		inited = TRUE;
 		// NOTE: Can't use the funcs directly in the following if as it crashes!
 		const intptr_t fn1 = (intptr_t) svn_fs_initialize,
 					   fn2 = (intptr_t) apr_initialize,
@@ -110,8 +110,6 @@ SvnInitialize ()
 		// Initialize the APR & SVN libraries.
 		if (fn1 != 0 && fn2 != 0 && fn3 != 0)
 		{
-		//	setenv("LC_ALL", "en_GB.UTF-8", 1);
-		//	exists = (svn_cmdline_init(kAppName, qDebug ? stderr : NULL) == EXIT_SUCCESS);
 			NSLocale* locale = [NSLocale currentLocale];
 			char buf[32];
 			if (ToUTF8([NSString stringWithFormat: @"%@_%@.UTF-8",
@@ -133,12 +131,18 @@ SvnInitialize ()
 					};
 
 					SVN_VERSION_DEFINE(myV);
-					Assert(kMinVersion <= VERS(myV.major, myV.minor, myV.patch));
-					Assert(kMaxVersion >= VERS(myV.major, myV.minor, myV.patch));
+					Assert(kMinVersion <= VERS_NUM(myV.major, myV.minor, myV.patch));
+					Assert(kMaxVersion >= VERS_NUM(myV.major, myV.minor, myV.patch));
 
 					SvnError err = svn_ver_check_list(&myV, checklist);
-					exists = (err == NULL);
-				//	dprintf("myVersion=%u.%u.%u hasLib=%d", myV.major, myV.minor, myV.patch, exists);
+					if (err == NULL)
+					{
+						const svn_version_t* libV = svn_client_version();
+						if (libV != NULL)
+							libVersion = VERS_NUM(libV->major, libV->minor, libV->patch);
+					}
+				//	dprintf("myVersion=%u.%u.%u hasLib=%d",
+				//			myV.major, myV.minor, myV.patch, VERS_EQ(libVersion, toolVersion));
 				#if qDebug
 					if (err)
 						DbgSvnPrint(err);
@@ -148,14 +152,15 @@ SvnInitialize ()
 					dprintf("apr_initialize() != APR_SUCCESS", 0);
 			}
 		}
-		if (!exists)
-			dprintf("svn_fs_initialize=0x%X apr_initialize=0x%X svn_ver_check_list=0x%X",
-					fn1, fn2, fn3);
+		else
+			dprintf("svn_fs_initialize=0x%X apr_initialize=0x%X svn_ver_check_list=0x%X", fn1, fn2, fn3);
+		if (!libVersion)
+			libVersion = VERS_NUM(0,0,1);
 	}
-	//dprintf("svnVersion=%u => hasLib=%d", svnVersion, exists);
-	#undef	VERS
+	//dprintf("toolVersion=%u libVersion=%u => hasLib=%d",
+	//		toolVersion, libVersion, VERS_EQ(libVersion, toolVersion));
 
-	return exists;
+	return VERS_EQ(libVersion, toolVersion);
 }
 
 

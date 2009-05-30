@@ -167,6 +167,14 @@ addTransform (Class itsClass, NSString* itsName)
 
 //----------------------------------------------------------------------------------------
 
+- (BOOL) checkSVNExistence
+{
+	return [self checkSVNExistence: TRUE];
+}
+
+
+//----------------------------------------------------------------------------------------
+
 - (void) applicationWillFinishLaunching: (NSNotification*) note
 {
 	#pragma unused(note)
@@ -276,7 +284,7 @@ addTransform (Class itsClass, NSString* itsName)
 	if (sender == preferencesWindow)
 	{
 		[sender makeFirstResponder: sender];
-		[self performSelector: @selector(checkSVNExistence:) withObject: kNSTrue afterDelay: 0];
+		[self performSelector: @selector(checkSVNExistence) withObject: nil afterDelay: 0];
 	}
 	return YES;
 }

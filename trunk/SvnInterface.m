@@ -89,6 +89,11 @@ SvnDoReport (SvnError err)
 BOOL
 SvnInitialize ()
 {
+	extern apr_status_t apr_initialize(void) WEAK_IMPORT_ATTRIBUTE;
+	extern svn_error_t* svn_fs_initialize(apr_pool_t* pool) WEAK_IMPORT_ATTRIBUTE;
+	extern svn_error_t* svn_ver_check_list(const svn_version_t* my_version,
+								const svn_version_checklist_t* checklist) WEAK_IMPORT_ATTRIBUTE;
+
 	#define	VERS_NUM(a,b,c)		((a) * 1000000 + (b) * 1000 + (c))
 	#define	VERS_EQ(v1,v2)		(((v1) / 1) == ((v2) / 1))		// Could be '/ 1000'
 	static UInt32 libVersion = 0;
@@ -102,13 +107,8 @@ SvnInitialize ()
 	}
 	else if (!libVersion)
 	{
-		// NOTE: Can't use the funcs directly in the following if as it crashes!
-		const intptr_t fn1 = (intptr_t) svn_fs_initialize,
-					   fn2 = (intptr_t) apr_initialize,
-					   fn3 = (intptr_t) svn_ver_check_list;
-
 		// Initialize the APR & SVN libraries.
-		if (fn1 != 0 && fn2 != 0 && fn3 != 0)
+		if (apr_initialize != NULL && svn_fs_initialize != NULL && svn_ver_check_list != NULL)
 		{
 			NSLocale* locale = [NSLocale currentLocale];
 			char buf[32];
@@ -153,7 +153,8 @@ SvnInitialize ()
 			}
 		}
 		else
-			dprintf("svn_fs_initialize=0x%X apr_initialize=0x%X svn_ver_check_list=0x%X", fn1, fn2, fn3);
+			dprintf("apr_initialize=0x%lX svn_fs_initialize=0x%lX svn_ver_check_list=0x%lX",
+					apr_initialize, svn_fs_initialize, svn_ver_check_list);
 		if (!libVersion)
 			libVersion = VERS_NUM(0,0,1);
 	}

@@ -6,6 +6,7 @@
 #import "NSString+MyAdditions.h"
 #import "AppKit/NSGraphicsContext.h"
 #import "CommonUtils.h"
+#import "ReviewCommit.h"
 #import "SvnInterface.h"
 
 
@@ -420,6 +421,15 @@ GenericFolderImage32 ()
 
 //----------------------------------------------------------------------------------------
 
+- (void) refreshSubController
+{
+	for_each(en, it, subControllers)
+		[it buildFileList];
+}
+
+
+//----------------------------------------------------------------------------------------
+
 - (void) close
 {
 	// tell the task center to cancel pending callbacks to prevent crash
@@ -826,6 +836,7 @@ svnInfoReceiver (void*       baton,
 		@try
 		{
 			[self svnDoStatus: showUpdates_ pool: pool];
+			[self refreshSubController];
 		}
 		@catch (SvnException* ex)
 		{
@@ -884,6 +895,7 @@ svnInfoReceiver (void*       baton,
 		[controller fetchSvnStatusVerboseReceiveDataFinished];
 		[controller restoreSelection];
 		[oldDirectories release];
+		[self refreshSubController];
 	}
 
 	[taskObj removeObjectForKey: @"stdoutData"];

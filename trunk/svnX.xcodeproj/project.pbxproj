@@ -809,7 +809,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ -e \"$SRCROOT/sparkle/Sparkle.xcodeproj\" ]; then\n\tcd $SRCROOT/sparkle\n#\techo \"Patching Sparkle\"\n#\tpatch -Np0 < ../fixSUUpdater.patch\n\techo \"Building Sparkle\"\n\txcodebuild\nfi\n";
+			shellScript = "if [ -e \"$SRCROOT/sparkle/Sparkle.xcodeproj\" ]; then\n\tcd $SRCROOT/sparkle\n\techo \"Patching Sparkle\"\n\tpatch -Np0 < ../fixSUUpdater.patch\n\techo \"Building Sparkle\"\n\txcodebuild\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

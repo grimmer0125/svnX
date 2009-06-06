@@ -572,7 +572,11 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 	enum { kUpdate = 2, kReview = 8 };
 	if (action == kReview)
 	{
-		[ReviewController performSelector: @selector(openForDocument:) withObject: document afterDelay: 0];
+		const id subController = [document anySubController];
+		if (subController == nil || AltOrShiftPressed())
+			[ReviewController performSelector: @selector(openForDocument:) withObject: document afterDelay: 0];
+		else if (subController)
+			[[subController window] makeKeyAndOrderFront: self];
 	}
 	else if (action == kUpdate && AltOrShiftPressed())
 	{

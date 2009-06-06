@@ -136,7 +136,7 @@ compareTemplateNames (id obj1, id obj2, void* context)
 
 - (NSString*) name
 {
-	return [fItem objectForKey: @"displayPath"];
+	return [fItem objectForKey: @"path"];
 }
 
 
@@ -302,6 +302,14 @@ enum {
 	[self setCommitFileCount: commitFileCount];
 	if (!commitDefault)
 		[self displaySelectedFileDiff];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) buildFileList
+{
+	[self buildFileList: NO];
 }
 
 
@@ -476,8 +484,6 @@ enum {
 {
 	#pragma unused(sender)
 	[fDocument svnRefresh];
-	// TO_DO: with only works because the new refresh is synchronus (the old one isn't)
-	[self buildFileList: NO];
 }
 
 
@@ -1200,7 +1206,7 @@ enum {
 	{
 		NSDictionary* item = [[fFiles objectAtIndex: rowIndex] item];
 		[aCell setImage: [item objectForKey: @"icon"]];
-		[aCell setTitle: [item objectForKey: @"displayPath"]];
+		[aCell setTitle: [item objectForKey: @"path"]];
 	}
 //	else
 //		NSLog(@"willDisplayCell: col=%@ row=%d", [aTableColumn identifier], rowIndex);

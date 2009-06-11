@@ -888,13 +888,11 @@ svnInfoReceiver (void*       baton,
 	if (isCompleted(taskObj))
 	{
 		// Save old svnDirectories because fetchSvnStatusVerboseReceiveDataFinished accesses it!
-		const id oldDirectories = [svnDirectories retain];
 		[controller saveSelection];
 		[self computesNewVerboseResultArray: stdOutData(taskObj)];
 		[controller setStatusMessage: nil];
 		[controller fetchSvnStatusVerboseReceiveDataFinished];
 		[controller restoreSelection];
-		[oldDirectories release];
 		[self refreshSubController];
 	}
 
@@ -1831,7 +1829,7 @@ svnInfoReceiver (void*       baton,
 	if (aSvnDirectories != old)
 	{
 		svnDirectories = aSvnDirectories;
-		[old release];
+		[old autorelease];
 	}
 }
 

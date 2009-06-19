@@ -282,7 +282,9 @@ static int gLogLevel = kLogLevelAll;
 
 	[taskObj setValue:[NSMutableData data] forKey:@"stdoutData"];	// row stdout data
 
-	[taskObj setValue:[[NSMutableAttributedString alloc] initWithString:@"" attributes:gTextStyleStd] forKey:@"combinedLog"];
+	const id combinedLog = [[NSMutableAttributedString alloc] initWithString: @"" attributes: gTextStyleStd];
+	[taskObj setValue:combinedLog forKey:@"combinedLog"];
+	[combinedLog release];
 
 	[taskObj setValue: kNSTrue forKey: @"canBeKilled"];
 	[taskObj setObject:[[[NSLock alloc] init] autorelease] forKey:@"lock"];

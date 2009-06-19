@@ -23,7 +23,7 @@
 
 - (void) dealloc
 {
-//	NSLog(@"dealloc svn view");
+//	dprintf("0x%X", self);
 
     [self setPendingTask: nil]; 
     [self setUrl: nil]; 
@@ -36,20 +36,17 @@
 
 - (void) unload
 {
-//	dprintf("0x%X", self);
+//	dprintf("%@ 0x%X->refs=%d", [self className], self, [self retainCount]);
 	// tell the task center to cancel pending callbacks to prevent crash
-	[[Tasks sharedInstance] cancelCallbacksOnTarget:self];
+	[[Tasks sharedInstance] cancelCallbacksOnTarget: self];
 
 	[self setPendingTask: nil]; 
-//	[self setUrl: nil]; 
-//	[self setRevision: nil]; 
-
 	[fView release];	// the nib is responsible for releasing its top-level objects
+	fView = nil;
 
-	// these objects are bound to the file owner and retain it
-	// we need to unbind them 
-	[progress unbind:@"animate"];		// -> self retainCount -1
-	[refetch unbind:@"value"];		// -> self retainCount -1
+	// Unbind objects that are bound to the NIB file's owner
+	[progress unbind: NSAnimateBinding];
+	[refetch  unbind: NSValueBinding];
 }
 
 

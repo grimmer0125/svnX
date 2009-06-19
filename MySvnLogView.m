@@ -179,7 +179,6 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 
 - (void) dealloc
 {
-//	NSLog(@"dealloc logview");
 	[self setPath: nil];
 
 	[self setLogArray: nil];
@@ -198,9 +197,11 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 	[logsAC release];
 	[logsACSelection release];
 
-	// these objects are bound to the file owner and retain it
-	// we need to unbind them 
-	[logsAC unbind: @"contentArray"];	// -> self retainCount -1
+	// Unbind objects that are bound to the NIB file's owner
+	id advancedBtn = [[fView subviews] objectAtIndex: 0];
+	AssertClass(advancedBtn, NSButton);
+	[logsAC      unbind: NSContentArrayBinding];
+	[advancedBtn unbind: NSValueBinding];
 	
 	[super unload];
 }

@@ -128,6 +128,7 @@
 	// the owner has to release its top level nib objects 
 	[svnSheet release];
 	[objectController release];
+	[arrayController  release];
 
 	[self release];
 }

@@ -104,6 +104,7 @@ addTransform (Class itsClass, NSString* itsName)
 
 	[Preferences() registerDefaults: dictionary];
 	[[NSUserDefaultsController sharedUserDefaultsController] setInitialValues: dictionary];
+	[SvnFileStatusToColourTransformer update];
 
 	// Transformers																		// Used by:
 	addTransform([SvnFileStatusToColourTransformer class], @"FileStatusToColor");		// MyWorkingCopy

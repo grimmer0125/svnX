@@ -3,8 +3,7 @@
 #import "CommonUtils.h"
 
 
-enum FileStatusColor { kColorModified = 0, kColorNew, kColorMissing, kColorConflict };
-typedef enum FileStatusColor FileStatusColor;
+typedef enum { kColorModified = 0, kColorNew, kColorMissing, kColorConflict } FileStatusColor;
 
 static NSColor* gColors[4] = { nil };
 static NSString* const gKeys[4] = {
@@ -49,13 +48,8 @@ static NSString* const gKeys[4] = {
 
 //----------------------------------------------------------------------------------------
 
-+ (void) observeValueForKeyPath: (NSString*)     keyPath
-		 ofObject:               (id)            object
-		 change:                 (NSDictionary*) change
-		 context:                (void*)         context
++ (void) update: (unsigned int) color
 {
-	#pragma unused(keyPath, object, change)
-	unsigned int color = (unsigned int) context;
 	Assert(color <= kColorConflict);
 	id data = GetPreference(gKeys[color]);
 
@@ -64,6 +58,27 @@ static NSString* const gKeys[4] = {
 		[gColors[color] release];
 		gColors[color] = [[NSUnarchiver unarchiveObjectWithData: data] retain];
 	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
++ (void) update
+{
+	for (unsigned int color = kColorModified; color <= kColorConflict; ++color)
+		[self update: color];
+}
+
+
+//----------------------------------------------------------------------------------------
+
++ (void) observeValueForKeyPath: (NSString*)     keyPath
+		 ofObject:               (id)            object
+		 change:                 (NSDictionary*) change
+		 context:                (void*)         context
+{
+	#pragma unused(keyPath, object, change)
+	[self update: (unsigned int) context];
 }
 
 

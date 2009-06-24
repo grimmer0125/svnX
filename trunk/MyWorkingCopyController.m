@@ -428,7 +428,7 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 			}
 		}
 	}
-	else if (ch >= ' ')
+	else if (ch >= ' ' && ch < 0xF700)
 	{
 		NSTableView* const tableView = tableResult;
 		NSArray* const dataArray = [svnFilesAC arrangedObjects];

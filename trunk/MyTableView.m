@@ -33,6 +33,8 @@
 //	NSLog(@"keyCode=0x%X", [theEvent keyCode]);
 	switch ([theEvent keyCode])
 	{
+		case 0x74:	// Page Up
+		case 0x79:	// Page Down
 		case 0x7E:	// Up
 		case 0x7D:	// Down
 			[super keyDown: theEvent];

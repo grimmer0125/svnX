@@ -1590,6 +1590,11 @@ enum {
 
 - (void) svnCommand_InfoCompleted: (id) taskObj
 {
+	if (!SvnWantAndHave() && isCompleted(taskObj))
+	{
+		[self fetchSvnInfoReceiveDataFinished: stdOut(taskObj)];
+	}
+
 	if (fHeadRevision > fLogRevision)
 	{
 		[self fetchSvnLog: @selector(svnCommand_LogCompleted:)];

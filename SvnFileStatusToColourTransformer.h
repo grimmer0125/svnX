@@ -6,6 +6,7 @@
 }
 
 + (void) initialize: (NSMutableDictionary*) prefs;
++ (void) update;
 
 @end
 

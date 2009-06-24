@@ -83,7 +83,7 @@
 				 proposedChildIndex: (int)                childIndex
 {
 	#pragma unused(outlineView, item)
-	if (childIndex != -1)
+	if (childIndex != -1 || [sender draggingSource] != [controller valueForKey: @"tableResult"])
 		return NSDragOperationNone;		// childIndex = -1 : inside the folder
 
 	// we want to return the correct mask in order to let the system show the appropriate "drag icon"

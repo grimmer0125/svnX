@@ -611,8 +611,7 @@ svnStatusReceiver (void*       baton,
 	NSString* const column7 = SvnStatusToString(repos_status);
 
 	// COLUMN 8
-	NSString* const column8 = (prop_status != svn_wc_status_none &&
-							   prop_status != svn_wc_status_normal) ? @"P" : @" ";
+	NSString* const column8 = (prop_status == svn_wc_status_normal) ? @"P" : SvnStatusToString(prop_status);
 
 	BOOL renamable = NO, addable = NO, removable = NO, updatable = NO, revertible = NO, committable = NO,
 		 copiable = NO, movable = NO, resolvable = NO, lockable = YES, unlockable = NO;
@@ -1168,8 +1167,7 @@ svnInfoReceiver (void*       baton,
 		}
 		
 		// COLUMN 8
-		if (!(propStatusCh0 == 0 || (propStatusCh0 == 'n' &&
-									 ([propStatus isEqualToString: @"none"] || [propStatus isEqualToString: @"normal"]))))
+		if (propStatusCh0 != 0 && (propStatusCh0 != 'n' || ![propStatus isEqualToString: @"none"]))
 		{
 			column8 = @"P";
 		}

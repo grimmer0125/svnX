@@ -41,7 +41,7 @@
 		 options:    (NSInvocation*) options
 		 sourceItem: (RepoItem*)     sourceItem
 {
-//	dprintf("(url=<%@> sourceItem=%@) objectController=0x%X", url, sourceItem, objectController);
+//	dprintf("(url=<%@> sourceItem=%@) revision=%@ modRev=%@", url, sourceItem, [sourceItem revision], [sourceItem modRev]);
 	[svnLogView setPath: [url absoluteString]];
 	[objectController setValue: url forKeyPath: @"content.itemUrl"];
 	[self setupWithOptions: options
@@ -129,6 +129,12 @@
 - (void) comparePath:   (NSString*) path
 		 toWorkingCopy: (BOOL)      toWorkingCopy
 {
+	// Block the button's action if the list is currently unpopulated.
+	if ([svnLogView selectedRevision] == nil || [svnLogView currentRevision] == nil)
+	{
+		NSBeep();
+		return;
+	}
 	id revOption = [NSString stringWithFormat:
 						toWorkingCopy ? @"-r%@"			// Compare selected to working copy
 									  : @"-r%@:%@",		// Compare selected to marked

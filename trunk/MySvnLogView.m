@@ -336,6 +336,9 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 		 pegRevision: (NSString*)     pegRev
 		 callback:    (NSInvocation*) callback
 {
+//	dprintf("(aPath='%@' pegRev=%@) fRevision=%@", aPath, pegRev, fRevision);
+	if (pegRev == nil)
+		pegRev = fRevision;
 	if (pegRev)
 		aPath = PathPegRevision(aPath, pegRev);
 	else

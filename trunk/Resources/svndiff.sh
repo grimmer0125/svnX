@@ -1,13 +1,6 @@
 #!/bin/sh
 
-#echo "svndiff @=[$@]" >> /tmp/app.txt
-#echo "
-#svndiff
-#	$1
-#	$2 '$3'
-#	$4 '$5'
-#	$6
-#	$7" >> /tmp/app.txt
+#echo -e "\nsvndiff '$1'\n\t$2 '$3'\n\t$4 '$5'\n\t$6\n\t$7" >> /tmp/app.txt
 
 get_ext()
 {
@@ -22,33 +15,28 @@ get_ext()
 # opendiff had a chance to open it...
 
 get_ext "$3"; file1="/tmp/svnx-$$-diff1.$r"
-cp -f "$6" $file1
+cp -f "$6" "$file1"
 
 # Sometimes, svn diff wants us to diff from a tmp file. (don't know why)
 # We want to diff the real working copy file.
 
-tmpFileFlag=`echo "$7" | sed -E 's/.*svndiff(\.[0-9]+)?\.tmp$/1/'`
+tmpFileFlag=`echo "$7" | sed -E 's/.*\/(tempfile|svndiff)(\.[0-9]+)?\.tmp$/1/'`
 if [ "$tmpFileFlag" == '1' ]; then
 	f=`echo "$5" | sed -E 's/(.*)	\(working copy\)$/\1/'`
 else
 	f=`echo "$7" | sed -e 's/\.svn\/tmp\/\(.*\)\.tmp$/\1/'`
 fi
 
-name="$5"
-isWorkingCopy="${name/*(working copy)/1}"
+isWorkingCopy="${5/*(working copy)/1}"
 isWorkingCopy="${isWorkingCopy/[!1]*/}"
-
 if [ $isWorkingCopy ]; then
-	file2=$f
+	file2="$f"
 else
 	get_ext "$5"; file2="/tmp/svnx-$$-diff2.$r"
-	cp -f "$7" $file2
+	cp -f "$7" "$file2"
 fi
 
-#echo "  isWorkingCopy='$isWorkingCopy'  tmpFileFlag='$tmpFileFlag'
-#	f='$f'
-#	file1='$file1'
-#	file2='$file2'" >> /tmp/app.txt
+#echo -e "  isWorkingCopy='$isWorkingCopy'  tmpFileFlag='$tmpFileFlag'\n\tf='$f'\n\tfile1='$file1'\n\tfile2='$file2'" >> /tmp/app.txt
 
 codewarrior_diff()
 {
@@ -68,10 +56,10 @@ case "$1" in
 	"araxissvndiff" ) /usr/local/bin/araxissvndiff "$file1" "$file2" "$file1" "$file2" ;;
 	"diffmerge"     ) /usr/local/bin/diffmerge.sh -ro1 --title1="$file1" --title2="$file2" "$file1" "$file2" ;;
 	"changes"       ) /usr/bin/chdiff "$file1" "$file2" ;;
-	"opendiff" | *  ) 
-		if [ $isWorkingCopy ]; then 
+	"opendiff" | *  )
+		if [ $isWorkingCopy ]; then
 			/usr/bin/opendiff "$file1" "$file2" -merge "$file2" &> /dev/null
-		else 
+		else
 			/usr/bin/opendiff "$file1" "$file2"
 		fi
 		;;

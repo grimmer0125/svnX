@@ -57,10 +57,11 @@ case "$1" in
 	"diffmerge"     ) /usr/local/bin/diffmerge.sh -ro1 --title1="$file1" --title2="$file2" "$file1" "$file2" ;;
 	"changes"       ) /usr/bin/chdiff "$file1" "$file2" ;;
 	"opendiff" | *  )
+		DIFF='/usr/bin/opendiff'; if [ ! -x "$DIFF" ]; then DIFF='opendiff'; fi
 		if [ $isWorkingCopy ]; then
-			/usr/bin/opendiff "$file1" "$file2" -merge "$file2" &> /dev/null
+			"$DIFF" "$file1" "$file2" -merge "$file2" &> /dev/null
 		else
-			/usr/bin/opendiff "$file1" "$file2"
+			"$DIFF" "$file1" "$file2"
 		fi
 		;;
 esac

@@ -339,7 +339,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 //	dprintf("(aPath='%@' pegRev=%@) fRevision=%@", aPath, pegRev, fRevision);
 	if (pegRev == nil)
 		pegRev = fRevision;
-	if (pegRev)
+	if ([pegRev length] != 0 && ![pegRev isEqualToString: @"0"])
 		aPath = PathPegRevision(aPath, pegRev);
 	else
 		pegRev = @"HEAD";

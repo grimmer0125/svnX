@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------------------
 //	ReviewCommit.m - Review and edit a commit
 //
-//	Copyright © Chris, 2008 - 2009.  All rights reserved.
+//	Copyright © Chris, 2008 - 2010.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #import <fcntl.h>
@@ -157,8 +157,9 @@ compareTemplateNames (id obj1, id obj2, void* context)
 
 @implementation ReviewController
 
-static NSString* const kPrefTemplates = @"msgTemplates";
-static NSString* const kPrefKeySplits = @"reviewSplits";
+static ConstString kPrefTemplates = @"msgTemplates",
+				   kPrefKeySplits = @"reviewSplits";
+
 enum {
 	kPaneMessage	=	0,
 	kPaneRecent		=	1,
@@ -278,13 +279,13 @@ enum {
 	NSMutableArray* const newFiles = [NSMutableArray array];
 
 	int commitFileCount = 0;
-	for_each(oEnum, item, svnFiles)
+	for_each_obj(oEnum, item, svnFiles)
 	{
 		if ([[item objectForKey: @"committable"] boolValue])
 		{
 			BOOL commit = commitDefault;
 			NSString* const name = [item objectForKey: @"displayPath"];
-			for_each(oEnum2, item2, oldFiles)
+			for_each_obj(oEnum2, item2, oldFiles)
 				if ([name isEqualToString: [item2 name]])
 				{
 					commit = [item2 commit];
@@ -354,7 +355,7 @@ enum {
 			const int count = [array count];
 			NSDateFormatter* const formatter = [SvnDateTransformer formatter];
 			NSDate* const date = [[NSDate alloc] init];
-			for_each(oEnum, item, array)
+			for_each_obj(oEnum, item, array)
 			{
 				NSString* str = [item objectForKey: @"date"];
 				str = [NSString stringWithFormat: @"%@ %@ +0000",
@@ -439,10 +440,10 @@ enum {
 
 //----------------------------------------------------------------------------------------
 
-- (void) textViewDidChangeSelection: (NSNotification*) aNotification
+- (void) textViewDidChangeSelection: (NSNotification*) notification
 {
 //	NSLog(@"textViewDidChangeSelection");
-//	[self validateTemplate: [aNotification object]];
+//	[self validateTemplate: [notification object]];
 }
 #endif
 
@@ -451,7 +452,7 @@ enum {
 
 - (void) setAllFilesCommit: (BOOL) commit
 {
-	for_each(oEnum, item, fFiles)
+	for_each_obj(oEnum, item, fFiles)
 	{
 		[item setCommit: commit];
 	}
@@ -573,6 +574,7 @@ enum {
 
 - (void) commitCallback: (id) taskObj
 {
+//	dprintf("0x%X taskObj=%@", self, taskObj);
 	if ([fWindow isVisible])
 	{
 		[self setIsBusy: NO];
@@ -592,7 +594,7 @@ enum {
 {
 	Assert([self canCommit]);
 	NSMutableArray* commitFiles = [NSMutableArray array];
-	for_each(oEnum, item, fFiles)
+	for_each_obj(oEnum, item, fFiles)
 	{
 		if ([item commit])
 			[commitFiles addObject: [item item]];
@@ -615,7 +617,7 @@ enum {
 	#pragma unused(alert, context)
 	if (returnCode == NSAlertDefaultReturn)
 	{
-		fSuppressAutoRefresh = true;
+		fSuppressAutoRefresh = TRUE;
 		[self doCommitFiles];
 	}
 }
@@ -643,7 +645,7 @@ enum {
 		[alert beginSheetModalForWindow: fWindow
 						  modalDelegate: self
 						 didEndSelector: @selector(commitFiles:returnCode:contextInfo:)
-						    contextInfo: nil];
+							contextInfo: nil];
 	}
 }
 
@@ -876,9 +878,9 @@ enum {
 
 //----------------------------------------------------------------------------------------
 
-- (void) textDidChange: (NSNotification*) aNotification
+- (void) textDidChange: (NSNotification*) notification
 {
-	#pragma unused(aNotification)
+	#pragma unused(notification)
 	[self setCanCommit: nil];
 }
 
@@ -915,7 +917,7 @@ enum {
 								@"3",			// count of args before first file
 								nil];
 
-	for_each(oEnum, it, fFiles)
+	for_each_obj(oEnum, it, fFiles)
 	{
 		if ([it commit])
 			[args addObject: [it name]];
@@ -986,7 +988,7 @@ enum {
 		range = [str rangeOfString: @"<USER>"];
 		if (range.location != NSNotFound)
 		{
-			[str replaceCharactersInRange: range withString: (id) CSCopyUserName(true)];
+			[str replaceCharactersInRange: range withString: (id) CSCopyUserName(TRUE)];
 		}
 
 		// <DATE>
@@ -1011,7 +1013,7 @@ enum {
 			}
 
 			id tmpStr = [NSMutableString string];
-			for_each(oEnum, item, fFiles)
+			for_each_obj(oEnum, item, fFiles)
 			{
 				if ([item commit])
 				{
@@ -1091,7 +1093,7 @@ enum {
 //	NSLog(@"windowDidBecomeKey");
 	if (fSuppressAutoRefresh)
 	{
-		fSuppressAutoRefresh = false;
+		fSuppressAutoRefresh = FALSE;
 	}
 	else if (GetPreferenceBool(@"autoRefreshWC"))
 	{
@@ -1102,9 +1104,9 @@ enum {
 
 //----------------------------------------------------------------------------------------
 
-- (void) windowDidResignKey: (NSNotification*) aNotification
+- (void) windowDidResignKey: (NSNotification*) notification
 {
-	#pragma unused(aNotification)
+	#pragma unused(notification)
 //	NSLog(@"windowDidResignKey ReviewController: refs=%d", [self retainCount]);
 	saveSplitViews(fWindow, kPrefKeySplits);
 	[self saveTemplates];
@@ -1113,9 +1115,9 @@ enum {
 
 //----------------------------------------------------------------------------------------
 
-- (void) windowWillClose: (NSNotification*) aNotification
+- (void) windowWillClose: (NSNotification*) notification
 {
-	#pragma unused(aNotification)
+	#pragma unused(notification)
 	[fDocument unregisterSubController: self];
 
 	saveSplitViews(fWindow, kPrefKeySplits);
@@ -1185,9 +1187,9 @@ enum {
 #pragma mark	Table View delegate
 //----------------------------------------------------------------------------------------
 
-- (void) tableViewSelectionDidChange: (NSNotification*) aNotification
+- (void) tableViewSelectionDidChange: (NSNotification*) notification
 {
-	#pragma unused(aNotification)
+	#pragma unused(notification)
 	[self displaySelectedFileDiff];
 }
 
@@ -1200,7 +1202,6 @@ enum {
 		 row:             (int)            rowIndex
 {
 	#pragma unused(aTableView)
-//	NSLog(@"willDisplayCell: col=%@ row=%d", [aTableColumn identifier], rowIndex);
 
 	if ([[aTableColumn identifier] isEqualToString: @"file"])
 	{
@@ -1224,7 +1225,7 @@ enum {
 	NSArray* filePaths = [NSArray arrayWithObject: [item fullPath]];
 
 	[pboard declareTypes: [NSArray arrayWithObject: NSFilenamesPboardType] owner: nil];
-    [pboard setPropertyList: filePaths forType: NSFilenamesPboardType];
+	[pboard setPropertyList: filePaths forType: NSFilenamesPboardType];
 
 	return YES;
 }
@@ -1250,7 +1251,7 @@ enum {
 	}
 	else if ([colID isEqualToString: @"file"])
 	{
-		return helpTagForWCFile([item item]);
+		return HelpTagForWCItem([item item]);
 	}
 
 	return @"";

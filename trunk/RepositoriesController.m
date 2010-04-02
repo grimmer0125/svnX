@@ -9,7 +9,7 @@
 
 
 static NSString* const kDocType = @"repository";
-static /*const*/ EditListPrefKeys kPrefKeys = 
+static /*const*/ EditListPrefKeys kPrefKeys =
 	{ @"repositories", @"repEditShown", @"repPanelFrame"/*, NSURLPboardType*/ };
 
 
@@ -84,7 +84,7 @@ StringToURL (NSString* urlString)
 
 - (id) newObject: (NSPasteboard*) pboard
 {
-	id obj = nil;	
+	id obj = nil;
 	NSURL* url = nil;
 	NSString* str = [pboard stringForType: @"public.url"];	// <= *.webloc file
 	if (str != nil && (url = [NSURL URLWithString: str]) != nil)
@@ -99,11 +99,11 @@ StringToURL (NSString* urlString)
 	{
 		if (str == nil)
 			str = [[url path] lastPathComponent];
-		obj = [fAC newObject];	
+		obj = [fAC newObject];
 		[obj setValue: url forKey: @"url"];
 		[obj setValue: str forKey: @"name"];
 	}
-	return obj;		
+	return obj;
 }
 
 
@@ -131,7 +131,7 @@ StringToURL (NSString* urlString)
 {
 	NSURL* const url = StringToURL(urlString);
 
-	for_each(en, doc, [[NSDocumentController sharedDocumentController] documents])
+	for_each_obj(en, doc, [[NSDocumentController sharedDocumentController] documents])
 	{
 		if ([[doc fileType] isEqualToString: kDocType] &&
 			[[doc windowTitle] isEqualToString: name] &&
@@ -204,7 +204,7 @@ StringToURL (NSString* urlString)
 - (void) openRepository: (NSString*) url
 {
 	// Find among the open repositories one that has a matching url
-	for_each(en1, it, [[NSDocumentController sharedDocumentController] documents])
+	for_each_obj(en1, it, [[NSDocumentController sharedDocumentController] documents])
 	{
 		if ([[it fileType] isEqualToString: kDocType] &&
 			[url rangeOfString: [[it rootURL] absoluteString]
@@ -216,7 +216,7 @@ StringToURL (NSString* urlString)
 	}
 
 	// Find among the known repositories one that has a matching url
-	for_each(en2, it, [fAC arrangedObjects])
+	for_each_obj(en2, it, [fAC arrangedObjects])
 	{
 		if ([url rangeOfString: [it objectForKey: @"url"]
 					   options: NSLiteralSearch | NSAnchoredSearch].location == 0)

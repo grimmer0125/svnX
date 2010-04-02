@@ -57,8 +57,8 @@
 - (void) outlineViewSelectionDidChange: (NSNotification*) notification
 {
 	NSOutlineView *ov = [notification object];
-	
-//	NSLog(@"Outliner click : %@", [[ov itemAtRow:[ov selectedRow]] path]);
+
+//	NSLog(@"Outliner click : %@", [[ov itemAtRow: [ov selectedRow]] path]);
 	[document setOutlineSelectedPath: [[ov itemAtRow: [ov selectedRow]] path]];
 }
 
@@ -87,7 +87,7 @@
 		return NSDragOperationNone;		// childIndex = -1 : inside the folder
 
 	// we want to return the correct mask in order to let the system show the appropriate "drag icon"
-    NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
+	NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
 
 	if (sourceDragMask & NSDragOperationMove)
 		return NSDragOperationMove;
@@ -95,8 +95,8 @@
 	if (sourceDragMask & NSDragOperationCopy)
 		return NSDragOperationCopy;
 
-    // default
-    return NSDragOperationNone;
+	// default
+	return NSDragOperationNone;
 }
 
 
@@ -107,21 +107,21 @@
 {
 	#pragma unused(outlineView, childIndex)
 //	NSPasteboard* pboard = [sender draggingPasteboard];
-    NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
+	NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
 	NSString* fullPath = [[document workingCopyPath] stringByAppendingPathComponent: [targetItem path]];
 
 	if (sourceDragMask & NSDragOperationMove)
 	{
 		//NSLog(@"move to : %@", fullPath);
 		[controller requestSvnMoveSelectedItemsToDestination: fullPath];
-    }
+	}
 	else if (sourceDragMask & NSDragOperationCopy)
 	{
 		//NSLog(@"copy to : %@", fullPath);
 		[controller requestSvnCopySelectedItemsToDestination: fullPath];
-    }
+	}
 
-    return YES;
+	return YES;
 }
 
 @end

@@ -8,8 +8,8 @@
 #import "ViewUtils.h"
 
 
-static NSString* const kCopyType = @"svnX_COPIED_ROWS",
-			   * const kMoveType = @"svnX_MOVED_ROWS";
+static ConstString kCopyType = @"svnX_COPIED_ROWS",
+				   kMoveType = @"svnX_MOVED_ROWS";
 
 
 @implementation EditListResponder
@@ -173,7 +173,7 @@ static NSString* const kCopyType = @"svnX_COPIED_ROWS",
 {
 	#pragma unused(sender)
 	[fAC setSelectionIndex: [[fAC arrangedObjects] count] - 1];
-	[fWindow makeFirstResponder: [self nameTextField]];	
+	[fWindow makeFirstResponder: [self nameTextField]];
 }
 
 
@@ -288,7 +288,7 @@ static NSString* const kCopyType = @"svnX_COPIED_ROWS",
 													 url ? NSURLPboardType : nil, nil];
 	[pboard declareTypes: typesArray owner: self];
 	if (url)
-		[url writeToPasteboard: pboard];	
+		[url writeToPasteboard: pboard];
 
 	// add rows array for local move
 	[pboard setPropertyList: rows forType: kMoveType];
@@ -296,7 +296,7 @@ static NSString* const kCopyType = @"svnX_COPIED_ROWS",
 	// create new array of selected rows for remote drop
 	// could do deferred provision, but keep it direct for clarity
 	NSMutableArray* rowCopies = [NSMutableArray arrayWithCapacity: [rows count]];
-	for_each(enumerator, idx, rows)
+	for_each_obj(enumerator, idx, rows)
 	{
 		[rowCopies addObject: [arrangedObjects objectAtIndex: [idx intValue]]];
 	}
@@ -319,7 +319,7 @@ static NSString* const kCopyType = @"svnX_COPIED_ROWS",
 	NSDragOperation sourceMask = [info draggingSourceOperationMask];
 
 	// we want to put the object at, not over,
-	// the current row (contrast NSTableViewDropOn) 
+	// the current row (contrast NSTableViewDropOn)
 	[tableView setDropRow: row dropOperation: NSTableViewDropAbove];
 
 	if (sourceMask & NSDragOperationMove) return NSDragOperationMove;
@@ -382,14 +382,14 @@ static NSString* const kCopyType = @"svnX_COPIED_ROWS",
 
 	if (!accept)
 	{
-		const id obj = [self newObject: pboard];	
+		const id obj = [self newObject: pboard];
 		if (obj)
 		{
 			[fAC insertObject: obj atArrangedObjectIndex: row];
 			[fAC setSelectionIndex: row];	// set selected rows to that of the new object
 			[obj release];
 
-			accept = YES;		
+			accept = YES;
 		}
 	}
 

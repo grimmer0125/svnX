@@ -12,19 +12,19 @@
 
 - (void) search: (id) sender
 {
-	[self setSearchString:[sender stringValue]];
-	[self rearrangeObjects];    
+	[self setSearchString: [sender stringValue]];
+	[self rearrangeObjects];
 }
 
 
 - (NSArray*) arrangeObjects: (NSArray*) objects
 {
-    NSMutableArray* matchedObjects = [NSMutableArray arrayWithCapacity: [objects count]];
+	NSMutableArray* matchedObjects = [NSMutableArray arrayWithCapacity: [objects count]];
 
 	const int filter = [document filterMode];
 	const BOOL treeMode = ![document flatMode];
 	NSString* const	selectedPath = [document outlineSelectedPath];
-    NSString* const lowerSearch = (searchString != nil && [searchString length] > 0) ? [searchString lowercaseString] : nil;
+	NSString* const lowerSearch = (searchString != nil && [searchString length] > 0) ? [searchString lowercaseString] : nil;
 	BOOL isCommittable = NO;
 
 	NSEnumerator* oEnum;
@@ -96,7 +96,7 @@
 //  - dealloc:
 - (void) dealloc
 {
-	[self setSearchString: nil];    
+	[self setSearchString: nil];
 	[super dealloc];
 }
 

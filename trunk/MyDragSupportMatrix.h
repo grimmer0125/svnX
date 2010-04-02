@@ -4,8 +4,8 @@
 
 @interface MyDragSupportMatrix : NSMatrix
 {
-    NSRect	oldDrawRect, newDrawRect;
-    BOOL	shouldDraw;
+	NSRect	oldDrawRect, newDrawRect;
+	BOOL	shouldDraw;
 	BOOL	isSubBrowser;
 
 	NSCell*	destinationCell;

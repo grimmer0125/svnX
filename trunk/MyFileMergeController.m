@@ -22,7 +22,7 @@
 		 descPath:         (id)            descPath
 		 descRev:          (NSString*)     descRev
 {
-    if (svnOptionsInvocation != options)
+	if (svnOptionsInvocation != options)
 	{
 		[svnOptionsInvocation release];
 		svnOptionsInvocation = [options retain];
@@ -73,7 +73,7 @@
 				   modalDelegate:  [workingCopy controller]
 				   didEndSelector: @selector(sheetDidEnd:returnCode:contextInfo:)
 				   contextInfo:    self];
-		}	
+		}
 		else
 			dprintf("loadNibNamed FAILED");
 	}
@@ -97,8 +97,8 @@
 - (void) finished
 {
 	[svnLogView unload];
-	
-	// the owner has to release its top level nib objects 
+
+	// the owner has to release its top level nib objects
 	[svnSheet release];
 	[objectController release];
 

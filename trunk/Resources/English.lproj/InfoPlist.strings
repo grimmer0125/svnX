@@ -1,6 +1,6 @@
 /* Localized versions of Info.plist keys */
 
 CFBundleName = "svnX";
-qCFBundleShortVersionString = "1.1";
-qCFBundleGetInfoString = "1.1, Copyright 2004-2007 La Chose";
-qNSHumanReadableCopyright = "Copyright © 2004-2007 La Chose\nCopyright © 2007-2009 Chris";
+qCFBundleShortVersionString = "1.2";
+qCFBundleGetInfoString = "1.2, Copyright 2004-2007 La Chose";
+qNSHumanReadableCopyright = "Copyright © 2004-2007 La Chose\nCopyright © 2007-2010 Chris";

@@ -1,11 +1,11 @@
 /*
     File:		GetEthernetAddrAllSample.c
-	
+
     Description:	This sample demonstrates how to use IOKitLib to find all of the Ethernet MAC address
                         of the system when there are more than one interface present.
-                
+
     Copyright:		© Copyright 2003 Apple Computer, Inc. All rights reserved.
-	
+
     Disclaimer:		IMPORTANT:  This Apple software is supplied to you by Apple Computer, Inc.
                         ("Apple") in consideration of your agreement to the following terms, and your
                         use, installation, modification or redistribution of this Apple software
@@ -40,11 +40,10 @@
                         OF THE APPLE SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT, TORT
                         (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
                         ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-				
+
 	Change History (most recent first):
-        
+
             <1>	 	02/19/01	New sample.
-        
 */
 
 #include <stdio.h>
@@ -66,7 +65,7 @@ static kern_return_t GetEthernetData(io_iterator_t intfIterator, EnetData *edata
 // releasing the iterator when iteration is complete.
 static kern_return_t FindEthernetInterfaces(io_iterator_t *matchingServices)
 {
-    kern_return_t		kernResult; 
+    kern_return_t		kernResult;
     mach_port_t			masterPort;
     CFMutableDictionaryRef	classesToMatch;
 
@@ -80,7 +79,7 @@ static kern_return_t FindEthernetInterfaces(io_iterator_t *matchingServices)
     kernResult = IOMasterPort(MACH_PORT_NULL, &masterPort);
     if (KERN_SUCCESS != kernResult)
         printf("IOMasterPort returned %d\n", kernResult);
-        
+
 /*! @function IOServiceMatching
     @abstract Create a matching dictionary that specifies an IOService class match.
     @discussion A very common matching criteria for IOService is based on its class. IOServiceMatching will create a matching dictionary that specifies any IOService of a class, or its subclasses. The class is specified by C-string name.
@@ -93,10 +92,10 @@ static kern_return_t FindEthernetInterfaces(io_iterator_t *matchingServices)
     // Note that another option here would be:
     // classesToMatch = IOBSDMatching("enX");
     // where X is a number from 0 to the number of Ethernet interfaces on the system - 1.
-    
+
     if (classesToMatch == NULL)
         printf("IOServiceMatching returned a NULL dictionary.\n");
-    
+
     /*! @function IOServiceGetMatchingServices
         @abstract Look up registered IOService objects that match a matching dictionary.
         @discussion This is the preferred method of finding IOService objects currently registered by IOKit. IOServiceAddNotification can also supply this information and install a notification of new IOServices. The matching information used in the matching dictionary may vary depending on the class of service being looked up.
@@ -105,15 +104,15 @@ static kern_return_t FindEthernetInterfaces(io_iterator_t *matchingServices)
         @param existing An iterator handle is returned on success, and should be released by the caller when the iteration is finished.
         @result A kern_return_t error code. */
 
-    kernResult = IOServiceGetMatchingServices(masterPort, classesToMatch, matchingServices);    
+    kernResult = IOServiceGetMatchingServices(masterPort, classesToMatch, matchingServices);
     if (KERN_SUCCESS != kernResult)
         printf("IOServiceGetMatchingServices returned %d\n", kernResult);
-    
+
     return kernResult;
 }
 
 #define kBSDName "BSD Name"
-    
+
 // Given an iterator across a set of Ethernet interfaces, return the MAC address of the first one.
 // If no interfaces are found the MAC address is set to an empty string.
 static kern_return_t GetEthernetData(io_iterator_t intfIterator, EnetData *edata, UInt32 *numEntries)
@@ -123,7 +122,7 @@ static kern_return_t GetEthernetData(io_iterator_t intfIterator, EnetData *edata
     io_object_t		parentService;		// parent of controllerService where built-in property exists
     kern_return_t	kernResult = KERN_FAILURE;
     UInt32		maxEntriesToFind;
-            
+
 /*! @function IOIteratorNext
     @abstract Returns the next object in an iteration.
     @discussion This function returns the next object in an iteration, or zero if no more remain or the iterator is invalid.
@@ -140,12 +139,12 @@ static kern_return_t GetEthernetData(io_iterator_t intfIterator, EnetData *edata
 
         // Initialize the bsdName field
         bzero(edata[*numEntries].bsdName, sizeof(edata[*numEntries].bsdName));
-        
+
         bsdName = IORegistryEntryCreateCFProperty(intfService, CFSTR(kBSDName),
                                                     kCFAllocatorDefault, 0);
         if (bsdName)
         {
-            CFStringGetCString(bsdName, (char*) edata[*numEntries].bsdName, 
+            CFStringGetCString(bsdName, (char*) edata[*numEntries].bsdName,
                                 sizeof(edata[*numEntries].bsdName), kCFStringEncodingMacRoman);
             CFRelease(bsdName);
         }
@@ -153,21 +152,21 @@ static kern_return_t GetEthernetData(io_iterator_t intfIterator, EnetData *edata
         // Initialize the returned address
         bzero(edata[*numEntries].macAddress, kIOEthernetAddressSize);
 
-        // IONetworkControllers can't be found directly by the IOServiceGetMatchingServices call, 
+        // IONetworkControllers can't be found directly by the IOServiceGetMatchingServices call,
         // matching mechanism. So we've found the IONetworkInterface and will get its parent controller
         // by asking for it specifically.
-        
+
         kernResult = IORegistryEntryGetParentEntry( intfService,
                                                     kIOServicePlane,
                                                     &controllerService );
 
         if (KERN_SUCCESS != kernResult)
             printf("IORegistryEntryGetParentEntry returned 0x%08x\n", kernResult);
-        else 
+        else
         {
 /*! @function IORegistryEntryCreateCFProperty
     @abstract Create a CF representation of a registry entry's property.
-    @discussion This function creates an instantaneous snapshot of a registry entry property, creating a CF container analogue in the caller's task. Not every object available in the kernel is represented as a CF container; currently OSDictionary, OSArray, OSSet, OSSymbol, OSString, OSData, OSNumber, OSBoolean are created as their CF counterparts. 
+    @discussion This function creates an instantaneous snapshot of a registry entry property, creating a CF container analogue in the caller's task. Not every object available in the kernel is represented as a CF container; currently OSDictionary, OSArray, OSSet, OSSymbol, OSString, OSData, OSNumber, OSBoolean are created as their CF counterparts.
     @param entry The registry entry handle whose property to copy.
     @param key A CFString specifying the property name.
     @param allocator The CF allocator to use when creating the CF container.
@@ -184,21 +183,21 @@ static kern_return_t GetEthernetData(io_iterator_t intfIterator, EnetData *edata
                 CFDataGetBytes(MACAddressAsCFData, CFRangeMake(0, kIOEthernetAddressSize), edata[*numEntries].macAddress);
 //                BlockMove(enetAddr, edata[gNumEntries].macAddress, kIOEthernetAddressSize);
                 CFRelease(MACAddressAsCFData);
-            }            
-            
+            }
+
             /* code to check whether the ethernet device is built-in by looking at the parent for a
                built-in property - need to look at the parent service to controller service
                to find this property.
             */
-            
+
             kernResult = IORegistryEntryGetParentEntry( controllerService,
                                                         kIOServicePlane,
                                                         &parentService );
             if (KERN_SUCCESS != kernResult)
                 printf("IORegistryEntryGetParentEntry for parentService returned 0x%08x\n", kernResult);
-            else 
+            else
             {
-                CFTypeRef	builtinAsCFData; 
+                CFTypeRef	builtinAsCFData;
             	builtinAsCFData = IORegistryEntryCreateCFProperty( parentService,
                                                                   CFSTR("built-in"),
                                                                   kCFAllocatorDefault,
@@ -217,24 +216,24 @@ static kern_return_t GetEthernetData(io_iterator_t intfIterator, EnetData *edata
 
                 (void) IOObjectRelease(parentService);
             }
-        
+
         /*! @function IOObjectRelease
             @abstract Releases an object handle previously returned by IOKitLib.
             @discussion All objects returned by IOKitLib should be released with this function when access to them is no longer needed. Using the object after it has been released may or may not return an error, depending on how many references the task has to the same object in the kernel.
             @param object The IOKit object to release.
             @result A kern_return_t error code. */
-                
+
             (void) IOObjectRelease(controllerService);
         }
-        
+
         // increment the counter
         (*numEntries)++;
-        
+
     }
 
     // We have sucked this service dry of information so release it now.
     (void) IOObjectRelease(intfService);
-        
+
     return kernResult;
 }
 
@@ -243,12 +242,12 @@ static kern_return_t GetEthernetData(io_iterator_t intfIterator, EnetData *edata
     1. the ethernet address
     2. the bsd name
     3. a boolean indicating whether the ethernet device is built-in or not
-    
+
     Input:
     The (EnetData*) parameter is a pointer to an EnetData array of *numEntries
     in array elements.
-    
-    Output: the numEntries value is modified to reflect the number of Enet items 
+
+    Output: the numEntries value is modified to reflect the number of Enet items
     found.
 */
 int GetEthernetAddressInfo(EnetData *edata, UInt32 *numEntries)
@@ -262,11 +261,11 @@ int GetEthernetAddressInfo(EnetData *edata, UInt32 *numEntries)
  */
 
     io_iterator_t	intfIterator;
- 
+
     kernResult = FindEthernetInterfaces(&intfIterator);
     if (KERN_SUCCESS != kernResult)
         printf("FindEthernetInterfaces returned 0x%08x\n", kernResult);
-    else 
+    else
     {
         kernResult = GetEthernetData(intfIterator, edata, numEntries);
 
@@ -275,6 +274,7 @@ int GetEthernetAddressInfo(EnetData *edata, UInt32 *numEntries)
     }
 
     IOObjectRelease(intfIterator);	// Release the iterator.
-        
+
     return kernResult;
 }
+

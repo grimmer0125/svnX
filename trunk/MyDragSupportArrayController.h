@@ -6,9 +6,11 @@
 {
 }
 
-- (void) moveObjectsInArrangedObjectsFromIndexes: (NSIndexSet*) indexSet 
-									     toIndex: (unsigned)    index;
-- (NSIndexSet *)indexSetFromRows:(NSArray *)rows;
-- (int)rowsAboveRow:(int)row inIndexSet:(NSIndexSet *)indexSet;
+- (void) moveObjectsInArrangedObjectsFromIndexes: (NSIndexSet*) indexSet
+		 toIndex:                                 (unsigned)    index;
+- (NSIndexSet*) indexSetFromRows: (NSArray*)    rows;
+- (int)         rowsAboveRow:     (int)         row
+				inIndexSet:       (NSIndexSet*) indexSet;
 
 @end
+

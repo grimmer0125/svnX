@@ -39,7 +39,7 @@
 		UInt8 ch = *p;
 		if (ch < 32 && ch != 9 && ch != 10 && ch != 13)
 			*p = ' ';
-	}		
+	}
 #endif
 	MySvnLogParser* parser = [[self alloc] init];
 	NSMutableArray* result = [parser parseXML: data];

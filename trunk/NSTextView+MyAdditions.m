@@ -22,11 +22,11 @@
 							nil];
 		[errStyle retain];
 	}
-	
+
 	NSAttributedString* attrStr = [[NSAttributedString alloc]
 			initWithString: string attributes: isErrorStyle ? errStyle : stdStyle];
-    [[self textStorage] appendAttributedString: attrStr];
-    [attrStr release];
+	[[self textStorage] appendAttributedString: attrStr];
+	[attrStr release];
 }
 
 @end

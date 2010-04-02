@@ -17,13 +17,13 @@ static NSDateFormatter* gDateFormatter = nil;
 
 + (Class)transformedValueClass
 {
-    return [NSString class];
+	return [NSString class];
 }
 
 
 + (BOOL)allowsReverseTransformation
 {
-    return NO;
+	return NO;
 }
 
 
@@ -31,7 +31,7 @@ static NSDateFormatter* gDateFormatter = nil;
 
 + (NSDateFormatter*) formatter
 {
-    return gDateFormatter;
+	return gDateFormatter;
 }
 
 

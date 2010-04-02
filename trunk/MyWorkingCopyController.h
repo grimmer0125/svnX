@@ -13,7 +13,7 @@
 	IBOutlet id				progressIndicator;
 	IBOutlet NSControl*		statusView;
 	IBOutlet id				tableResult;
-    IBOutlet id				outliner;
+	IBOutlet id				outliner;
 
 	IBOutlet NSControl*		modeView;
 	IBOutlet NSPopUpButton*	filterView;
@@ -40,7 +40,7 @@
 
 	BOOL					svnStatusPending;
 	BOOL					suppressAutoRefresh;
-	
+
 	BOOL					isDisplayingErrorSheet;
 	BOOL					outlineInited;		// has initialised outline view
 
@@ -95,3 +95,4 @@
 - (void) requestSvnCopySelectedItemsToDestination: (NSString*) destination;
 
 @end
+

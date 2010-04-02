@@ -1,6 +1,7 @@
 //
 // MyWorkingCopyController.m - Controller of the working copy browser
 //
+
 #import "MyWorkingCopyController.h"
 #import "MyWorkingCopy.h"
 #import "MyApp.h"
@@ -27,7 +28,6 @@ enum {
 	kModeSmart	=	2
 };
 
-typedef NSString* const ConstString;
 static ConstString keyWCWidows    = @"wcWindows",
 				   keyWidowFrame  = @"winFrame",
 				   keyViewMode    = @"viewMode",
@@ -197,10 +197,10 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 	isDisplayingErrorSheet = NO;
 	[self setStatusMessage: @""];
 
-	[document   addObserver:self forKeyPath:@"flatMode"
-				options:(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:nil];
+	[document   addObserver: self forKeyPath: @"flatMode"
+				options: (NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context: nil];
 
-	[drawerLogView setDocument:document];
+	[drawerLogView setDocument: document];
 	[drawerLogView setUp];
 
 	NSTableView* const tableView = tableResult;
@@ -301,7 +301,7 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 	#pragma unused(notification)
 	if (suppressAutoRefresh)
 	{
-		suppressAutoRefresh = false;
+		suppressAutoRefresh = FALSE;
 	}
 	else if (!svnStatusPending && GetPreferenceBool(@"autoRefreshWC"))
 	{
@@ -343,6 +343,7 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 		NSBeep();
 		return FALSE;
 	}
+
 	return TRUE;
 }
 
@@ -387,7 +388,7 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 		 context:                (void*)         context
 {
 	#pragma unused(object, change, context)
-	if ( [keyPath isEqualToString:@"flatMode"] )
+	if ( [keyPath isEqualToString: @"flatMode"] )
 	{
 		[self adjustOutlineView];
 	}
@@ -418,7 +419,7 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 		[self doubleClickInTableView: nil];
 	else if (([theEvent modifierFlags] & NSControlKeyMask) != 0)	// ctrl+<letter> => command button
 	{
-		for_each(enumerator, cell, [[[window contentView] viewWithTag: vCmdButtons] cells])
+		for_each_obj(enumerator, cell, [[[window contentView] viewWithTag: vCmdButtons] cells])
 		{
 			NSString* const keys = [cell keyEquivalent];
 			if (keys != nil && [keys length] == 1 && ch == ([keys characterAtIndex: 0] | 0x20))
@@ -518,10 +519,10 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 - (IBAction) openAWorkingCopy: (id) sender
 {
 	#pragma unused(sender)
-    NSOpenPanel* oPanel = [NSOpenPanel openPanel];
+	NSOpenPanel* oPanel = [NSOpenPanel openPanel];
 
-    [oPanel setAllowsMultipleSelection: NO];
-    [oPanel setCanChooseDirectories: YES];
+	[oPanel setAllowsMultipleSelection: NO];
+	[oPanel setCanChooseDirectories: YES];
 	[oPanel setCanChooseFiles: NO];
 
 	[oPanel beginSheetForDirectory: NSHomeDirectory() file: nil types: nil
@@ -558,7 +559,7 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 - (IBAction) toggleView: (id) sender
 {
 	#pragma unused(sender)
-	//[[self document] setFlatMode:!([[self document] flatMode])];
+	//[[self document] setFlatMode: !([[self document] flatMode])];
 
 //	[self adjustOutlineView];
 }
@@ -691,8 +692,8 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 //- (void) fetchSvnStatusReceiveDataFinished
 //{
 //	[self stopProgressIndicator];
-//	[textResult setString:[[self document] resultString]];
-//	
+//	[textResult setString: [[self document] resultString]];
+//
 //	svnStatusPending = NO;
 //}
 
@@ -787,9 +788,9 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 }
 
 
-- (IBAction)changeFilter:(id)sender
+- (IBAction) changeFilter: (id) sender
 {
-	int tag = [[sender selectedItem] tag];																		
+	int tag = [[sender selectedItem] tag];
 
 	[self setFilterMode: tag];
 }
@@ -807,7 +808,7 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 - (IBAction) toggleSidebar: (id) sender
 {
 	#pragma unused(sender)
-	[sidebar toggle:sender];
+	[sidebar toggle: sender];
 }
 
 
@@ -1184,7 +1185,7 @@ enum {
 			beginSheetModalForWindow: [self window]
 					   modalDelegate: self
 					  didEndSelector: @selector(updateWorkingCopyPanelDidEnd:returnCode:contextInfo:)
-						 contextInfo: NULL];					 
+						 contextInfo: NULL];
 	}
 }
 
@@ -1282,7 +1283,7 @@ enum {
 
 
 //----------------------------------------------------------------------------------------
-#pragma mark	svn copy & svn move common 
+#pragma mark	svn copy & svn move common
 
 - (void) renamePanelForCopy: (BOOL)      isCopy
 		 destination:        (NSString*) destination
@@ -1436,7 +1437,7 @@ enum {
 		[alert	beginSheetModalForWindow: window
 						   modalDelegate: nil
 						  didEndSelector: NULL
-						     contextInfo: nil];
+							 contextInfo: nil];
 		return;
 	}
 
@@ -1516,7 +1517,7 @@ enum {
 	NSFileManager* const fileManager = [NSFileManager defaultManager];
 
 	// Look for a suitable match in the selection
-	for_each(en, it, [svnFilesAC selectedObjects])
+	for_each_obj(en, it, [svnFilesAC selectedObjects])
 	{
 		if (![[it objectForKey: @"new"] boolValue] &&
 			[fileManager fileExistsAtPath: [it objectForKey: @"fullPath"]
@@ -1528,7 +1529,7 @@ enum {
 
 	// Look for a matching name in the WC arranged objects
 	NSString* const srcName = [repoItem name];
-	for_each(en2, it, [svnFilesAC arrangedObjects])
+	for_each_obj(en2, it, [svnFilesAC arrangedObjects])
 	{
 		if (![[it objectForKey: @"new"] boolValue] &&
 			[srcName isEqualToString: [[it objectForKey: @"displayPath"] lastPathComponent]] &&
@@ -1540,7 +1541,7 @@ enum {
 	}
 
 	// Look for a matching name in the WC
-	for_each(en3, it, [svnFilesAC content])
+	for_each_obj(en3, it, [svnFilesAC content])
 	{
 		if (![[it objectForKey: @"new"] boolValue] &&
 			[srcName isEqualToString: [[it objectForKey: @"displayPath"] lastPathComponent]] &&
@@ -1905,7 +1906,7 @@ enum {
 	if (returnCode == NSOKButton)
 		[document svnCommit: [commitPanelText string]];
 
-	[(id) contextInfo release];	
+	[(id) contextInfo release];
 	[sheet close];
 }
 
@@ -2012,8 +2013,8 @@ enum {
 	if ( performActionMenusDict == nil )
 	{
 		performActionMenusDict = [[NSDictionary dictionaryWithContentsOfFile:
-						[[[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"/Contents/Resources/"]
-								stringByAppendingPathComponent:@"performMenus.plist"]] retain];
+						[[[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent: @"/Contents/Resources/"]
+								stringByAppendingPathComponent: @"performMenus.plist"]] retain];
 	}
 
 	return performActionMenusDict;
@@ -2056,11 +2057,11 @@ enum {
 
 	if ([selectedFiles count] <= 0)
 	{
-		[ws selectFile: [document workingCopyPath] inFileViewerRootedAtPath: nil];		
+		[ws selectFile: [document workingCopyPath] inFileViewerRootedAtPath: nil];
 	}
 	else
 	{
-		for_each(enumerator, file, selectedFiles) 
+		for_each_obj(enumerator, file, selectedFiles)
 		{
 			[ws selectFile: file inFileViewerRootedAtPath: nil];
 		}

@@ -10,7 +10,7 @@
 
 
 static NSString* const kDocType = @"workingCopy";
-static /*const*/ EditListPrefKeys kPrefKeys = 
+static /*const*/ EditListPrefKeys kPrefKeys =
 	{ @"favoriteWorkingCopies", @"wcEditShown", @"wcPanelFrame"/*, NSFilenamesPboardType*/ };
 
 
@@ -44,15 +44,15 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 
 - (id) newObject: (NSPasteboard*) pboard
 {
-	id obj = nil;	
+	id obj = nil;
 	NSString* filePath = [[pboard propertyListForType: NSFilenamesPboardType] lastObject];
 	if (filePath)
 	{
-		obj = [fAC newObject];	
+		obj = [fAC newObject];
 		[obj setValue: filePath                     forKey: @"fullPath"];
 		[obj setValue: [filePath lastPathComponent] forKey: @"name"];
 	}
-	return obj;		
+	return obj;
 }
 
 
@@ -77,7 +77,7 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 - (void) awakeFromNib
 {
 	// Notification for user creating a new working copy => will add item into favorites list.
-	[[NSNotificationCenter defaultCenter] addObserver: self 
+	[[NSNotificationCenter defaultCenter] addObserver: self
 		selector: @selector(newWorkingCopyNotificationHandler:) name: @"newWorkingCopy" object: nil];
 
 	[[NSUserDefaultsController sharedUserDefaultsController]
@@ -107,7 +107,7 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 - (void) newWorkingCopyNotificationHandler: (NSNotification*) notification
 {
 	[self newWorkingCopyItemWithPath: [notification object]];
-	
+
 	[fWindow makeKeyAndOrderFront: nil];
 }
 
@@ -136,7 +136,7 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 - (BOOL) showExtantWindow: (NSString*) name
 		 fullPath:         (NSString*) fullPath
 {
-	for_each(en, doc, [[NSDocumentController sharedDocumentController] documents])
+	for_each_obj(en, doc, [[NSDocumentController sharedDocumentController] documents])
 	{
 		if ([[doc fileType] isEqualToString: kDocType] &&
 			[[doc windowTitle] isEqualToString: name] &&
@@ -241,7 +241,7 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 
 	// Find among the open working copies one that has a matching path
 	MyWorkingCopy* wcDocument = nil;
-	for_each(en1, it, [[NSDocumentController sharedDocumentController] documents])
+	for_each_obj(en1, it, [[NSDocumentController sharedDocumentController] documents])
 	{
 		if ([[it fileType] isEqualToString: kDocType])
 		{
@@ -258,7 +258,7 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 
 	// Find among the known working copies one that has a matching path
 	NSDictionary* wcEntry = nil;
-	for_each(en2, it, [fAC arrangedObjects])
+	for_each_obj(en2, it, [fAC arrangedObjects])
 	{
 		NSRange r = [aPath rangeOfString: [it objectForKey: @"fullPath"]
 								 options: NSLiteralSearch | NSAnchoredSearch];

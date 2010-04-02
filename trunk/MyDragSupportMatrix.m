@@ -17,6 +17,7 @@ extern NSImage* GenericFolderImage32 (void);
 
 @implementation MyDragSupportMatrix
 
+//----------------------------------------------------------------------------------------
 // Special init would be done here:
 
 - (id) initWithFrame:   (NSRect)  frameRect
@@ -32,24 +33,27 @@ extern NSImage* GenericFolderImage32 (void);
 					numberOfColumns: numColumns])
 	{
 		// register for files dragged to the repository (-> svn import)
-		[self registerForDraggedTypes: [NSArray arrayWithObjects:NSFilenamesPboardType, nil]];
+		[self registerForDraggedTypes: [NSArray arrayWithObjects: NSFilenamesPboardType, nil]];
 	}
-	
+
 	return self;
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (id) initWithCoder: (NSCoder*) decoder
 {
-	if (self = [super initWithCoder:decoder])
+	if (self = [super initWithCoder: decoder])
 	{
-		[self registerForDraggedTypes: [NSArray arrayWithObjects:NSFilenamesPboardType, nil]];
+		[self registerForDraggedTypes: [NSArray arrayWithObjects: NSFilenamesPboardType, nil]];
 	}
 	return self;
 }
 
 
-//  - dealloc:
+//----------------------------------------------------------------------------------------
+
 - (void) dealloc
 {
 	[self setDestinationCell: nil];
@@ -69,18 +73,10 @@ extern NSImage* GenericFolderImage32 (void);
 
 
 //----------------------------------------------------------------------------------------
-#pragma mark	-
-#pragma mark	Drag Out (export/checkout)
-
-- (NSDragOperation) draggingEntered: (id<NSDraggingInfo>) sender
-{
-	return (isSubBrowser || [sender draggingSource] == self) ? NSDragOperationNone : NSDragOperationAll;
-}
-
+// need to override this because NSMatrix eats drag events
 
 - (void) mouseDown: (NSEvent*) event
 {
-	// need to override this because NSMatrix eats drag events
 	int row, col;
 
 	if ([event clickCount] == 2)
@@ -129,12 +125,26 @@ extern NSImage* GenericFolderImage32 (void);
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (BOOL) isCellSelected: (NSCell*) cell
 {
 	return [[self selectedCells] indexOfObjectIdenticalTo: cell] != NSNotFound;
 }
 
 
+//----------------------------------------------------------------------------------------
+
+- (id) document
+{
+//	dprintf("document=%@", [[self window] classDescription]);
+	return [(id) [self window] document];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	Drag Out (export/checkout)
 //----------------------------------------------------------------------------------------
 
 enum { kDragImageSize = 32, kDragImageOffset = kDragImageSize / 2 };
@@ -155,14 +165,14 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 	// See http://developer.apple.com/qa/qa2001/qa1300.html
 
 	NSMutableArray* types = [NSMutableArray array];
-	for_each(en, it, [self selectedCells])
+	for_each_obj(en, it, [self selectedCells])
 	{
 		[types addObject: [(RepoItem*) [it representedObject] fileType]];
 	}
 
 	[self dragPromisedFilesOfTypes: types
 						  fromRect: srcRect
-						    source: self
+							source: self
 						 slideBack: YES
 							 event: event];
 }
@@ -221,15 +231,6 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 }
 
 
-//----------------------------------------------------------------------------------------
-
-- (id) document
-{
-//	NSLog(@"MyDragSupportMatrix document=%@", [[self window] classDescription]);
-	return [(id) [self window] document];
-}
-
-
 #if 0
 //----------------------------------------------------------------------------------------
 // This does not work even though the following doc claims it should!
@@ -280,6 +281,15 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 //----------------------------------------------------------------------------------------
 #pragma mark	-
 #pragma mark	Drag In (import)
+//----------------------------------------------------------------------------------------
+
+- (NSDragOperation) draggingEntered: (id<NSDraggingInfo>) sender
+{
+	return (isSubBrowser || [sender draggingSource] == self) ? NSDragOperationNone : NSDragOperationAll;
+}
+
+
+//----------------------------------------------------------------------------------------
 
 - (NSDragOperation) draggingUpdated: (id<NSDraggingInfo>) sender
 {
@@ -328,6 +338,8 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) draggingExited: (id<NSDraggingInfo>) sender
 {
 	#pragma unused(sender)
@@ -337,6 +349,8 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 	[self setNeedsDisplay: TRUE];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (BOOL) performDragOperation: (id<NSDraggingInfo>) sender
 {
@@ -355,11 +369,13 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) drawRect: (NSRect) rect
 {
 	[super drawRect: rect];
 
-	if (shouldDraw)
+	if (shouldDraw)		// Draw drag tracking feedback
 	{
 		shouldDraw = TRUE;
 		[[NSColor blackColor] setStroke];
@@ -374,8 +390,12 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 //----------------------------------------------------------------------------------------
 #pragma mark	-
 #pragma mark	Accessors
+//----------------------------------------------------------------------------------------
 
 - (NSCell*) destinationCell { return destinationCell; }
+
+
+//----------------------------------------------------------------------------------------
 
 - (void) setDestinationCell: (NSCell*) aDestinationCell
 {
@@ -385,5 +405,7 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 }
 
 
-@end
+@end	// MyDragSupportMatrix
 
+//----------------------------------------------------------------------------------------
+// End of MyDragSupportMatrix.m

@@ -1,10 +1,10 @@
-//
+//----------------------------------------------------------------------------------------
 //  Scripting.m - Open Scripting Architecture support
 //
 //  Created by Dominique Peretti on 11/12/04.
 //  Copyright 2004 __MyCompanyName__. All rights reserved.
-//	Copyright © Chris, 2008 - 2009.  All rights reserved.
-//
+//	Copyright © Chris, 2008 - 2010.  All rights reserved.
+//----------------------------------------------------------------------------------------
 
 #import "Scripting.h"
 #import "MyApp.h"

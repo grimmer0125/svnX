@@ -80,8 +80,9 @@
 			 toFolder:       (NSURL*)    folderURL
 			 isTemporary:    (BOOL)      isTemporary;
 - (void)     receiveFiles:   (NSArray*)  files
-		     toRepositoryAt: (RepoItem*) destRepoDir;
+			 toRepositoryAt: (RepoItem*) destRepoDir;
 
 - (NSInvocation*) svnOptionsInvocation;
 
 @end
+

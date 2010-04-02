@@ -15,9 +15,9 @@
 }
 
 
-- (void)awakeFromNib;
+- (void) awakeFromNib;
 
-- (void)dealloc;
+- (void) dealloc;
 
 // toolbar datasource
 
@@ -25,9 +25,9 @@
 				   itemForItemIdentifier:     (NSString*)  itemIdentifier
 				   willBeInsertedIntoToolbar: (BOOL)       flag;
 
-- (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar*)toolbar;
+- (NSArray*) toolbarDefaultItemIdentifiers: (NSToolbar*) toolbar;
 
-- (NSArray *)toolbarAllowedItemIdentifiers:(NSToolbar*)toolbar;
+- (NSArray*) toolbarAllowedItemIdentifiers: (NSToolbar*) toolbar;
 
 @end
 

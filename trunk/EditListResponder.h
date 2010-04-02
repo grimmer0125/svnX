@@ -12,8 +12,8 @@ typedef struct EditListPrefKeys
 
 @interface EditListResponder : NSResponder
 {
-    IBOutlet NSWindow*						fWindow;
-    IBOutlet NSTableView*					fTableView;
+	IBOutlet NSWindow*						fWindow;
+	IBOutlet NSTableView*					fTableView;
 	IBOutlet NSBox*							fEditBox;
 	IBOutlet MyDragSupportArrayController*	fAC;
 	NSMutableArray*							fDataArray;

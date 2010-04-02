@@ -4,20 +4,23 @@
 
 @implementation TrimNewLinesTransformer
 
-+ (Class)transformedValueClass
++ (Class) transformedValueClass
 {
-    return [NSString class];
+	return [NSString class];
 }
 
-+ (BOOL)allowsReverseTransformation
+
++ (BOOL) allowsReverseTransformation
 {
-    return NO;
+	return NO;
 }
 
-- (id)transformedValue:(id)aString
-{	
-	return [aString stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"\n"]];
+
+- (id) transformedValue: (id) aString
+{
+	return [aString stringByTrimmingCharactersInSet: [NSCharacterSet characterSetWithCharactersInString: @"\n"]];
 }
 
 
 @end
+

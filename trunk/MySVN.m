@@ -1,6 +1,7 @@
 //
 // MySVN.m
 //
+
 #import "MySVN.h"
 #import "MyApp.h"
 #import "CommonUtils.h"
@@ -15,7 +16,7 @@ makeTaskInfo (NSString* name, NSString* commmandPath, NSArray* arguments)
 {
 	return [NSMutableDictionary dictionaryWithObjectsAndKeys:
 				name,															@"name",
-				[NSString stringWithFormat:@"%@ %@",
+				[NSString stringWithFormat: @"%@ %@",
 					commmandPath, [arguments componentsJoinedByString: @" "]],	@"command",
 				nil];
 }
@@ -35,8 +36,8 @@ makeSvnInfo (NSString* name, NSArray* arguments)
 static NSString*
 joinedOptions (NSArray* options1, NSArray* options2)
 {
-	return [NSString stringWithFormat:@"%@ %@", [options1 componentsJoinedByString: @" "],
-												[options2 componentsJoinedByString: @" "]];
+	return [NSString stringWithFormat: @"%@ %@", [options1 componentsJoinedByString: @" "],
+												 [options2 componentsJoinedByString: @" "]];
 }
 
 
@@ -145,13 +146,13 @@ GetDiffAppName ()
 						 taskInfo:       (id)            taskInfo
 {
 	NSString *taskLaunchPath		= SvnCmdPath();
-	NSMutableArray *arguments       = [NSMutableArray arrayWithObject:command];
-	
+	NSMutableArray *arguments       = [NSMutableArray arrayWithObject: command];
+
 	[arguments addObjectsFromArray: args];
 
-	if (![command isEqualToString:@"info"] && ![command isEqualToString:@"revert"] &&
-		![command isEqualToString:@"add"] && ![command isEqualToString:@"move"] &&
-		![command isEqualToString:@"resolved"] )
+	if (![command isEqualToString: @"info"] && ![command isEqualToString: @"revert"] &&
+		![command isEqualToString: @"add"] && ![command isEqualToString: @"move"] &&
+		![command isEqualToString: @"resolved"] )
 		addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 
@@ -173,10 +174,10 @@ GetDiffAppName ()
 	#pragma unused(generalOptions)
 	NSString *taskLaunchPath		= ShellScriptPath(@"svnmove");
 	NSMutableArray *arguments       = [NSMutableArray arrayWithObject: SvnCmdPath()];
-	
-	[arguments addObject: [options componentsJoinedByString:@" "]]; // see svnmove.sh
+
+	[arguments addObject: [options componentsJoinedByString: @" "]]; // see svnmove.sh
 	[arguments addObject: destinationPath]; // see svnmove.sh
-	[arguments addObjectsFromArray:files];
+	[arguments addObjectsFromArray: files];
 
 	id additionalTaskInfo = makeTaskInfo(@"svn move multiple", taskLaunchPath, arguments);
 
@@ -197,9 +198,9 @@ GetDiffAppName ()
 	NSString *taskLaunchPath		= ShellScriptPath(@"svncopy");
 	NSMutableArray *arguments       = [NSMutableArray arrayWithObject: SvnCmdPath()];
 
-	[arguments addObject: [options componentsJoinedByString:@" "]]; // see svncopy.sh
+	[arguments addObject: [options componentsJoinedByString: @" "]]; // see svncopy.sh
 	[arguments addObject: destinationPath]; // see svncopy.sh
-	[arguments addObjectsFromArray:files];
+	[arguments addObjectsFromArray: files];
 
 	id additionalTaskInfo = makeTaskInfo(@"svn copy multiple", taskLaunchPath, arguments);
 
@@ -217,11 +218,11 @@ GetDiffAppName ()
 {
 	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
-	
+
 	[arguments			 addObject: @"log"];
 	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
-	[arguments			 addObject: path];	
+	[arguments			 addObject: path];
 
 	id additionalTaskInfo = makeTaskInfo(@"svn log", taskLaunchPath, arguments);
 //	[additionalTaskInfo setObject: kNSTrue forKey: @"outputToData"];
@@ -240,11 +241,11 @@ GetDiffAppName ()
 {
 	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
-	
+
 	[arguments			 addObject: @"list"];
 	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
-	[arguments			 addObject: path];	
+	[arguments			 addObject: path];
 
 	id additionalTaskInfo = makeTaskInfo(@"svn list", taskLaunchPath, arguments);
 
@@ -262,11 +263,11 @@ GetDiffAppName ()
 {
 	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
-	
+
 	[arguments			 addObject: @"status"];
 	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
-	[arguments			 addObject: path];	
+	[arguments			 addObject: path];
 
 	id additionalTaskInfo = makeTaskInfo(@"svn status", taskLaunchPath, arguments);
 
@@ -284,11 +285,11 @@ GetDiffAppName ()
 {
 	NSString *taskLaunchPath		= SvnCmdPath();
 	NSMutableArray *arguments       = [NSMutableArray array];
-	
+
 	[arguments			 addObject: @"update"];
 	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
-	[arguments			 addObject: path];	
+	[arguments			 addObject: path];
 
 	id additionalTaskInfo = makeTaskInfo(@"svn update", taskLaunchPath, arguments);
 
@@ -311,8 +312,8 @@ GetDiffAppName ()
 	[arguments			 addObject: @"checkout"];
 	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
-	[arguments			 addObject: file];	
-	[arguments			 addObject: destinationPath];	
+	[arguments			 addObject: file];
+	[arguments			 addObject: destinationPath];
 
 	id additionalTaskInfo = makeTaskInfo(@"svn checkout", taskLaunchPath, arguments);
 
@@ -333,7 +334,7 @@ GetDiffAppName ()
 
 	[arguments           addObject: SvnCmdPath()];
 	[arguments           addObject: concatOptions(generalOptions, options)];
-	[arguments addObjectsFromArray: items];	
+	[arguments addObjectsFromArray: items];
 
 	id additionalTaskInfo = makeTaskInfo(@"extract", taskLaunchPath, arguments);
 
@@ -356,8 +357,8 @@ GetDiffAppName ()
 	[arguments			 addObject: @"import"];
 	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
-	[arguments			 addObject: file];	
-	[arguments			 addObject: destinationPath];	
+	[arguments			 addObject: file];
+	[arguments			 addObject: destinationPath];
 
 	id additionalTaskInfo = makeTaskInfo(@"svn import", taskLaunchPath, arguments);
 
@@ -380,8 +381,8 @@ GetDiffAppName ()
 	[arguments			 addObject: @"copy"];
 	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
-	[arguments			 addObject: file];	
-	[arguments			 addObject: destinationPath];	
+	[arguments			 addObject: file];
+	[arguments			 addObject: destinationPath];
 
 	id additionalTaskInfo = makeTaskInfo(@"svn copy", taskLaunchPath, arguments);
 
@@ -404,8 +405,8 @@ GetDiffAppName ()
 	[arguments			 addObject: @"move"];
 	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
-	[arguments			 addObject: file];	
-	[arguments			 addObject: destinationPath];	
+	[arguments			 addObject: file];
+	[arguments			 addObject: destinationPath];
 
 	id additionalTaskInfo = makeTaskInfo(@"svn move", taskLaunchPath, arguments);
 
@@ -427,7 +428,7 @@ GetDiffAppName ()
 	[arguments			 addObject: @"mkdir"];
 	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
-	[arguments addObjectsFromArray: files];	
+	[arguments addObjectsFromArray: files];
 
 	id additionalTaskInfo = makeTaskInfo(@"svn mkdir", taskLaunchPath, arguments);
 
@@ -449,7 +450,7 @@ GetDiffAppName ()
 	[arguments			 addObject: @"delete"];
 	addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
-	[arguments addObjectsFromArray: files];	
+	[arguments addObjectsFromArray: files];
 
 	id additionalTaskInfo = makeTaskInfo(@"svn delete", taskLaunchPath, arguments);
 
@@ -497,26 +498,26 @@ ensureDict (NSDictionary* dictOrNil)
 {
 	NSMutableDictionary *dic;
 	[invocation invoke];
-	[invocation getReturnValue:&dic];
-	
+	[invocation getReturnValue: &dic];
+
 	NSMutableArray *arr = [NSMutableArray array];
-	NSString *username = [dic objectForKey:@"user"];
-	NSString *password = [dic objectForKey:@"pass"];
-	
+	NSString *username = [dic objectForKey: @"user"];
+	NSString *password = [dic objectForKey: @"pass"];
+
 	if ([username length])
 	{
-		[arr addObject:@"--username"];
-		[arr addObject:username];
+		[arr addObject: @"--username"];
+		[arr addObject: username];
 
 		if ([password length])
 		{
-			[arr addObject:@"--password"];
-			[arr addObject:password];		
+			[arr addObject: @"--password"];
+			[arr addObject: password];
 		}
 	}
 
-	[arr addObject:@"--non-interactive"];
-		
+	[arr addObject: @"--non-interactive"];
+
 	return arr;
 }
 
@@ -536,7 +537,7 @@ ensureDict (NSDictionary* dictOrNil)
 	NSPipe* pipe = [[NSPipe alloc] init];
 	NSPipe* errorPipe = [[NSPipe alloc] init];
 
-	[task setEnvironment: [Task createEnvironment: TRUE]];	
+	[task setEnvironment: [Task createEnvironment: TRUE]];
 	[task setLaunchPath: taskLaunchPath];
 	[task setArguments: arguments];
 
@@ -546,14 +547,14 @@ ensureDict (NSDictionary* dictOrNil)
 	NSFileHandle* errorHandle = [errorPipe fileHandleForReading];
 
 	// this will be done by Tasks
-//	[task launch]; 
+//	[task launch];
 
 	NSMutableDictionary *taskObj = [NSMutableDictionary dictionaryWithObjectsAndKeys:
 								@"pending",											@"status",
 								task,												@"task",
 								handle,												@"handle",
 								errorHandle,										@"errorHandle",
-						//		[NSNumber numberWithInt:[task processIdentifier]],	@"pid",
+						//		[NSNumber numberWithInt: [task processIdentifier]],	@"pid",
 								callback,											@"callback",
 								ensureDict(callbackInfo),							@"callbackInfo",
 								ensureDict(taskInfo),								@"taskInfo",

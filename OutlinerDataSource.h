@@ -4,8 +4,8 @@
 
 @interface OutlinerDataSource : NSObject
 {
-    IBOutlet id document;
-    IBOutlet id controller;
+	IBOutlet id document;
+	IBOutlet id controller;
 }
 @end
 

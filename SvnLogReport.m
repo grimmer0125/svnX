@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------------------
 //	SvnLogReport.m - Generate & display in HTML a Subversion log report
 //
-//	Copyright © Chris, 2008 - 2009.  All rights reserved.
+//	Copyright © Chris, 2008 - 2010.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #import "CommonUtils.h"
@@ -88,7 +88,7 @@ LogToXML (NSArray* logItems, bool includePaths, int limit, bool reverseOrder)
 			{
 				NSXMLElement* const paths = [NSXMLNode elementWithName: @"paths"];
 				[entry addChild: paths];
-				for_each(en2, obj, pathObjs)
+				for_each_obj(en2, obj, pathObjs)
 				{
 					NSXMLElement* const path = CopyChild(paths, obj, @"path");
 					CopyAttribute(path, obj, @"action");
@@ -471,7 +471,7 @@ WriteXMLLog (NSArray* logItems, bool includePaths, int limit, bool reverseOrder,
 			{
 				const id autoPool = [[NSAutoreleasePool alloc] init];
 				WRITE("<paths>");
-				for_each(en2, obj, [pathObjs sortedArrayUsingDescriptors: sortDescriptors])
+				for_each_obj(en2, obj, [pathObjs sortedArrayUsingDescriptors: sortDescriptors])
 				{
 					ToUTF8([obj objectForKey: @"action"], act, sizeof(act));
 					NSString* value;
@@ -801,8 +801,8 @@ enum {
 
 
 //----------------------------------------------------------------------------------------
-// Optional method:  This message is sent to us since we are the target of some toolbar item actions 
-// (for example:  of the save items action) 
+// Optional method:  This message is sent to us since we are the target of some toolbar item actions
+// (for example:  of the save items action)
 
 NSString* const SaveDocToolbarItemIdentifier = @"svnX.save";
 NSString* const SearchDocToolbarItemIdentifier = @"svnX.search";

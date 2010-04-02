@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------------------
 //	ViewUtils.h - NSView & NSWindow utilities
 //
-//	Copyright © Chris, 2008 - 2009.  All rights reserved.
+//	Copyright © Chris, 2008 - 2010.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #pragma once
@@ -72,10 +72,10 @@ void		WViewEnable				(NSWindow* window, int tag, bool isEnabled);
 void		WViewShow				(NSWindow* window, int tag, bool isVisible);
 static inline
 void		WHideView				(NSWindow* window, int tag)
-										{ return WViewShow(window, tag, FALSE); }
+										{ WViewShow(window, tag, FALSE); }
 static inline
 void		WShowView				(NSWindow* window, int tag)
-										{ return WViewShow(window, tag, TRUE); }
+										{ WViewShow(window, tag, TRUE); }
 int			TagOfSelectedItem		(NSPopUpButton* view);
 static inline
 int			CurrentTag				(NSPopUpButton* view)

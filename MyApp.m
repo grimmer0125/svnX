@@ -1,8 +1,8 @@
 //----------------------------------------------------------------------------------------
 //	MyApp.m - NSApplication's delegate
 //
-//  Copyright Dominique Peretti, 2004 - 2008.
-//	Copyright © Chris, 2008 - 2009.  All rights reserved.
+//  Copyright Dominique Peretti, 2004 - 2007.
+//	Copyright © Chris, 2007 - 2010.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #import <CoreServices/CoreServices.h>
@@ -14,7 +14,6 @@
 #import "SvnFileStatusToColourTransformer.h"
 #import "SvnDateTransformer.h"
 #import "ArrayCountTransformer.h"
-#import "SvnFilePathTransformer.h"
 #import "FilePathCleanUpTransformer.h"
 #import "TrimNewLinesTransformer.h"
 #import "Tasks.h"
@@ -23,15 +22,9 @@
 
 
 // TO_DO: Add file "TaskStatusToColorTransformer.h"
-@interface TaskStatusToColorTransformer : NSObject
-{
-}
-@end
+@interface TaskStatusToColorTransformer : NSObject @end
 
-@interface ActionToColor : NSValueTransformer
-{
-}
-@end
+@interface ActionToColor : NSValueTransformer @end
 
 
 //----------------------------------------------------------------------------------------
@@ -112,7 +105,6 @@ addTransform (Class itsClass, NSString* itsName)
 	addTransform([ArrayCountTransformer            class], @"ArrayCountTransformer");	// MySvnLogView
 	addTransform([FilePathCleanUpTransformer       class], @"FilePathCleanUp");			// FavoriteWorkingCopies (path field)
 	addTransform([FilePathWorkingCopy              class], @"FilePathWorkingCopy");		// FavoriteWorkingCopies
-	addTransform([SvnFilePathTransformer           class], @"lastPathComponent");		// SingleFileInspector
 	addTransform([TrimNewLinesTransformer          class], @"TrimNewLines");			// MySvnLogView (author column)
 	addTransform([TaskStatusToColorTransformer     class], @"TaskStatusToColor");		// Activity Window in svnX.nib
 	addTransform([ActionToColor                    class], @"ActionToColor");			// MySvnLogView
@@ -420,7 +412,7 @@ static BOOL gCanFocus = YES;
 
 //----------------------------------------------------------------------------------------
 
-- (BOOL) applicationShouldOpenUntitledFile: (NSApplication*) sender 
+- (BOOL) applicationShouldOpenUntitledFile: (NSApplication*) sender
 {
 	#pragma unused(sender)
 	return NO;
@@ -467,13 +459,13 @@ static BOOL gCanFocus = YES;
 - (NSMutableArray*) updaterCustomizeProfileInfo: (NSMutableArray*) profileInfo
 {
 	NSString *MACAddress = [self getMACAddress];
-	NSArray *profileDictObjs = [NSArray arrayWithObjects:@"MACAddr",@"MAC Address", MACAddress, MACAddress, nil];
-	NSArray *profileDictKeys = [NSArray arrayWithObjects:@"key", @"visibleKey", @"value", @"visibleValue", nil];
+	NSArray *profileDictObjs = [NSArray arrayWithObjects: @"MACAddr",@"MAC Address", MACAddress, MACAddress, nil];
+	NSArray *profileDictKeys = [NSArray arrayWithObjects: @"key", @"visibleKey", @"value", @"visibleValue", nil];
 
 	[profileInfo addObject: [NSDictionary dictionaryWithObjects: profileDictObjs forKeys: profileDictKeys]];
 
 	//NSLog(@"%@", profileInfo);
-	
+
 	return profileInfo;
 }
 
@@ -486,25 +478,25 @@ static BOOL gCanFocus = YES;
 	UInt32 entryCount = 10;
 	MACAddress mac;
 
-	int err = GetEthernetAddressInfo((EnetData*)&data, &entryCount);
+	int err = GetEthernetAddressInfo((EnetData*) &data, &entryCount);
 
-	if ( err == noErr )
+	if (err == noErr)
 	{
-		NSValue *value = [NSValue valueWithBytes:&data[0].macAddress objCType:@encode(MACAddress)];
-		[value getValue:&mac];
-		NSMutableString *s = [NSMutableString string];
-		int i;
-		
-		for ( i=0; i<kIOEthernetAddressSize; i++ )
+		NSValue* value = [NSValue valueWithBytes: &data[0].macAddress objCType: @encode(MACAddress)];
+		[value getValue: &mac];
+		NSMutableString* s = [NSMutableString string];
+
+		for (int i = 0; i < kIOEthernetAddressSize; ++i)
 		{
-			[s appendFormat:@"%02X", mac[i]];
-		
-			if(i < kIOEthernetAddressSize-1) [s appendString:@":"];
+			[s appendFormat: @"%02X", mac[i]];
+
+			if (i < kIOEthernetAddressSize - 1)
+				[s appendString: @":"];
 		}
-		
+
 		return s;
 	}
-	
+
 	return @"";
 }
 
@@ -516,10 +508,7 @@ static BOOL gCanFocus = YES;
 //----------------------------------------------------------------------------------------
 // The text view of the help documentation window
 
-@interface HelpDocView : NSTextView
-{
-}
-@end
+@interface HelpDocView : NSTextView @end
 
 
 @implementation HelpDocView

@@ -1,6 +1,8 @@
+//----------------------------------------------------------
+// ReviewCommit.h - Review and edit a commit
 //
-// ReviewCommit.h
-//
+//	Copyright © Chris, 2008 - 2010.  All rights reserved.
+//----------------------------------------------------------
 
 #import <Cocoa/Cocoa.h>
 #import "Tasks.h"

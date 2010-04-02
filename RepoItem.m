@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------------------
 //  RepoItem.m - A file or folder in a Subversion repository.
 //
-//	Copyright © Chris, 2008 - 2009.  All rights reserved.
+//	Copyright © Chris, 2008 - 2010.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #import "NSString+MyAdditions.h"
@@ -30,6 +30,9 @@ SvnRevNumString (SvnRevNum rev, char buf[kSvnRevNumBufSize])
 //----------------------------------------------------------------------------------------
 
 @implementation RepoItem
+
+ConstString kTypeRepoItem = @"svnX_REPO_ITEM";
+
 
 //----------------------------------------------------------------------------------------
 
@@ -275,17 +278,6 @@ SvnRevNumString (SvnRevNum rev, char buf[kSvnRevNumBufSize])
 {
 	return fTime;
 }
-
-
-//----------------------------------------------------------------------------------------
-
-#if 0
-- (void) setURL: (NSURL*) url
-{
-	Assert(fURL == nil);
-	fURL = [url retain];
-}
-#endif
 
 
 //----------------------------------------------------------------------------------------

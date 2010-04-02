@@ -1,25 +1,24 @@
 
-@interface TaskStatusToColorTransformer : NSObject {
+@interface TaskStatusToColorTransformer : NSObject @end
 
-}
-
-@end
 
 @implementation TaskStatusToColorTransformer
 
-+ (Class)transformedValueClass
++ (Class) transformedValueClass
 {
-    return [NSColor class];
+	return [NSColor class];
 }
 
-+ (BOOL)allowsReverseTransformation
+
++ (BOOL) allowsReverseTransformation
 {
-    return NO;
+	return NO;
 }
 
-- (id)transformedValue:(NSString*)aString
-{	
-	if ( [aString isEqualToString:@"error"] )
+
+- (id) transformedValue: (NSString*) aString
+{
+	if ([aString isEqualToString: @"error"])
 	{
 		return [NSColor redColor];
 	}
@@ -28,3 +27,4 @@
 
 
 @end
+

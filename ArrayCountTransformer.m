@@ -1,26 +1,26 @@
 #import "ArrayCountTransformer.h"
 
 
+// Transformer to workaround what I think is a limitation of Panther.
+// One should be able to use path.@count in the keyPath field of interface builder,
+// but this doesn't seem to work.
+
 @implementation ArrayCountTransformer
-/*
- Transformer to workaround what I think is a limitation of Panther.
- One should be able to use path.@count in the keyPath field of interface builder,
- but this doesn't seem to work.
- 
-*/
-+ (Class)transformedValueClass
+
++ (Class) transformedValueClass
 {
-    return [NSNumber class];
+	return [NSNumber class];
 }
 
-+ (BOOL)allowsReverseTransformation
++ (BOOL) allowsReverseTransformation
 {
-    return NO;
+	return NO;
 }
 
-- (id)transformedValue:(id)aArray
+- (id) transformedValue: (id) aArray
 {
-	return [NSNumber numberWithInt:[aArray count]];
+	return [NSNumber numberWithInt: [aArray count]];
 }
 
 @end
+

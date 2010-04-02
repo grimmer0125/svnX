@@ -25,12 +25,12 @@
 {
 //	dprintf("0x%X", self);
 
-    [self setPendingTask: nil]; 
-    [self setUrl: nil]; 
-    [self setRevision: nil];
+	[self setPendingTask: nil];
+	[self setUrl: nil];
+	[self setRevision: nil];
 	[fOptionsInvocation release];
 
-    [super dealloc];
+	[super dealloc];
 }
 
 
@@ -40,7 +40,7 @@
 	// tell the task center to cancel pending callbacks to prevent crash
 	[[Tasks sharedInstance] cancelCallbacksOnTarget: self];
 
-	[self setPendingTask: nil]; 
+	[self setPendingTask: nil];
 	[fView release];	// the nib is responsible for releasing its top-level objects
 	fView = nil;
 
@@ -58,19 +58,19 @@
 	}
 	else
 	{
-		[self setIsFetching:FALSE];
+		[self setIsFetching: FALSE];
 
 		if ( [self pendingTask] != nil )
 		{
-			NSTask *task = [[self pendingTask] valueForKey:@"task"];
-			
+			NSTask *task = [[self pendingTask] valueForKey: @"task"];
+
 			if ( [task isRunning] )
 			{
 				[task terminate];
 			}
 		}
 
-		[self setPendingTask:nil];
+		[self setPendingTask: nil];
 	}
 }
 
@@ -81,7 +81,7 @@
 
 - (void) fetchSvn
 {
-	[self setIsFetching:TRUE];
+	[self setIsFetching: TRUE];
 }
 
 
@@ -93,7 +93,7 @@
 		[self performSelectorOnMainThread: @selector(fetchSvnReceiveDataFinished:)
 			  withObject:                  taskObj
 			  waitUntilDone:               YES];
-//		[self fetchSvnReceiveDataFinished:taskObj];
+//		[self fetchSvnReceiveDataFinished: taskObj];
 	}
 	else if (taskObj = stdErr(taskObj))
 		[self svnError: taskObj];
@@ -107,17 +107,17 @@
 								   alternateButton: nil
 									   otherButton: nil
 						 informativeTextWithFormat: @"%@", errorString];
-	
-	[alert setAlertStyle:NSCriticalAlertStyle];
-	
- 	[self setIsFetching:NO];
-	
-	if ( [self window] != nil )
+
+	[alert setAlertStyle: NSCriticalAlertStyle];
+
+ 	[self setIsFetching: NO];
+
+	if ([self window] != nil)
 	{
 		[alert beginSheetModalForWindow: [self window]
 						  modalDelegate: self
 						 didEndSelector: nil
-						    contextInfo: nil];
+							contextInfo: nil];
 	}
 	else
 	{
@@ -129,7 +129,7 @@
 - (void) fetchSvnReceiveDataFinished: (id) taskObj
 {
 	#pragma unused(taskObj)
-	[self setIsFetching:FALSE];
+	[self setIsFetching: FALSE];
 }
 
 

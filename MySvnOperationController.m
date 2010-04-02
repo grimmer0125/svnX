@@ -17,7 +17,7 @@
 		 options:    (NSInvocation*) options
 		 sourceItem: (RepoItem*)     sourceItem
 {
-    if (svnOptionsInvocation != options)
+	if (svnOptionsInvocation != options)
 	{
 		[svnOptionsInvocation release];
 		svnOptionsInvocation = [options retain];
@@ -125,7 +125,7 @@
 	[targetBrowser reset];
 	[targetBrowser unload]; // targetBrowser was loaded from a nib (see "unload" comments).
 
-	// the owner has to release its top level nib objects 
+	// the owner has to release its top level nib objects
 	[svnSheet release];
 	[objectController release];
 	[arrayController  release];
@@ -233,7 +233,7 @@
 	NSArray* const theItems = [arrayController arrangedObjects];
 	NSMutableArray* selectedItems = [NSMutableArray array];
 
-	for_each(en, it, [targetBrowser selectedItems])
+	for_each_obj(en, it, [targetBrowser selectedItems])
 	{
 		if (![theItems containsObject: it])
 			[selectedItems addObject: it];
@@ -256,7 +256,7 @@
 		NSBeep();
 	}
 	else
-	{		
+	{
 		[NSApp endSheet: svnSheet returnCode: [sender tag]];
 	}
 }

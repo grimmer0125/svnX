@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------------------
 //	ViewUtils.m - NSView & NSWindow utilities
 //
-//	Copyright © Chris, 2008 - 2009.  All rights reserved.
+//	Copyright © Chris, 2008 - 2010.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #import "ViewUtils.h"
@@ -536,7 +536,7 @@ getSubviewSplitViews (NSView* rootView, NSMutableArray* array)
 	if ([subviews count])
 	{
 		const Class splitViewClass = [NSSplitView class];
-		for_each(oEnum, view, subviews)
+		for_each_obj(oEnum, view, subviews)
 		{
 			if ([view isKindOfClass: splitViewClass])
 				[array addObject: view];
@@ -585,15 +585,15 @@ void
 setupSplitViews (NSWindow* window, NSArray* values, id delegate)
 {
 	NSArray* splitViews = getSplitViews(window);
-//	NSLog(@"setupSplitViews: %@ values=%@", splitViews, values);
+//	dprintf("(%@): splitViews=%@", values, splitViews);
 	int i, count = [splitViews count], valueCount = [values count];
 	for (i = 0; i < count; ++i)
 	{
 		GCoord value = (i < valueCount) ? [[values objectAtIndex: i] floatValue] : 0;
-//		NSLog(@"    %d splitView=%@ value=%g", i, [splitViews objectAtIndex: i], value);
+//		dprintf_("    %d splitView=%@ value=%g", i, [splitViews objectAtIndex: i], value);
 		initSplitView([splitViews objectAtIndex: i], value, delegate);
 	}
-//	NSLog(@"setupSplitViews: done");
+//	dprintf_("setupSplitViews: done");
 }
 
 
@@ -619,6 +619,8 @@ saveSplitViews (NSWindow* window, NSString* prefsKey)
 }
 
 
+//----------------------------------------------------------------------------------------
+#pragma mark	-
 //----------------------------------------------------------------------------------------
 
 @implementation NSWindow (ViewUtils)
@@ -665,7 +667,7 @@ saveSplitViews (NSWindow* window, NSString* prefsKey)
 //----------------------------------------------------------------------------------------
 
 
-@end	// NSWindow
+@end	// NSWindow (ViewUtils)
 
 
 //----------------------------------------------------------------------------------------

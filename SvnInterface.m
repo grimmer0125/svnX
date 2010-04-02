@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------------------
 //	SvnInterface.m - Interface to Subversion libraries
 //
-//	Copyright © Chris, 2003 - 2009.  All rights reserved.
+//	Copyright © Chris, 2003 - 2010.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #import "MyApp.h"
@@ -304,7 +304,7 @@ SvnAuth_ssl_server_trust_prompt (svn_auth_cred_ssl_server_trust_t** cred_p,
 	if (failures & SVN_AUTH_SSL_CNMISMATCH)
 	{
 		[msg appendString: UTF8("\xE2\x80\xA2 The certificate hostname does not match.\n")];
-	} 
+	}
 
 	if (failures & SVN_AUTH_SSL_NOTYETVALID)
 	{
@@ -416,7 +416,7 @@ SvnSetupAuthentication (id delegate, SvnPool pool)
 	svn_auth_get_ssl_client_cert_prompt_provider(Push(), SvnAuth_ssl_client_cert_prompt,
 												 delegate, kSvnRetryLimit, pool);
 	svn_auth_get_ssl_client_cert_pw_prompt_provider(Push(), SvnAuth_ssl_client_cert_pw_prompt,
-												    delegate, kSvnRetryLimit, pool);
+													delegate, kSvnRetryLimit, pool);
 #endif
 
 	#undef	Push

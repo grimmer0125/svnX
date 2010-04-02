@@ -1,3 +1,10 @@
+//----------------------------------------------------------------------------------------
+//	MyWorkingCopy.m - Working Copy model
+//
+//	Copyright 2004 - 2007 Dominique Peretti.
+//	Copyright © Chris, 2007 - 2010.  All rights reserved.
+//----------------------------------------------------------------------------------------
+
 #import "MyWorkingCopy.h"
 #import "MyWorkingCopyController.h"
 #import "MyApp.h"
@@ -282,7 +289,7 @@ GenericFolderImage32 ()
 
 - (void) svnRefresh
 {
-//	NSLog(@"svnRefresh - isVisible=%d", [[controller window] isVisible]);
+//	dprintf("isVisible=%d", [[controller window] isVisible]);
 	if (useOldParsingMethod())
 		[controller fetchSvnInfo];
 	[controller fetchSvnStatus];
@@ -351,7 +358,7 @@ GenericFolderImage32 ()
 	resetIconCache();
 	[self setUser: nil];
 	[self setPass: nil];
-	[self setRevision:nil];
+	[self setRevision: nil];
 	[self setWorkingCopyPath: nil];
 	[self setWindowTitle: nil];
 	[self setSvnFiles: nil];
@@ -387,7 +394,7 @@ GenericFolderImage32 ()
 	[desc1 release];
 	[desc2 release];
 
-    [super windowControllerDidLoadNib: aController];
+	[super windowControllerDidLoadNib: aController];
 }
 
 
@@ -423,7 +430,7 @@ GenericFolderImage32 ()
 
 - (void) refreshSubController
 {
-	for_each(en, it, subControllers)
+	for_each_obj(en, it, subControllers)
 		[it buildFileList];
 }
 
@@ -522,7 +529,7 @@ typedef struct SvnStatusEnv SvnStatusEnv;
 static NSMutableArray*
 addDirToTree (const SvnStatusEnv* env, NSString* const fullPath, NSImage* icon)
 {
-//	NSLog(@"addDirToTree('%@')", fullPath);
+//	dprintf("('%@')", fullPath);
 	NSMutableArray* children = [env->fTree objectForKey: fullPath];
 	if (children == nil)
 	{
@@ -546,46 +553,46 @@ addDirToTree (const SvnStatusEnv* env, NSString* const fullPath, NSImage* icon)
 // WC 'svn status' callback.
 
 static void
-svnStatusReceiver (void*       baton,
-				   const char* path,
-				   SvnStatus   status)
+svnStatusReceiver (void*     baton,
+				   ConstCStr path,
+				   SvnStatus status)
 {
-//	NSLog(@"svnStatusReceiver('%s')", path);
+//	dprintf("('%s')", path);
 	const SvnStatusEnv* const env = (const SvnStatusEnv*) baton;
 	const svn_wc_entry_t* const entry = status->entry;
 
-	NSString* const kCurrentDir = @".";
-	NSString* const itemFullPath = UTF8(path);
-	NSString* const itemPath = (env->wcPathLength < [itemFullPath length])
+	ConstString kCurrentDir = @".";
+	ConstString itemFullPath = UTF8(path);
+	ConstString itemPath = (env->wcPathLength < [itemFullPath length])
 								? [itemFullPath substringFromIndex: env->wcPathLength + 1] : kCurrentDir;
 
 	const SvnWCStatusKind text_status = status->text_status,
 						  prop_status = status->prop_status;
 	// see all meanings at http://svnbook.red-bean.com/nightly/en/svn.ref.svn.c.status.html
 	// COLUMN 1
-	NSString* const column1 = SvnStatusToString(text_status);
-		
+	ConstString column1 = SvnStatusToString(text_status);
+
 	// COLUMN 2
-	NSString* const column2 = SvnStatusToString(prop_status);
+	ConstString column2 = SvnStatusToString(prop_status);
 
 	// COLUMN 3
-	NSString* const column3 = status->locked ? @"L" : @" ";
+	ConstString column3 = status->locked ? @"L" : @" ";
 
 	// COLUMN 4
-	NSString* const column4 = status->copied ? @"+" : @" ";
+	ConstString column4 = status->copied ? @"+" : @" ";
 
 	// COLUMN 5
-	NSString* const column5 = status->switched ? @"S" : @" ";
+	ConstString column5 = status->switched ? @"S" : @" ";
 
 	// COLUMN 6
 	// see <http://svn.collab.net/repos/svn/trunk/subversion/svn/status.c>, ~ line 112 for explanation
-	NSString* const kIsLocked = @"K";
+	ConstString kIsLocked = @"K";
 	NSString* column6 = @" ";
-	const char* const wc_token = entry ? entry->lock_token : NULL;
+	ConstCStr const wc_token = entry ? entry->lock_token : NULL;
 	if (env->showUpdates)
 	{
 		const svn_lock_t* const repos_lock = status->repos_lock;
-		const char* const repos_token = repos_lock ? repos_lock->token : NULL;
+		ConstCStr const repos_token = repos_lock ? repos_lock->token : NULL;
 		if (repos_token)
 		{
 			if (wc_token)
@@ -608,10 +615,10 @@ svnStatusReceiver (void*       baton,
 	SvnWCStatusKind repos_status = status->repos_text_status;
 	if (repos_status == svn_wc_status_none || repos_status == svn_wc_status_normal)
 		repos_status = status->repos_prop_status;
-	NSString* const column7 = SvnStatusToString(repos_status);
+	ConstString column7 = SvnStatusToString(repos_status);
 
 	// COLUMN 8
-	NSString* const column8 = (prop_status == svn_wc_status_normal) ? @"P" : SvnStatusToString(prop_status);
+	ConstString column8 = (prop_status == svn_wc_status_normal) ? @"P" : SvnStatusToString(prop_status);
 
 	BOOL renamable = NO, addable = NO, removable = NO, updatable = NO, revertible = NO, committable = NO,
 		 copiable = NO, movable = NO, resolvable = NO, lockable = YES, unlockable = NO;
@@ -630,7 +637,7 @@ svnStatusReceiver (void*       baton,
 		updatable = YES;
 		copiable = YES;
 		movable = YES;
-	}		
+	}
 	else if (text_status == svn_wc_status_unversioned)
 	{
 		addable = YES;
@@ -643,7 +650,7 @@ svnStatusReceiver (void*       baton,
 		revertible = YES;
 		updatable = YES;
 		removable = YES;
-		lockable = NO;			
+		lockable = NO;
 	}
 	else if (text_status == svn_wc_status_added ||
 			 text_status == svn_wc_status_replaced)
@@ -744,13 +751,13 @@ typedef struct SvnInfoEnv SvnInfoEnv;
 // WC 'svn info' callback.  Sets <revision> and <repositoryUrl>.
 
 static SvnError
-svnInfoReceiver (void*       baton,
-				 const char* path,
-				 SvnInfo     info,
-				 SvnPool     pool)
+svnInfoReceiver (void*     baton,
+				 ConstCStr path,
+				 SvnInfo   info,
+				 SvnPool   pool)
 {
 	#pragma unused(pool)
-//	NSLog(@"svnInfoReceiver: URL=<%s>", info->URL);
+//	dprintf("URL=<%s>", info->URL);
 	SvnInfoEnv* env = (SvnInfoEnv*) baton;
 	[env->fInterface svnInfo: info forPath: path];
 	strncpy(env->fURL, info->URL, sizeof(env->fURL));
@@ -763,7 +770,7 @@ svnInfoReceiver (void*       baton,
 // svn status of <workingCopyPath> via SvnInterface
 
 - (void) svnDoStatus: (BOOL)    showUpdates_
-         pool:        (SvnPool) pool
+		 pool:        (SvnPool) pool
 {
 	SvnClient ctx = SvnSetupClient(&fSvnEnv, self);
 
@@ -800,7 +807,7 @@ svnInfoReceiver (void*       baton,
 		env.flatMode     = flatMode;
 		env.showUpdates  = showUpdates_;
 
-	//	NSLog(@"svnDoStatus('%s')", path);
+	//	dprintf("('%s')", path);
 		svn_revnum_t result_rev = SVN_INVALID_REVNUM;
 		SvnThrowIf(svn_client_status2(&result_rev, path, &rev_opt,
 									  svnStatusReceiver, &env, kSvnRecurse,
@@ -816,7 +823,7 @@ svnInfoReceiver (void*       baton,
 		[self setSvnFiles: env.newSvnFiles];
 		[controller fetchSvnStatusVerboseReceiveDataFinished];
 		[controller restoreSelection];
-	//	NSLog(@"svnDoStatus rev=%d url=<%s>", result_rev, NULL);
+	//	dprintf("rev=%d url=<%s>", result_rev, env.fURL);
 	}
 }
 
@@ -828,7 +835,6 @@ svnInfoReceiver (void*       baton,
 	[controller setStatusMessage: @"Refreshing"];
 	if (SvnWantAndHave())
 	{
-	//	NSLog(@"svn status - begin");
 		const id autoPool = [[NSAutoreleasePool alloc] init];
 		// Create top-level memory pool.
 		SvnPool pool = SvnNewPool();
@@ -846,7 +852,6 @@ svnInfoReceiver (void*       baton,
 		{
 			SvnDeletePool(pool);
 			[autoPool release];
-	//		NSLog(@"svn status - end");
 			[controller setStatusMessage: nil];
 		}
 	}
@@ -904,7 +909,7 @@ svnInfoReceiver (void*       baton,
 
 - (void) computesNewVerboseResultArray: (NSData*) xmlData
 {
-    NSError* err = nil;
+	NSError* err = nil;
 	NSXMLDocument*
 		xmlDoc = [[NSXMLDocument alloc] initWithData: xmlData options: NSXMLNodeOptionsNone error: &err];
 	if (xmlDoc == nil)
@@ -914,7 +919,7 @@ svnInfoReceiver (void*       baton,
 		NSLog(@"Error parsing xml %@", err);
 
 	if (xmlDoc == nil)
-        return;
+		return;
 
 	NSMutableArray* const newSvnFiles = [NSMutableArray arrayWithCapacity: 100];
 	const BOOL kFlatMode = [self flatMode];
@@ -926,13 +931,13 @@ svnInfoReceiver (void*       baton,
 											  icon: nil];
 
 	// <target> node
-	NSXMLElement *targetElement = [[[xmlDoc rootElement] elementsForName:@"target"] objectAtIndex:0];
+	NSXMLElement *targetElement = [[[xmlDoc rootElement] elementsForName: @"target"] objectAtIndex: 0];
 
 	// <against revision=""> node
-	NSArray *againstElements = [targetElement elementsForName:@"against"];
+	NSArray *againstElements = [targetElement elementsForName: @"against"];
 	if ( [againstElements count] > 0 )
 	{
-		NSXMLElement *against = [againstElements objectAtIndex:0];
+		NSXMLElement *against = [againstElements objectAtIndex: 0];
 		[controller setStatusMessage: [NSString stringWithFormat: @"Status against revision: %@",
 																  [[against attributeForName: @"revision"] stringValue]]];
 	}
@@ -946,7 +951,7 @@ svnInfoReceiver (void*       baton,
 	NSString* const kCurrentDir = @".";
 
 	NSXMLElement *entry;
-	NSEnumerator *e = [[targetElement elementsForName:@"entry"] objectEnumerator];
+	NSEnumerator *e = [[targetElement elementsForName: @"entry"] objectEnumerator];
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
 	// <entry> nodes
@@ -958,77 +963,77 @@ svnInfoReceiver (void*       baton,
 
 		NSXMLElement *wc_status = nil;
 		NSString *itemStatus = @"";
-		NSString *propStatus = nil; 
+		NSString *propStatus = nil;
 		NSString* copiedStatus = nil;
 		NSString* switchedStatus = nil;
-		
+
 		// wcLockedStatus has nothing to do with lockInWc
 		// <http://svnbook.red-bean.com/nightly/en/svn.advanced.locking.html#svn.advanced.locking.meanings>
 		NSString* wcLockedStatus = nil;
 		NSString* wc_lock = nil;
-		
+
 		// <wc-status> node
-		NSArray *wc_status_elements = [entry elementsForName:@"wc-status"];
+		NSArray *wc_status_elements = [entry elementsForName: @"wc-status"];
 		if ( [wc_status_elements count] > 0 )
 		{
-			wc_status = [wc_status_elements objectAtIndex:0];
-		
-			itemStatus = [[wc_status attributeForName:@"item"] stringValue];
-			propStatus = [[wc_status attributeForName:@"props"] stringValue];		
-			copiedStatus = [[wc_status attributeForName:@"copied"] stringValue];
-			switchedStatus = [[wc_status attributeForName:@"switched"] stringValue];
-			wcLockedStatus = [[wc_status attributeForName:@"wc-locked"] stringValue];
+			wc_status = [wc_status_elements objectAtIndex: 0];
 
-			if ( [wc_status attributeForName:@"revision"] != nil )
-			revisionCurrent = [[wc_status attributeForName:@"revision"] stringValue];
+			itemStatus = [[wc_status attributeForName: @"item"] stringValue];
+			propStatus = [[wc_status attributeForName: @"props"] stringValue];
+			copiedStatus = [[wc_status attributeForName: @"copied"] stringValue];
+			switchedStatus = [[wc_status attributeForName: @"switched"] stringValue];
+			wcLockedStatus = [[wc_status attributeForName: @"wc-locked"] stringValue];
+
+			if ( [wc_status attributeForName: @"revision"] != nil )
+			revisionCurrent = [[wc_status attributeForName: @"revision"] stringValue];
 
 			// working copy lock? (when --show-update is NOT used)
-			NSArray *lockInWCElements = [wc_status elementsForName:@"lock"];
+			NSArray *lockInWCElements = [wc_status elementsForName: @"lock"];
 			if ( [lockInWCElements count] > 0 )
 			{
-				NSXMLElement *lockInWC = [lockInWCElements objectAtIndex:0];
+				NSXMLElement *lockInWC = [lockInWCElements objectAtIndex: 0];
 				wc_lock = [[[lockInWC elementsForName: @"token"] objectAtIndex: 0] stringValue];
 			}
-			
-			NSArray *commitElements = [wc_status elementsForName:@"commit"];
+
+			NSArray *commitElements = [wc_status elementsForName: @"commit"];
 			if ( [commitElements count] > 0 )
 			{
-				NSXMLElement *commit = [commitElements objectAtIndex:0];
-				NSArray *commitElements = [commit elementsForName:@"author"];
+				NSXMLElement *commit = [commitElements objectAtIndex: 0];
+				NSArray *commitElements = [commit elementsForName: @"author"];
 				if ( [commitElements count] > 0 )
 				{
-					theUser = [[commitElements objectAtIndex:0] stringValue];
+					theUser = [[commitElements objectAtIndex: 0] stringValue];
 				}
-				revisionLastChanged = [[commit attributeForName:@"revision"] stringValue];
+				revisionLastChanged = [[commit attributeForName: @"revision"] stringValue];
 			}
 		}
-		
+
 		// <repos-status> node  (when running --show-update)
 		NSXMLElement *repos_status = nil;
-		NSArray *repos_status_elements = [entry elementsForName:@"repos-status"];
-		
+		NSArray *repos_status_elements = [entry elementsForName: @"repos-status"];
+
 		NSString* reposItemStatus = nil;
 		NSString* reposPropStatus = nil;
 		NSString* repos_lock = nil;
-		
+
 		if ( [repos_status_elements count] > 0 )
 		{
-			repos_status = [repos_status_elements objectAtIndex:0];
+			repos_status = [repos_status_elements objectAtIndex: 0];
 
 			if (kShowUpdates)
 			{
 				// repository lock?
-				NSArray *lockInReposElements = [repos_status elementsForName:@"lock"];
+				NSArray *lockInReposElements = [repos_status elementsForName: @"lock"];
 				if ( [lockInReposElements count] > 0 )
 				{
-					NSXMLElement *lockInRepos = [lockInReposElements objectAtIndex:0];
+					NSXMLElement *lockInRepos = [lockInReposElements objectAtIndex: 0];
 					repos_lock = [[[lockInRepos elementsForName: @"token"] objectAtIndex: 0] stringValue];
 				}
 			}
 
-			reposItemStatus = [[repos_status attributeForName:@"item"] stringValue];
-			reposPropStatus = [[repos_status attributeForName:@"props"] stringValue];		
-			
+			reposItemStatus = [[repos_status attributeForName: @"item"] stringValue];
+			reposPropStatus = [[repos_status attributeForName: @"props"] stringValue];
+
 		}
 
 	#if 0
@@ -1036,12 +1041,12 @@ svnInfoReceiver (void*       baton,
 		NSXMLElement *lockInWc;
 
 		if ( wc_status != nil )
-		{		
-			NSArray *lockInWcElements = [wc_status elementsForName:@"lock"];
+		{
+			NSArray *lockInWcElements = [wc_status elementsForName: @"lock"];
 
 			if ( [lockInWcElements count] > 0 )
 			{
-				lockInWc = [lockInWcElements objectAtIndex:0];
+				lockInWc = [lockInWcElements objectAtIndex: 0];
 			}
 		}
 	#endif
@@ -1106,7 +1111,7 @@ svnInfoReceiver (void*       baton,
 		{
 			col1 = '~';		column1 = @"~";
 		}
-		
+
 		// COLUMN 2
 		const unichar propStatusCh0 = (propStatus && [propStatus length]) ? [propStatus characterAtIndex: 0] : 0;
 		if (propStatusCh0 == 'm' && [propStatus isEqualToString: @"modified"])
@@ -1117,25 +1122,25 @@ svnInfoReceiver (void*       baton,
 		{
 			col2 = 'C';		column2 = @"C";
 		}
-		
+
 		// COLUMN 3
-		if ( [wcLockedStatus isEqualToString:@"true"] )
+		if ( [wcLockedStatus isEqualToString: @"true"] )
 		{
 			column3 = @"L";
 		}
-		
+
 		// COLUMN 4
-		if ( [copiedStatus isEqualToString:@"true"] )
+		if ( [copiedStatus isEqualToString: @"true"] )
 		{
 			column4 = @"+";
 		}
 
 		// COLUMN 5
-		if ( [switchedStatus isEqualToString:@"true"] )
+		if ( [switchedStatus isEqualToString: @"true"] )
 		{
 			column5 = @"S";
 		}
-		
+
 		// COLUMN 6
 		// see <http://svn.collab.net/repos/svn/trunk/subversion/svn/status.c>, ~ line 112 for explanation
 		if (kShowUpdates)
@@ -1158,20 +1163,20 @@ svnInfoReceiver (void*       baton,
 		}
 		else if ( wc_lock )
 			column6 = @"K";				// File is locked in this working copy
-		
+
 		// COLUMN 7
 		if ( repos_status != nil )
 		{
-			if ( [reposItemStatus isEqualToString:@"none"] == NO || [reposPropStatus isEqualToString:@"none"] == NO )
+			if ( [reposItemStatus isEqualToString: @"none"] == NO || [reposPropStatus isEqualToString: @"none"] == NO )
 				column7 = @"*";
 		}
-		
+
 		// COLUMN 8
 		if (propStatusCh0 != 0 && (propStatusCh0 != 'n' || ![propStatus isEqualToString: @"none"]))
 		{
 			column8 = @"P";
 		}
-		
+
 		BOOL renamable=NO, addable=NO, removable=NO, updatable=NO, revertible=NO, committable=NO,
 			 copiable=NO, movable=NO, resolvable=NO, lockable=YES, unlockable=NO;
 
@@ -1189,7 +1194,7 @@ svnInfoReceiver (void*       baton,
 			updatable = YES;
 			copiable = YES;
 			movable = YES;
-		}		
+		}
 		else if (col1 == '?')
 		{
 			addable = YES;
@@ -1201,7 +1206,7 @@ svnInfoReceiver (void*       baton,
 			revertible = YES;
 			updatable = YES;
 			removable = YES;
-			lockable = NO;			
+			lockable = NO;
 		}
 		else if (col1 == 'A' || col1 == 'R')
 		{
@@ -1228,7 +1233,7 @@ svnInfoReceiver (void*       baton,
 			revertible = YES;
 			resolvable = YES;
 		}
-		if ( [column6 isEqualToString:@"K"])
+		if ( [column6 isEqualToString: @"K"])
 		{
 			lockable = NO;
 			unlockable = YES;
@@ -1249,13 +1254,11 @@ svnInfoReceiver (void*       baton,
 
 			for (j = 0; j < count; ++j)
 			{
-				NSString* const dirName = [pathArr objectAtIndex: j];
-				NSEnumerator *enumerator = [tmp objectEnumerator];
-				id obj, child = nil;
-
+				ConstString dirName = [pathArr objectAtIndex: j];
+				id child = nil;
 				filePath = [filePath stringByAppendingPathComponent: dirName];
 
-				while ( obj = [enumerator nextObject] )
+				for_each_obj(en, obj, tmp)
 				{
 					if ([[obj name] isEqualToString: dirName])
 					{
@@ -1264,7 +1267,7 @@ svnInfoReceiver (void*       baton,
 					}
 				}
 
-				if ( child == nil )
+				if (child == nil)
 				{
 					NSImage* dirIcon = [workspace iconForFile: filePath];
 					[dirIcon setSize: kIconSize];
@@ -1338,8 +1341,8 @@ svnInfoReceiver (void*       baton,
 
 	fInfoPending = TRUE;
 	[MySvn    genericCommand: @"info"
-				   arguments: [NSArray arrayWithObject:[self workingCopyPath]]
-              generalOptions: [self svnOptionsInvocation]
+				   arguments: [NSArray arrayWithObject: [self workingCopyPath]]
+			  generalOptions: [self svnOptionsInvocation]
 					 options: nil
 					callback: MakeCallbackInvocation(self, @selector(svnInfoCompletedCallback:))
 				callbackInfo: nil
@@ -1350,11 +1353,11 @@ svnInfoReceiver (void*       baton,
 //----------------------------------------------------------------------------------------
 // WC 'svn info' callback.  Sets <revision> and <repositoryUrl>.
 
-- (void) svnInfo: (SvnInfo)     info
-		 forPath: (const char*) path
+- (void) svnInfo: (SvnInfo)   info
+		 forPath: (ConstCStr) path
 {
 	#pragma unused(path)
-//	NSLog(@"svnInfo revision=%d url=<%s>", info->rev, info->URL);
+//	dprintf("revision=%d url=<%s>", info->rev, info->URL);
 	[self setRevision: SvnRevNumToString(info->rev)];
 
 	NSString* urlString = UTF8(info->URL);
@@ -1383,7 +1386,7 @@ svnInfoReceiver (void*       baton,
 
 - (void) fetchSvnInfoReceiveDataFinished: (NSString*) result
 {
-	NSArray* lines = [result componentsSeparatedByString: @"\n"];
+	NSArray* const lines = [result componentsSeparatedByString: @"\n"];
 
 	const int count = [lines count];
 	if (count < 5)
@@ -1395,23 +1398,23 @@ svnInfoReceiver (void*       baton,
 		bool gotRev = false, gotURL = false;
 		for (int i = 0; i < count && (!gotRev || !gotURL); ++i)
 		{
-			NSString* const line = [lines objectAtIndex: i];
+			ConstString line = [lines objectAtIndex: i];
 			const int lineLength = [line length];
-			
-			if (!gotRev && lineLength > 9 && [[line substringWithRange:NSMakeRange(0, 10)] isEqualToString:@"Revision: "] )
+
+			if (!gotRev && lineLength > 9 && [[line substringWithRange: NSMakeRange(0, 10)] isEqualToString: @"Revision: "] )
 			{
-				[self setRevision: [line substringFromIndex:10]];
-				gotRev = true;			
+				[self setRevision: [line substringFromIndex: 10]];
+				gotRev = true;
 			}
-			else if (!gotURL && lineLength > 4 && [[line substringWithRange:NSMakeRange(0, 5)] isEqualToString:@"URL: "] )
+			else if (!gotURL && lineLength > 4 && [[line substringWithRange: NSMakeRange(0, 5)] isEqualToString: @"URL: "] )
 			{
-				NSString *urlString = [line substringFromIndex:5];
+				NSString* urlString = [line substringFromIndex: 5];
 
 				if ([urlString characterAtIndex: [urlString length] - 1] != '/')
-					urlString = [urlString stringByAppendingString:@"/"];
+					urlString = [urlString stringByAppendingString: @"/"];
 
 				[self setRepositoryUrl: [NSURL URLWithString: urlString]];
-				gotURL = true;			
+				gotURL = true;
 			}
 		}
 	}
@@ -1434,7 +1437,7 @@ svnInfoReceiver (void*       baton,
 	// commiting files in a dir if only a prop-change commit was requested on the dir.
 	BOOL nonRecusive = TRUE, isDir;
 	NSFileManager* const fileManager = [NSFileManager defaultManager];
-	for_each(enumerator, item, items)
+	for_each_obj(enumerator, item, items)
 	{
 		if ([[item objectForKey: @"deleted"] boolValue] &&
 			[fileManager fileExistsAtPath: [item objectForKey: @"fullPath"] isDirectory: &isDir] &&
@@ -1465,7 +1468,7 @@ svnInfoReceiver (void*       baton,
 
 - (void) svnCommit: (NSString*) message
 {
-	[self svnCommit:    [svnFilesAC selectedObjects] 
+	[self svnCommit:    [svnFilesAC selectedObjects]
 		  message:      message
 		  callback:     [self genericCompletedCallback]
 		  callbackInfo: nil];
@@ -1495,7 +1498,7 @@ svnInfoReceiver (void*       baton,
 
 - (void) svnSwitch: (NSArray*) options
 {
-	// it would be much more clean to use a specific [MySvn switch:...] command.
+	// it would be much more clean to use a specific [MySvn switch: ...] command.
 	id taskObj = [MySvn genericCommand: @"switch"
 							 arguments: [NSArray array]
 						generalOptions: [self svnOptionsInvocation]
@@ -1526,34 +1529,34 @@ svnInfoReceiver (void*       baton,
 	NSInvocation* const callback = [self genericCompletedCallback];
 	NSDictionary* const taskInfo = [self documentNameDict];
 
-	if ( [command isEqualToString:@"rename"] )
+	if ([command isEqualToString: @"rename"])
 	{
 		NSMutableArray* srcAndDst = [NSMutableArray arrayWithArray: itemPaths];
 		[srcAndDst addObject: [info objectForKey: @"destination"]];
 
 		[MySvn   genericCommand: @"move"
 					  arguments: srcAndDst
-                 generalOptions: [self svnOptionsInvocation]
+				 generalOptions: [self svnOptionsInvocation]
 						options: options
 					   callback: callback
 				   callbackInfo: nil
 					   taskInfo: taskInfo];
 	}
-	else if ( [command isEqualToString:@"move"] )
+	else if ([command isEqualToString: @"move"])
 	{
 		[MySvn     moveMultiple: itemPaths
-					destination: [info objectForKey:@"destination"]
-                 generalOptions: [self svnOptionsInvocation]
+					destination: [info objectForKey: @"destination"]
+				 generalOptions: [self svnOptionsInvocation]
 						options: options
 					   callback: callback
 				   callbackInfo: nil
 					   taskInfo: taskInfo];
 	}
-	else if ( [command isEqualToString:@"copy"] )
+	else if ([command isEqualToString: @"copy"])
 	{
 		[MySvn     copyMultiple: itemPaths
-					destination: [info objectForKey:@"destination"]
-                 generalOptions: [self svnOptionsInvocation]
+					destination: [info objectForKey: @"destination"]
+				 generalOptions: [self svnOptionsInvocation]
 						options: options
 					   callback: callback
 				   callbackInfo: nil
@@ -1582,7 +1585,7 @@ svnInfoReceiver (void*       baton,
 
 	if (isCompleted(taskObj))
 	{
-		[self svnRefresh];		
+		[self svnRefresh];
 	}
 
 	[self svnError: taskObj];
@@ -1604,10 +1607,10 @@ svnInfoReceiver (void*       baton,
 - (void) svnUpdate: (NSArray*) options
 {
 	[controller startProgressIndicator];
-	
+
 	[self setDisplayedTaskObj:
 		[MySvn updateAtWorkingCopyPath: [self workingCopyPath]
-					    generalOptions: [self svnOptionsInvocation]
+						generalOptions: [self svnOptionsInvocation]
 							   options: options
 							  callback: MakeCallbackInvocation(self, @selector(svnUpdateCompletedCallback:))
 						  callbackInfo: nil
@@ -1616,7 +1619,7 @@ svnInfoReceiver (void*       baton,
 
 
 //----------------------------------------------------------------------------------------
-// Update entire working copy
+// Update entire working copy to HEAD
 
 - (void) svnUpdate
 {
@@ -1632,7 +1635,7 @@ svnInfoReceiver (void*       baton,
 
 	if (isCompleted(taskObj))
 	{
-		[self svnRefresh];		
+		[self svnRefresh];
 	}
 
 	[self svnError: taskObj];
@@ -1682,7 +1685,7 @@ svnInfoReceiver (void*       baton,
 
 - (NSMutableDictionary*) getSvnOptions
 {
-	return [NSMutableDictionary dictionaryWithObjectsAndKeys:[self user], @"user", [self pass], @"pass", nil ];
+	return [NSMutableDictionary dictionaryWithObjectsAndKeys: [self user], @"user", [self pass], @"pass", nil ];
 }
 
 
@@ -1737,7 +1740,7 @@ svnInfoReceiver (void*       baton,
 
 
 //----------------------------------------------------------------------------------------
-// get/set displayedTaskObj 
+// get/set displayedTaskObj
 
 - (NSMutableDictionary*) displayedTaskObj { return displayedTaskObj; }
 
@@ -1839,7 +1842,7 @@ svnInfoReceiver (void*       baton,
 
 - (void) setFilterMode: (int) aFilterMode
 {
-//	NSLog(@"setFilterMode: %d", aFilterMode);
+//	dprintf("%d", aFilterMode);
 	filterMode = aFilterMode;
 }
 
@@ -1905,11 +1908,11 @@ svnInfoReceiver (void*       baton,
 
 - (NSString*) outlineSelectedPath { return outlineSelectedPath; }
 
-- (void) setOutlineSelectedPath: (NSString*) anOutlineSelectedPath
+- (void) setOutlineSelectedPath: (NSString*) aPath
 {
-//	NSLog(@"setOutlineSelectedPath('%@')", anOutlineSelectedPath);
+//	dprintf("('%@')", aPath);
 	id old = outlineSelectedPath;
-	outlineSelectedPath = [anOutlineSelectedPath retain];
+	outlineSelectedPath = [aPath retain];
 	[old release];
 	if (svnFiles != nil)
 		[svnFilesAC rearrangeObjects];
@@ -1931,9 +1934,9 @@ svnInfoReceiver (void*       baton,
 
 - (void) setRepositoryUrl: (NSURL*) aRepositoryUrl
 {
-    id old = [self repositoryUrl];
-    repositoryUrl = [aRepositoryUrl retain];
-    [old release];
+	id old = [self repositoryUrl];
+	repositoryUrl = [aRepositoryUrl retain];
+	[old release];
 }
 
 
@@ -2047,3 +2050,5 @@ compareNames (id obj1, id obj2, void* context)
 
 @end	// WCTreeEntry
 
+//----------------------------------------------------------------------------------------
+// End of MyWorkingCopy.m

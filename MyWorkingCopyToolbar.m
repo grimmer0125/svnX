@@ -54,7 +54,7 @@
 
 - (void) awakeFromNib
 {
-    items = [[NSMutableDictionary alloc] init];
+	items = [[NSMutableDictionary alloc] init];
 
 	[self createItem: @"Working Copy Path" view: workingCopyPathView, 150, 18, 340, 32];
 
@@ -152,7 +152,7 @@
 				@"svnUpdate",
 				@"openRepository",
 				@"refresh",
-				@"toggleSidebar",					
+				@"toggleSidebar",
 				NSToolbarSeparatorItemIdentifier,
 				NSToolbarSpaceItemIdentifier,
 				NSToolbarFlexibleSpaceItemIdentifier,

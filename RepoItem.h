@@ -1,12 +1,13 @@
 //----------------------------------------------------------------------------------------
 //  RepoItem.h - A file or folder in a Subversion repository.
 //
-//	Copyright © Chris, 2008 - 2009.  All rights reserved.
+//	Copyright © Chris, 2008 - 2010.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #import <Foundation/Foundation.h>
 #import "SvnInterface.h"
 
+extern ConstString kTypeRepoItem;
 
 @interface RepoItem : NSObject
 {
@@ -55,7 +56,6 @@
 - (SInt64)		size;
 - (void)		setTime:		(UTCTime) time;
 - (UTCTime)		time;
-//- (void)		setURL:			(NSURL*) url;
 - (NSURL*)		url;
 
 - (BOOL)		setUp:			(NSString*)	pathToColumn

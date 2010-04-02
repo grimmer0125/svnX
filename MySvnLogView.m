@@ -76,13 +76,13 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 
 + (Class) transformedValueClass
 {
-    return [NSColor class];
+	return [NSColor class];
 }
 
 
 + (BOOL) allowsReverseTransformation
 {
-    return NO;
+	return NO;
 }
 
 
@@ -164,8 +164,8 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 			[fView setFrame: [self bounds]];
 			[self addSubview: fView];
 
-		//  [self addObserver:self forKeyPath:@"currentRevision"
-		//			options:(NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld) context:nil];
+		//  [self addObserver: self forKeyPath: @"currentRevision"
+		//			options: (NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld) context: nil];
 		}
 
 		[self setMostRecentRevision: 1];
@@ -202,7 +202,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 	AssertClass(advancedBtn, NSButton);
 	[logsAC      unbind: NSContentArrayBinding];
 	[advancedBtn unbind: NSValueBinding];
-	
+
 	[super unload];
 }
 
@@ -345,7 +345,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 		pegRev = @"HEAD";
 	id taskInfo = [MySvn	log: aPath
 				 generalOptions: [self svnOptionsInvocation]
-						options: [NSArray arrayWithObjects: @"--xml", 
+						options: [NSArray arrayWithObjects: @"--xml",
 										[NSString stringWithFormat: @"-r%@:%d", pegRev, [self mostRecentRevision]],
 										isVerbose ? @"-v" : nil,
 										nil]

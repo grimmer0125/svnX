@@ -38,12 +38,12 @@
 
 + (Class) transformedValueClass
 {
-    return [NSString class];
+	return [NSString class];
 }
 
 + (BOOL) allowsReverseTransformation
 {
-    return NO;
+	return NO;
 }
 
 - (id) transformedValue: (id) aString
@@ -75,7 +75,7 @@
 		fTransform = GetPreferenceBool(@"abbrevWCFilePaths");
 	}
 
-    return self;
+	return self;
 }
 
 
@@ -112,13 +112,13 @@
 
 + (Class) transformedValueClass
 {
-    return [NSString class];
+	return [NSString class];
 }
 
 
 + (BOOL) allowsReverseTransformation
 {
-    return YES;
+	return YES;
 }
 
 

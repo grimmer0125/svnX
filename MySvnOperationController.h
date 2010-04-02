@@ -11,7 +11,7 @@ typedef enum SvnOperation { kSvnCopy = 0, kSvnMove, kSvnDelete, kSvnMkdir, kSvnD
 @interface MySvnOperationController : NSObject
 {
 	IBOutlet NSObjectController*			objectController;
-	IBOutlet NSArrayController*				arrayController;	// to manage list of items (svn mkdir) 
+	IBOutlet NSArrayController*				arrayController;	// to manage list of items (svn mkdir)
 	IBOutlet NSWindow*						svnSheet;
 	IBOutlet MySvnRepositoryBrowserView*	targetBrowser;
 	IBOutlet NSTextField*					targetName;
@@ -39,3 +39,4 @@ typedef enum SvnOperation { kSvnCopy = 0, kSvnMove, kSvnDelete, kSvnMkdir, kSvnD
 - (SvnOperation) operation;
 
 @end
+

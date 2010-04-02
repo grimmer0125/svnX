@@ -11,12 +11,12 @@
 
 @interface DrawerLogView : NSView
 {
-    IBOutlet id _view;
+	IBOutlet id _view;
 	IBOutlet NSTextView *logTextView;
 	IBOutlet NSObjectController *documentProxy;
-	
+
 	id document;
-	
+
 	id currentTaskObj;
 }
 
@@ -25,3 +25,4 @@
 - (void) setDocument: (id) aDocument;
 
 @end
+

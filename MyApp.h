@@ -1,4 +1,8 @@
-/* MyApp */
+//----------------------------------------------------------------------------------------
+//	MyApp.h - NSApplication's delegate
+//
+//	Copyright © Chris, 2007 - 2010.  All rights reserved.
+//----------------------------------------------------------------------------------------
 
 #import <Cocoa/Cocoa.h>
 
@@ -7,7 +11,7 @@
 /* " Application's main controller." */
 @interface MyApp : NSObject
 {
-    IBOutlet id							preferencesWindow;
+	IBOutlet id							preferencesWindow;
 	IBOutlet id							favoriteWorkingCopiesWindow;	// Unused
 	IBOutlet id							tasksManager;
 	IBOutlet RepositoriesController*	repositoriesController;
@@ -32,7 +36,6 @@
 - (UInt32)    svnVersionNum;
 - (NSString*) svnVersion;
 - (void)      setSvnVersion:    (NSData*) version;
-
 - (void)      openRepository:   (NSURL*)    url
 			  user:             (NSString*) user
 			  pass:             (NSString*) pass;

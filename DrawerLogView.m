@@ -54,10 +54,10 @@
 	_view = nil;
 
 	// objects that are bound to the file owner retain it
-	// we need to unbind them 
+	// we need to unbind them
 	[docProxy unbind: @"contentObject"];
 
-	// the owner has to release its top level nib objects 
+	// the owner has to release its top level nib objects
 	[docProxy release];
 	[view release];
 }

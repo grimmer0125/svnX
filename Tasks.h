@@ -12,13 +12,11 @@ NSData*		stdOutData	(NSDictionary* taskObj);
 
 @interface Tasks : NSObject
 {
-    IBOutlet NSArrayController *tasksAC;
+	IBOutlet NSArrayController*	tasksAC;
+	IBOutlet NSPanel*			activityWindow;
+	IBOutlet NSDrawer*			logDrawer;
+	IBOutlet NSTextView*		logTextView;
 
-    IBOutlet NSPanel *activityWindow;
-	IBOutlet NSDrawer *logDrawer;
-	
-	IBOutlet NSTextView *logTextView;
-	
 	id currentTaskObj;
 }
 

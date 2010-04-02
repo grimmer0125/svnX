@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------------------
 //	CommonUtils.m - Common Cocoa utilities
 //
-//	Copyright © Chris, 2003 - 2009.  All rights reserved.
+//	Copyright © Chris, 2003 - 2010.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #import <Cocoa/Cocoa.h>
@@ -95,7 +95,7 @@ MakeCallbackInvocation (id target, SEL selector)
 #if qDebug
 	NSMethodSignature* methodSig = [[target class] instanceMethodSignatureForSelector: selector];
 	if (methodSig == nil)
-		dprintf("(%@ '@%s'): ERROR: no method found", target, sel_getName(selector));
+		dprintf("(%@ '%s'): ERROR: no method found", target, sel_getName(selector));
 	Assert(methodSig != nil);
 	NSInvocation* callback = [NSInvocation invocationWithMethodSignature: methodSig];
 #else
@@ -105,6 +105,8 @@ MakeCallbackInvocation (id target, SEL selector)
 	[callback setSelector: selector];
 	[callback setTarget:   target];
 
+//	dprintf("(0x%X=%@ 0x%X='%s') => 0x%X=%@",
+//			target, target, selector, sel_getName(selector), callback, callback);
 	return callback;
 }
 
@@ -349,7 +351,7 @@ Folder_IsChewableItems (NSURL* url)
 
 - (id) reversedSortDescriptor
 {
-	return [[AlphaNumSortDesc alloc] initWithKey: fKey ascending: !fAscending];
+	return [[[self class] alloc] initWithKey: fKey ascending: !fAscending];
 }
 
 

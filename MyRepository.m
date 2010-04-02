@@ -176,8 +176,8 @@ compareRevisions (id obj1, id obj2, void* context)
 	[svnLogView removeObserver: self forKeyPath: @"currentRevision"];
 
 	[drawerLogView unload];
-	
-	[super close];	
+
+	[super close];
 }
 
 
@@ -348,13 +348,13 @@ compareRevisions (id obj1, id obj2, void* context)
 - (BOOL) textView:      (NSTextView*) textView
 		 clickedOnLink: (id)          link
 		 atIndex:       (unsigned)    charIndex
-{	
+{
 	#pragma unused(textView, charIndex)
 	if ([link isKindOfClass: [NSString class]])
-	{	
+	{
 	//	[svnLogView setRevision: fRevision];		// FIX_ME: call latestRevision:pegRev:
-		[self changeRepositoryUrl: [NSURL URLWithString: link]];					
-        return YES;
+		[self changeRepositoryUrl: [NSURL URLWithString: link]];
+		return YES;
 	}
 
 	return NO;
@@ -708,7 +708,7 @@ svnInfoReceiver (void*       baton,
 	{
 		[self fetchSvnInfoReceiveDataFinished: stdOut(taskObj)];
 	}
-	
+
 	[self svnErrorIf: taskObj];
 }
 
@@ -872,7 +872,7 @@ svnInfoReceiver (void*       baton,
 	{
 		[MyFileMergeController runSheet: kSvnDiff repository: self
 							   url: [selection url] sourceItem: selection];
-	}	
+	}
 }
 
 
@@ -884,7 +884,7 @@ svnInfoReceiver (void*       baton,
 	NSArray* const selectedObjects = [svnBrowserView selectedItems];
 //	NSLog(@"svnBlame: %@", selectedObjects);
 	NSMutableArray* files = [NSMutableArray array];
-	for_each(enumerator, item, selectedObjects)
+	for_each_obj(enumerator, item, selectedObjects)
 	{
 		if (![item isDir])
 			[files addObject: PathPegRevision([item url], fRevision)];
@@ -903,7 +903,7 @@ svnInfoReceiver (void*       baton,
 			   callback:       MakeCallbackInvocation(self, @selector(svnErrorIf:))
 			   callbackInfo:   nil
 			   taskInfo:       [self documentNameDict]];
-	}	
+	}
 }
 
 
@@ -913,7 +913,7 @@ svnInfoReceiver (void*       baton,
 - (IBAction) svnReport: (id) sender
 {
 	#pragma unused(sender)
-	
+
 	[self requestReport];
 }
 
@@ -1096,7 +1096,7 @@ enum {
 	[oPanel beginSheetForDirectory: NSHomeDirectory() file: nil types: nil
 					modalForWindow: [self windowForSheet]
 					 modalDelegate: self
-				    didEndSelector: didEndSelector
+					didEndSelector: didEndSelector
 					   contextInfo: contextInfo];
 }
 
@@ -1205,7 +1205,7 @@ enum {
 	// handle it as a single task (that will be easier to terminate)
 
 	includeRev = includeRev && GetPreferenceBool(@"includeRevisionInName");
-	for_each(enumerator, item, fileObjs)
+	for_each_obj(enumerator, item, fileObjs)
 	{
 		// operation, sourcePath, destinationPath
 		[arguments addObject: [item isDir] ? @"e"		// folder => svn export (see svnextract.sh)
@@ -1438,9 +1438,9 @@ enum {
 	}
 
 	[NSApp beginSheet:     importCommitPanel
-		   modalForWindow: [self windowForSheet] 
-		   modalDelegate:  self 
-		   didEndSelector: @selector(importCommitPanelDidEnd:returnCode:contextInfo:) 
+		   modalForWindow: [self windowForSheet]
+		   modalDelegate:  self
+		   didEndSelector: @selector(importCommitPanelDidEnd:returnCode:contextInfo:)
 		   contextInfo:    [[NSDictionary dictionaryWithObjectsAndKeys:
 										TrimSlashes(destRepoDir), @"destination",
 										filePath,                 @"filePath",
@@ -1641,7 +1641,7 @@ enum {
 - (void) svnError: (NSString*) errorString
 {
 	NSAlert* alert = [NSAlert alertWithMessageText: @"svn Error"
-								     defaultButton: @"OK"
+									 defaultButton: @"OK"
 								   alternateButton: nil
 									   otherButton: nil
 						 informativeTextWithFormat: @"%@", errorString];
@@ -1668,7 +1668,7 @@ enum {
 	NSMutableArray* validatedFiles = [NSMutableArray array];
 	BOOL yesToAll = NO;
 
-	for_each(enumerator, item, files)
+	for_each_obj(enumerator, item, files)
 	{
 		if (yesToAll)
 		{

@@ -146,8 +146,8 @@
 					@"svnBlame",
 					@"svnReport",
 					@"svnCheckout",
-					@"svnExport",					
-					@"svnImport",					
+					@"svnExport",
+					@"svnImport",
 					@"toggleSidebar",
 					nil];
 }

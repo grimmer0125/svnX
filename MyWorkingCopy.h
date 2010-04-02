@@ -1,3 +1,10 @@
+//----------------------------------------------------------------------------------------
+//	MyWorkingCopy.h - Working Copy model
+//
+//	Copyright 2004 - 2007 Dominique Peretti.
+//	Copyright © Chris, 2007 - 2010.  All rights reserved.
+//----------------------------------------------------------------------------------------
+
 #import <Cocoa/Cocoa.h>
 
 enum {
@@ -14,30 +21,28 @@ enum {
 /*" Model of the working copy browser "*/
 @interface MyWorkingCopy : NSDocument
 {
-	NSString *user;
-	NSString *pass;
+	NSString*		user;
+	NSString*		pass;
+	NSString*		workingCopyPath;
+	NSString*		revision;
+	NSURL*			repositoryUrl;
 
-	NSString *workingCopyPath;
-	NSString *revision;
-	NSURL	 *repositoryUrl;
-
-	NSString *windowTitle;
-
-	NSString *outlineSelectedPath; // the currently selected path in the left outline view
+	NSString*		windowTitle;
+	NSString*		outlineSelectedPath;	// the currently selected path in the left outline view
 
 	IBOutlet MyWorkingCopyController*	controller;
-	IBOutlet MySvnFilesArrayController*	svnFilesAC;	
-	
-    NSArray*		svnFiles;
+	IBOutlet MySvnFilesArrayController*	svnFilesAC;
+
+	NSArray*		svnFiles;
 	WCTreeEntry*	svnDirectories;
 
 	BOOL			flatMode, smartMode;
-	BOOL			showUpdates;	// svn status -u
+	BOOL			showUpdates;			// svn status -u
 	int				filterMode;
 	NSMutableSet*	subControllers;			// active ReviewContollers
 
 	NSMutableDictionary*	displayedTaskObj;
-	struct SvnEnv*			fSvnEnv;		// The svn client environment
+	struct SvnEnv*			fSvnEnv;		// the svn client environment
 	BOOL					fInfoPending, fStatusPending;
 }
 
@@ -108,10 +113,10 @@ enum {
 - (NSURL*) repositoryUrl;
 - (void) setRepositoryUrl: (NSURL*) aRepositoryUrl;
 
-- (NSImage*) iconForFile: (NSString*) relPath;
+- (NSImage*)  iconForFile: (NSString*) relPath;
 - (NSString*) treeSelectedFullPath;
 - (NSString*) outlineSelectedPath;
-- (void) setOutlineSelectedPath: (NSString*) anOutlineSelectedPath;
+- (void)      setOutlineSelectedPath: (NSString*) aPath;
 
 @end	// MyWorkingCopy
 

@@ -68,7 +68,7 @@ ToRepoItems (NSArray* dicts, NSString* revision)
 	NSMutableArray* result = [NSMutableArray array];
 	const SvnRevNum revNum = SvnRevNumFromString(revision);
 
-	for_each(en, it, dicts)
+	for_each_obj(en, it, dicts)
 	{
 		id obj = [RepoItem repoItem: it revision: revNum];
 		[result addObject: obj];
@@ -89,7 +89,7 @@ FromRepoItems (NSArray* repoItems)
 {
 	NSMutableArray* result = [NSMutableArray array];
 
-	for_each(en, it, repoItems)
+	for_each_obj(en, it, repoItems)
 	{
 		[result addObject: [it dictionary]];
 	}
@@ -104,7 +104,7 @@ static NSArray*
 RepoItemsSetRevision (NSArray* repoItems, id revision)
 {
 	const SvnRevNum revNum = SvnRevNumFromString(revision);
-	for_each(en, it, repoItems)
+	for_each_obj(en, it, repoItems)
 	{
 		[(RepoItem*) it setRevision: revNum];
 	}
@@ -117,6 +117,7 @@ RepoItemsSetRevision (NSArray* repoItems, id revision)
 
 //----------------------------------------------------------------------------------------
 #pragma mark	-
+//----------------------------------------------------------------------------------------
 
 @interface IconCache : NSObject
 {
@@ -254,6 +255,8 @@ RepoItemsSetRevision (NSArray* repoItems, id revision)
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) dealloc
 {
 //	dprintf("0x%X", self);
@@ -264,13 +267,15 @@ RepoItemsSetRevision (NSArray* repoItems, id revision)
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) unload
 {
 	// the nib is responsible for releasing its top-level objects
 //	[fView release];	// this is done by super
 
 	// these objects are bound to the file owner and retain it
-	// we need to unbind them 
+	// we need to unbind them
 	[revisionTextField unbind: @"value"];
 	[super unload];
 }
@@ -341,13 +346,14 @@ RepoItemsSetRevision (NSArray* repoItems, id revision)
 //----------------------------------------------------------------------------------------
 #pragma mark	-
 #pragma mark	Browser delegate methods
+//----------------------------------------------------------------------------------------
 
 - (void) browser:             (NSBrowser*) sender
 		 createRowsForColumn: (int)        column
 		 inMatrix:            (NSMatrix*)  matrix
 {
 	const id revision = [self revision];
-	if (revision == nil) return; 
+	if (revision == nil) return;
 
 	if (isSubBrowser)
 		[(MyDragSupportMatrix*) matrix setupForSubBrowser];
@@ -415,8 +421,8 @@ RepoItemsSetRevision (NSArray* repoItems, id revision)
 typedef const svn_dirent_t*	SvnListEntry;
 typedef const svn_lock_t*	SvnLock;
 
-const UInt32		kListFlags = SVN_DIRENT_KIND | SVN_DIRENT_SIZE | SVN_DIRENT_CREATED_REV |
-								 SVN_DIRENT_TIME | SVN_DIRENT_LAST_AUTHOR;
+const UInt32 kListFlags = SVN_DIRENT_KIND | SVN_DIRENT_SIZE | SVN_DIRENT_CREATED_REV |
+						  SVN_DIRENT_TIME | SVN_DIRENT_LAST_AUTHOR;
 
 const NSPropertyListFormat kListCacheFormat = NSPropertyListBinaryFormat_v1_0;
 
@@ -741,7 +747,7 @@ svnListReceiver (void*        baton,
 	[matrix sizeToCells];
 	[matrix display];
 
-//	if ( [self browserPath] != nil ) 
+//	if ( [self browserPath] != nil )
 //	{
 //		[browser setPath: [self browserPath]]; // attempt to restore the previously displayed path
 //		[self setBrowserPath: nil];

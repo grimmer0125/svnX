@@ -92,10 +92,10 @@ NSString*
 GetDiffAppName ()
 {
 	// 0: FileMerge, 1: TextWrangler, 2: CodeWarrior, 3: BBEdit,
-	// 4: Araxis Merge, 5: DiffMerge, 6: Changes
+	// 4: Araxis Merge, 5: DiffMerge, 6: Changes, 7: Guiffy
 	static NSString* const diffAppNames[] = {
-		@"opendiff", @"textwrangler", @"codewarrior", @"bbedit",
-		@"araxissvndiff", @"diffmerge", @"changes"
+		@"filemerge", @"textwrangler", @"codewarrior", @"bbedit",
+		@"araxis", @"diffmerge", @"changes", @"guiffy"
 	};
 
 	int diffAppIndex = GetPreferenceInt(@"defaultDiffApplication");

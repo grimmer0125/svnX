@@ -173,7 +173,7 @@ static int gLogLevel = kLogLevelAll;
 - (IBAction) clearCompleted: (id) sender
 {
 	#pragma unused(sender)
-	for_each_obj(en, taskObj, [tasksAC arrangedObjects])
+	for_each_obj(en, taskObj, [NSArray arrayWithArray: [tasksAC arrangedObjects]])
 	{
 		if (![[taskObj objectForKey: @"canBeKilled"] boolValue])	// tasks that can't be killed are already killed :-)
 		{

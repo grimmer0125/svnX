@@ -163,7 +163,9 @@ static ConstString kPrefTemplates = @"msgTemplates",
 enum {
 	kPaneMessage	=	0,
 	kPaneRecent		=	1,
-	kPaneTemplates	=	2
+	kPaneTemplates	=	2,
+
+	kMaxTempHTMLFiles	=	8
 };
 
 
@@ -393,7 +395,8 @@ enum {
 
 - (void) buildTemplatesList
 {
-	[fTemplates setArray: GetPreference(kPrefTemplates)];
+	for_each_obj(en, it, GetPreference(kPrefTemplates))
+		[fTemplates addObject: [[it mutableCopy] autorelease]];
 	[fTemplates sortUsingFunction: compareTemplateNames context: NULL];
 	[fTemplatesAC setContent: fTemplates];
 }
@@ -404,11 +407,9 @@ enum {
 - (IBAction) addTemplate: (id) sender
 {
 	#pragma unused(sender)
-//	NSLog(@"templates=%@", fTemplates);
 	id obj = [NSMutableDictionary dictionaryWithObjectsAndKeys: @"untitled", @"name",
 																@"template body", @"body", nil];
 	[fTemplatesAC addObject: obj];
-//	[fTemplatesAC setSelectionIndex: [[fTemplatesAC arrangedObjects] count] - 1];
 	[fTemplatesAC setSelectionIndex: [fTemplates count] - 1];
 }
 
@@ -417,35 +418,8 @@ enum {
 
 - (void) saveTemplates
 {
-	NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
-//	[prefs setObject: [fTemplatesAC content] forKey: kPrefTemplates];
-	[prefs setObject: fTemplates forKey: kPrefTemplates];
-	[prefs synchronize];
+	SetPreference(kPrefTemplates, fTemplates);
 }
-
-
-//----------------------------------------------------------------------------------------
-
-#if 0
-- (IBAction) validateTemplate: (id) sender
-{
-//	NSLog(@"validateTemplate");
-	#pragma unused(sender)
-	NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
-//	[prefs setObject: [fTemplatesAC content] forKey: kPrefTemplates];
-	[prefs setObject: fTemplates forKey: kPrefTemplates];
-	[prefs synchronize];
-}
-
-
-//----------------------------------------------------------------------------------------
-
-- (void) textViewDidChangeSelection: (NSNotification*) notification
-{
-//	NSLog(@"textViewDidChangeSelection");
-//	[self validateTemplate: [notification object]];
-}
-#endif
 
 
 //----------------------------------------------------------------------------------------
@@ -615,7 +589,7 @@ enum {
 		 contextInfo: (void*)    context
 {
 	#pragma unused(alert, context)
-	if (returnCode == NSAlertDefaultReturn)
+	if (returnCode == NSOKButton)
 	{
 		fSuppressAutoRefresh = TRUE;
 		[self doCommitFiles];
@@ -713,7 +687,7 @@ enum {
 {
 	static unsigned int fileIndex = 0;
 	return [NSString stringWithFormat: @"/tmp/svnx-review-%X%c.html",
-											self, 'z' - (++fileIndex & 3)];
+											self, 'z' - (++fileIndex % kMaxTempHTMLFiles)];
 }
 
 
@@ -819,7 +793,7 @@ enum {
 - (IBAction) changeEditView: (id) sender
 {
 	#pragma unused(sender)
-//	NSLog(@"changeEditView: %d", [sender selectedSegment]);
+//	dprintf("%d", [sender selectedSegment]);
 //	[self setEditPane: [sender selectedSegment]];
 }
 
@@ -923,7 +897,7 @@ enum {
 			[args addObject: [it name]];
 	}
 
-//	NSLog(@"args=%@\nscript='%@'", args, script);
+//	dprintf("args=%@\nscript='%@'", args, script);
 
 	NSString* result = @"[SCRIPT: Couldn't run]";
 	static unsigned int uid = 0;
@@ -934,16 +908,17 @@ enum {
 		chmod(cpath, S_IRWXU) == 0)
 	{
 		NSPipe* const pipe = [NSPipe pipe];
-		Task* const task = [Task task];
+		Task* const task = [[Task task] retain];
 		[task setStandardOutput: pipe];
 		[task launch: path arguments: args];
 
 		NSTask* const nsTask = [task task];
 		NSFileHandle* const handle = [pipe fileHandleForReading];
 		NSMutableData* const data = [NSMutableData dataWithLength: 0];
-		NSDate* const endDate = [NSDate dateWithTimeIntervalSinceNow: 30];	// Wait a max of 30 secs
-		while ([nsTask isRunning] && [endDate compare: [NSDate date]] > 0)
+		const UTCTime endTime = CFAbsoluteTimeGetCurrent() + 30;		// Wait a max of 30 secs
+		while ([nsTask isRunning] && CFAbsoluteTimeGetCurrent() < endTime)
 		{
+		//	[NSThread sleepForTimeInterval: 1.0 / 8];
 			[data appendData: [handle availableData]];
 		}
 
@@ -958,7 +933,8 @@ enum {
 			result = @"[SCRIPT: Timed-out]";
 		}
 
-		unlink(cpath);
+		[task release];
+		(void) unlink(cpath);
 	}
 
 	return result;
@@ -1090,7 +1066,7 @@ enum {
 - (void) windowDidBecomeKey: (NSNotification*) notification
 {
 	#pragma unused(notification)
-//	NSLog(@"windowDidBecomeKey");
+//	dprintf("%@", self);
 	if (fSuppressAutoRefresh)
 	{
 		fSuppressAutoRefresh = FALSE;
@@ -1107,7 +1083,7 @@ enum {
 - (void) windowDidResignKey: (NSNotification*) notification
 {
 	#pragma unused(notification)
-//	NSLog(@"windowDidResignKey ReviewController: refs=%d", [self retainCount]);
+//	dprintf("refs=%d", [self retainCount]);
 	saveSplitViews(fWindow, kPrefKeySplits);
 	[self saveTemplates];
 }
@@ -1126,11 +1102,10 @@ enum {
 	[self unload];
 
 	// Delete temp HTML files
-	const NSStringEncoding kEncoding = NSUTF8StringEncoding;
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < kMaxTempHTMLFiles; ++i)
 	{
-		char cpath[64];
-		if ([[self tmpHtmlPath] getCString: cpath maxLength: sizeof(cpath) encoding: kEncoding])
+		ConstCStr cpath = [[self tmpHtmlPath] fileSystemRepresentation];
+		if (cpath)
 			(void) unlink(cpath);
 	}
 }
@@ -1209,8 +1184,6 @@ enum {
 		[aCell setImage: [item objectForKey: @"icon"]];
 		[aCell setTitle: [item objectForKey: @"path"]];
 	}
-//	else
-//		NSLog(@"willDisplayCell: col=%@ row=%d", [aTableColumn identifier], rowIndex);
 }
 
 
@@ -1269,14 +1242,14 @@ enum {
 	   row:                       (int)            rowIndex
 {
 	#pragma unused(aTableView, aTableColumn)
-//	NSLog(@"objectValueFor: col=%@ row=%d", [aTableColumn identifier], rowIndex);
+//	dprintf("col=%@ row=%d", [aTableColumn identifier], rowIndex);
 
 	if ([[aTableColumn identifier] isEqualToString: @"commit"])
 	{
 		return NSBool([[fFiles objectAtIndex: rowIndex] commit]);
 	}
 //	else
-//		NSLog(@"objectValueFor: col=%@ row=%d", [aTableColumn identifier], rowIndex);
+//		dprintf("col=%@ row=%d", [aTableColumn identifier], rowIndex);
 
 	return nil;
 }
@@ -1290,7 +1263,7 @@ enum {
 		 row:            (int)            rowIndex
 {
 	#pragma unused(aTableView, aTableColumn)
-//	NSLog(@"setObjectValue: %@ col=%@ row=%d", anObject, [aTableColumn identifier], rowIndex);
+//	dprintf("%@ col=%@ row=%d", anObject, [aTableColumn identifier], rowIndex);
 
 	if ([[aTableColumn identifier] isEqualToString: @"commit"])		// should be always the case
 	{

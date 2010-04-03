@@ -17,7 +17,6 @@
 
   <xsl:variable name='entry-count' select='count(/log/logentry)' />
   <xsl:variable name='page-count' select='ceiling($entry-count div $page-len)' />
-  <xsl:variable name='page' select='0' />
   <xsl:variable name='today' select='date:date()' />
   <xsl:variable name='now' select='date:seconds()' />
   <xsl:variable name='title'>
@@ -36,6 +35,7 @@
   </xsl:template>
 
   <xsl:template name='page'>
+    <xsl:param name='page' />
     <xsl:variable name='end' select='$page * $page-len' />
     <xsl:variable name='pos' select='$end - $page-len + 1' />
     <exsl:document method='html'
@@ -80,6 +80,7 @@
   </xsl:template>
 
   <xsl:template name='toc'>
+    <xsl:param name='page' />
     <xsl:if test='$page-count &gt; 1'>
       <table class='toc'><tbody><tr><td class='ar'>
 <xsl:if test='$page = 1'><span class='O'>&#x140A;</span></xsl:if>
@@ -96,6 +97,8 @@
   </xsl:template>
 
   <xsl:template name='link'>
+    <xsl:param name='n' />
+    <xsl:param name='page' />
     <xsl:if test='$n &lt;= $page-count'>
       <xsl:if test='$n = $page'><span class='X'><xsl:value-of select='$n' /></span></xsl:if>
       <xsl:if test='$n != $page'><a href='{$F}{$n}.html'><xsl:value-of select='$n' /></a></xsl:if>&#xA0;
@@ -107,7 +110,7 @@
   </xsl:template>
 
   <xsl:template match='logentry'>
-    <xsl:variable name='page' select='$page' />
+    <xsl:param name='page' />
     <tbody class='entry'>
       <tr>
         <td class='rev'><xsl:value-of select='@revision'/></td>
@@ -162,6 +165,7 @@
   </xsl:template>
 
   <xsl:template name='path1'>
+    <xsl:param name='path' />
     <tr>
       <xsl:variable name='act' select='@action' />
       <td class='act {$act}'><xsl:value-of select='translate($act, "AMDR", "")'/></td>

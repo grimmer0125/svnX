@@ -6,6 +6,7 @@
 
 #import "CommonUtils.h"
 #import "SvnLogReport.h"
+#import "MyRepository.h"
 #import "MySvn.h"
 #import "NSString+MyAdditions.h"
 #import "Tasks.h"
@@ -470,7 +471,7 @@ WriteXMLLog (NSArray* logItems, bool includePaths, int limit, bool reverseOrder,
 			if (pathObjs != nil)
 			{
 				const id autoPool = [[NSAutoreleasePool alloc] init];
-				WRITE("<paths>");
+				WRITE("<paths>\n");
 				for_each_obj(en2, obj, [pathObjs sortedArrayUsingDescriptors: sortDescriptors])
 				{
 					ToUTF8([obj objectForKey: @"action"], act, sizeof(act));
@@ -487,13 +488,13 @@ WriteXMLLog (NSArray* logItems, bool includePaths, int limit, bool reverseOrder,
 						writef(os, "<path action=\"%s\">", act);
 					}
 					WriteText(os, [obj objectForKey: @"path"]);
-					WRITE("</path>");
+					WRITE("</path>\n");
 				}
 				WRITE("</paths>");
 				[autoPool release];
 			}
 		}
-		WRITE("</logentry>");
+		WRITE("</logentry>\n");
 
 		if (--limit == 0)
 			break;
@@ -511,7 +512,9 @@ WriteXMLLog (NSArray* logItems, bool includePaths, int limit, bool reverseOrder,
 }
 
 
-//----------------------------------------------------------------------------------------
+//========================================================================================
+#pragma mark	-
+//========================================================================================
 
 @interface SvnLogToolbar : NSObject
 {
@@ -520,24 +523,10 @@ WriteXMLLog (NSArray* logItems, bool includePaths, int limit, bool reverseOrder,
 @private
 	NSMutableDictionary*	fItems;
 }
-
-- (void) dealloc;
-- (void) awakeFromNib;
-- (NSToolbarItem*) toolbar: (NSToolbar*)toolbar
-				   itemForItemIdentifier: (NSString*) itemIdentifier
-				   willBeInsertedIntoToolbar: (BOOL) flag;
-- (NSArray*) toolbarAllowedItemIdentifiers: (NSToolbar*) toolbar;
-- (NSArray*) toolbarDefaultItemIdentifiers: (NSToolbar*) toolbar;
-- (void) toolbarWillAddItem: (NSNotification*) notification;
-- (NSToolbarItem*) createItem: (NSString*) itsID
-				   label: (NSString*) itsLabel
-				   help: (NSString*) itsHelp;
-
-@end
+@end	// SvnLogToolbar
 
 
 //----------------------------------------------------------------------------------------
-#pragma mark	-
 
 @implementation SvnLogToolbar
 
@@ -545,8 +534,27 @@ WriteXMLLog (NSArray* logItems, bool includePaths, int limit, bool reverseOrder,
 - (void) dealloc
 {
 	[fItems release];
-
 	[super dealloc];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (NSToolbarItem*) createItem: (NSString*) itsID
+				   label:      (NSString*) itsLabel
+				   help:       (NSString*) itsHelp
+{
+	NSToolbarItem* item = [[NSToolbarItem alloc] initWithItemIdentifier: itsID];
+	[item setPaletteLabel: itsLabel];
+	[item setLabel: itsLabel];
+	if (itsHelp)
+		[item setToolTip: itsHelp];
+	[item setTarget: fReport];
+	[item setAction: NSSelectorFromString([itsID stringByAppendingString: @":"])];
+	[item setImage: [NSImage imageNamed: itsID]];
+	[fItems setObject: item forKey: itsID];
+	[item release];
+	return item;
 }
 
 
@@ -554,7 +562,7 @@ WriteXMLLog (NSArray* logItems, bool includePaths, int limit, bool reverseOrder,
 
 - (void) awakeFromNib
 {
-	fItems = [[NSMutableDictionary alloc] init];
+	fItems = [NSMutableDictionary new];
 
 	[self createItem: @"textSmaller" label: @"Smaller" help: @"Decrease font size."];
 	[self createItem: @"textBigger"  label: @"Bigger"  help: @"Increase font size."];
@@ -623,26 +631,6 @@ WriteXMLLog (NSArray* logItems, bool includePaths, int limit, bool reverseOrder,
 
 //----------------------------------------------------------------------------------------
 
-- (NSToolbarItem*) createItem: (NSString*) itsID
-				   label:      (NSString*) itsLabel
-				   help:       (NSString*) itsHelp
-{
-	NSToolbarItem* item = [[NSToolbarItem alloc] initWithItemIdentifier: itsID];
-	[item setPaletteLabel: itsLabel];
-	[item setLabel: itsLabel];
-	if (itsHelp)
-		[item setToolTip: itsHelp];
-	[item setTarget: fReport];
-	[item setAction: NSSelectorFromString([itsID stringByAppendingString: @":"])];
-	[item setImage: [NSImage imageNamed: itsID]];
-	[fItems setObject: item forKey: itsID];
-	[item release];
-	return item;
-}
-
-
-//----------------------------------------------------------------------------------------
-
 @end	// SvnLogToolbar
 
 
@@ -656,12 +644,15 @@ enum {
 	kDefaultPageLength	=	500
 };
 
+static ConstString kDialogId = @"BrowseLog";
 
-//----------------------------------------------------------------------------------------
 
 @implementation SvnLogReport
 
-- (void) taskCompleted: (Task*) task object: (id) object
+//----------------------------------------------------------------------------------------
+
+- (void) taskCompleted: (Task*) task
+		 object:        (id)    object
 {
 	#pragma unused(task)
 	if (![fWindow isVisible])
@@ -688,6 +679,7 @@ enum {
 //----------------------------------------------------------------------------------------
 
 - (void) createReport:  (NSString*) fileURL
+		 document:      (MyRepository*) fDocument
 		 logItems:      (NSArray*)  logItems
 		 revision:      (NSString*) revision
 		 limit:         (int)       limit
@@ -700,6 +692,8 @@ enum {
 	Assert(fWindow != nil);
 	Assert(fLogView != nil);
 
+	if (revision == nil)
+		revision = @"HEAD";
 	[fWindow setTitle: PathWithRevision(fileURL, revision)];
 	[fWindow makeKeyAndOrderFront: nil];
 
@@ -709,14 +703,14 @@ enum {
 	const pid_t pid = getpid();
 	static unsigned int uid = 0;
 	++uid;
-	NSString* const tmpXmlPath  = [NSString stringWithFormat: @"/tmp/svnx%u-log%u.xml", pid, uid];
-	NSString* const tmpHtmlBase = [NSString stringWithFormat: @"svnx%u-log%u-", pid, uid];
-	NSString* const tmpHtmlPath = [NSString stringWithFormat: @"/tmp/%@1.html", tmpHtmlBase];
-	NSString* const pageLen     = [NSString stringWithFormat: @"%u", pageLength];
+	ConstString tmpXmlPath  = [NSString stringWithFormat: @"/tmp/svnx%u-log%u.xml", pid, uid],
+				tmpHtmlBase = [NSString stringWithFormat: @"svnx%u-log%u-", pid, uid],
+				tmpHtmlPath = [NSString stringWithFormat: @"/tmp/%@1.html", tmpHtmlBase],
+				pageLen     = [NSString stringWithFormat: @"%u", pageLength];
 
 	NSBundle* bundle = [NSBundle mainBundle];
-	NSString* const srcXslPath = [bundle pathForResource: @"svnlog" ofType: @"xsl"];
-//	NSString* const srcCssPath = [bundle pathForResource: @"svnlog" ofType: @"css"];
+	ConstString srcXslPath = [bundle pathForResource: @"svnlog" ofType: @"xsl"];
+//	ConstString srcCssPath = [bundle pathForResource: @"svnlog" ofType: @"css"];
 
 	NSArray* args2 = [NSArray arrayWithObjects: @"--stringparam", @"file", fileURL,
 												@"--stringparam", @"revision", revision,
@@ -737,30 +731,28 @@ enum {
 	}
 	else
 	{
-		id aBuf[10] = {
-			@"log", @"--non-interactive", @"--xml",
-			[NSString stringWithFormat: (reverseOrder ? @"-r1:%@" : @"-r%@:1"), revision],
-			PathPegRevision(fileURL, revision)
-		};
-		int aCount = 5;
-		Assert(aBuf[aCount - 1] != nil);
-		Assert(aBuf[aCount] == nil);
+		id objs[20];
+		int count = [fDocument svnStdOptions: objs];
+		objs[count++] = @"log";
+		objs[count++] = @"--xml";
+		objs[count++] = [NSString stringWithFormat: (reverseOrder ? @"-r1:%@" : @"-r%@:1"), revision];
+		objs[count++] = PathPegRevision(fileURL, revision);
 		if (verbose)
-			aBuf[aCount++] = @"-v";
+			objs[count++] = @"-v";
 		if (stopOnCopy)
-			aBuf[aCount++] = @"--stop-on-copy";
+			objs[count++] = @"--stop-on-copy";
 		if (limit != kUnlimitedLogLimit)
 		{
-			aBuf[aCount++] = @"--limit";
-			aBuf[aCount++] = [NSString stringWithFormat: @"%u", limit];
+			objs[count++] = @"--limit";
+			objs[count++] = [NSString stringWithFormat: @"%u", limit];
 		}
-		Assert(aCount < 10);
-		NSArray* arguments = [NSArray arrayWithObjects: aBuf count: aCount];
+		Assert(count < 18);
+		NSArray* args = [NSArray arrayWithObjects: objs count: count];
 
 		// TO_DO: store task & kill it if window closes before completion
 		Task* task = [Task taskWithDelegate: self object: args2];
 		[@"?" writeToFile: tmpXmlPath atomically: false];
-		[task launch: SvnCmdPath() arguments: arguments stdOutput: tmpXmlPath];
+		[task launch: SvnCmdPath() arguments: args stdOutput: tmpXmlPath];
 	}
 
 	[[fLogView mainFrame] loadRequest: [NSURLRequest requestWithURL:
@@ -789,10 +781,8 @@ enum {
 
 //----------------------------------------------------------------------------------------
 
-- (void) printDocument: (id) sender
+- (void) doPrintDocument
 {
-	#pragma unused(sender)
-//	NSView* view = fLogView;
 	NSView* view = [[[fLogView mainFrame] frameView] documentView];
 	NSPrintOperation* printOperation = [NSPrintOperation printOperationWithView: view];
 	[printOperation runOperationModalForWindow: fWindow delegate: nil
@@ -801,16 +791,25 @@ enum {
 
 
 //----------------------------------------------------------------------------------------
+
+- (void) printDocument: (id) sender
+{
+	#pragma unused(sender)
+	[self performSelector: @selector(doPrintDocument) withObject: nil afterDelay: 0];
+}
+
+
+//----------------------------------------------------------------------------------------
 // Optional method:  This message is sent to us since we are the target of some toolbar item actions
 // (for example:  of the save items action)
 
-NSString* const SaveDocToolbarItemIdentifier = @"svnX.save";
-NSString* const SearchDocToolbarItemIdentifier = @"svnX.search";
+ConstString SaveDocToolbarItemIdentifier   = @"svnX.save",
+			SearchDocToolbarItemIdentifier = @"svnX.search";
 
 - (BOOL) validateToolbarItem: (NSToolbarItem*) toolbarItem
 {
 	bool enable = !false;
-	NSString* itemID = [toolbarItem itemIdentifier];
+	ConstString itemID = [toolbarItem itemIdentifier];
 	if ([itemID isEqual: SaveDocToolbarItemIdentifier])
 		enable = true;	//[self isDocumentEdited];
 	else if ([itemID isEqual: NSToolbarPrintItemIdentifier])
@@ -832,7 +831,8 @@ NSString* const SearchDocToolbarItemIdentifier = @"svnX.search";
 
 //----------------------------------------------------------------------------------------
 
-+ (void) createForURL:  (NSString*) fileURL
++ (void) createFor:     (MyRepository*) document
+		 url:           (NSString*) fileURL
 		 logItems:      (NSArray*)  logItems
 		 revision:      (NSString*) revision
 		 limit:         (int)       limit
@@ -844,19 +844,22 @@ NSString* const SearchDocToolbarItemIdentifier = @"svnX.search";
 {
 	if (pageLength <= 0)
 		pageLength = kDefaultPageLength;
-	SvnLogReport* report = [[self alloc] init];
-	if ([NSBundle loadNibNamed: @"BrowseLog" owner: report])
-		[report createReport:  fileURL
-				logItems:      logItems
-				revision:      revision
-				limit:         limit
-				pageLength:    pageLength
-				verbose:       verbose
-				stopOnCopy:    stopOnCopy
-				relativeDates: relativeDates
-				reverseOrder:  reverseOrder];
+	SvnLogReport* obj = [self new];
+	if ([NSBundle loadNibNamed: kDialogId owner: obj])
+	{
+		[obj createReport: fileURL
+				 document: document
+				 logItems: logItems
+				 revision: revision
+					limit: limit
+			   pageLength: pageLength
+				  verbose: verbose
+			   stopOnCopy: stopOnCopy
+			relativeDates: relativeDates
+			 reverseOrder: reverseOrder];
+	}
 	else
-		[report release];
+		[obj release];
 }
 
 

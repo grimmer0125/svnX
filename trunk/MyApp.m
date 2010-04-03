@@ -76,6 +76,8 @@ addTransform (Class itsClass, NSString* itsName)
 	[dictionary setObject: @"%y-%d-%m %H:%M:%S"       forKey: @"dateformat"];
 	[dictionary setObject: kNSFalse                   forKey: @"includeRevisionInName"];
 	[dictionary setObject: kNSTrue                    forKey: @"installSvnxTool"];
+	[dictionary setObject: kNSTrue                    forKey: @"wcEditShown"];
+	[dictionary setObject: kNSTrue                    forKey: @"repEditShown"];
 
 	// Working Copy
 	[dictionary setObject: kNSTrue  forKey: @"addWorkingCopyOnCheckout"];

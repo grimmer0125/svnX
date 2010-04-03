@@ -83,6 +83,7 @@
 			 toRepositoryAt: (RepoItem*) destRepoDir;
 
 - (NSInvocation*) svnOptionsInvocation;
+- (int) svnStdOptions: (id[]) objs;
 
-@end
+@end	// MyRepository
 

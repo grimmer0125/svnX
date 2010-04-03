@@ -1,11 +1,13 @@
+//----------------------------------------------------------------------------------------
+//	SvnLogReport.h - Generate & display in HTML a Subversion log report
 //
-// SvnLogReport.h
-//
+//	Copyright © Chris, 2008 - 2010.  All rights reserved.
+//----------------------------------------------------------------------------------------
 
 #import <Cocoa/Cocoa.h>
 #import "Tasks.h"
 
-@class WebView;
+@class MyRepository, WebView;
 
 @interface SvnLogReport : NSResponder<TaskDelegate>
 {
@@ -13,7 +15,8 @@
 	IBOutlet WebView*	fLogView;
 }
 
-+ (void) createForURL:  (NSString*) fileURL
++ (void) createFor:     (MyRepository*) document
+		 url:           (NSString*) fileURL
 		 logItems:      (NSArray*)  logItems
 		 revision:      (NSString*) revision
 		 limit:         (int)       limit
@@ -23,11 +26,7 @@
 		 relativeDates: (BOOL)      relativeDates
 		 reverseOrder:  (BOOL)      reverseOrder;
 
-- (void) textSmaller: (id) sender;
-- (void) textBigger: (id) sender;
-- (void) printDocument: (id) sender;
-- (BOOL) validateToolbarItem: (NSToolbarItem*) toolbarItem;
 - (NSWindow*) window;
 
-@end
+@end	// SvnLogReport
 

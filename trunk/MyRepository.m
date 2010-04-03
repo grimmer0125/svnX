@@ -1000,7 +1000,8 @@ enum {
 			   reverseOrder = GetViewInt(views, vReportReverseOrder);
 	const int reportLimitNum = reportLimit ? GetViewInt(views, vReportLimitNum) : 0;
 
-	[SvnLogReport createForURL:  (isCurrentLog ? [fURL absoluteString] : [self browsePath])
+	[SvnLogReport createFor:     self
+				  url:           (isCurrentLog ? [fURL absoluteString] : [self browsePath])
 				  logItems:      (isCurrentLog ? [svnLogView arrangedObjects] : nil)
 				  revision:      fRevision
 				  limit:         reportLimitNum
@@ -1759,6 +1760,31 @@ enum {
 - (NSInvocation*) makeExtractedCallback
 {
 	return MakeCallbackInvocation(self, @selector(extract_Completed:));
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (int) svnStdOptions: (id[]) objs
+{
+	int count = 0;
+	if ([user length])
+	{
+		objs[count++] = @"--username";
+		objs[count++] = user;
+
+		if ([pass length])
+		{
+			objs[count++] = @"--password";
+			objs[count++] = pass;
+		}
+	}
+
+	objs[count++] = @"--non-interactive";
+//	if (HasSvnV1_6() && GetPreferenceBool(@"trustServerCert"))
+//		objs[count++] = @"--trust-server-cert";
+	Assert(count <= 6);
+	return count;
 }
 
 

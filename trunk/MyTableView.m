@@ -1,6 +1,10 @@
 #import "MyTableView.h"
 #import "MyWorkingCopy.h"
 #import "MyWorkingCopyController.h"
+#import "TableViewDelegate.h"
+#import "IconTextCell.h"
+#import "IconUtils.h"
+
 
 @implementation MyTableView
 
@@ -15,6 +19,16 @@
 
 - (void) awakeFromNib
 {
+#if 1
+	NSTableColumn* const col = [self tableColumnWithIdentifier: @"path"];
+	IconTextCell* const cell = [IconTextCell new];
+	[cell setFont: [NSFont labelFontOfSize: 11]];
+	[cell setIconRef: GenericFileIcon()];
+	[col setDataCell: cell];
+	[cell release];
+	[self removeTableColumn: [self tableColumnWithIdentifier: @"icon"]];
+	[col unbind: NSValueBinding];
+#endif
 	[self setDoubleAction: @selector(onDoubleClick:)];
 }
 

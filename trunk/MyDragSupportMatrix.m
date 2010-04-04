@@ -7,10 +7,8 @@
 #import "MyRepository.h"
 #import "MySvnRepositoryBrowserView.h"
 #import "RepoItem.h"
+#import "IconUtils.h"
 #import "ViewUtils.h"
-
-
-extern NSImage* GenericFolderImage32 (void);
 
 
 //----------------------------------------------------------------------------------------
@@ -201,13 +199,11 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 		[[repoItem url] writeToPasteboard: pboard];
 
 		if ([repoItem isDir])
-			anImage = [repoItem isRoot] ? [NSImage imageNamed: @"Repository"]
-										: GenericFolderImage32();
+			anImage = ImageFromIcon([repoItem icon], kDragImageSize);
 
 		sourceObject = self;
 	}
 
-	[anImage setSize: gDragImageSize];
 	NSImage* image = [[NSImage alloc] initWithSize: gDragImageSize];
 	[image lockFocus];
 	[anImage dissolveToPoint: NSMakePoint(0, 0) fraction: 0.667];

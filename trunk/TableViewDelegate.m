@@ -8,6 +8,7 @@
 #import "MyWorkingCopy.h"
 #import "MyWorkingCopyController.h"
 #import "NSString+MyAdditions.h"
+#import "IconTextCell.h"
 #import "CommonUtils.h"
 
 
@@ -157,6 +158,8 @@ HelpTagForWCItem (NSDictionary* wcFileInfo)
 			 index = [rowIndexes indexGreaterThanIndex: index])
 		{
 			if (![tableView isRowSelected: index])
+				[tableView selectRowIndexes: rowIndexes byExtendingSelection: NO];
+			if (![tableView isRowSelected: index])
 				return NO;
 		}
 
@@ -205,8 +208,6 @@ HelpTagForWCItem (NSDictionary* wcFileInfo)
 	#pragma unused(aTableView, aCell, rect, mouseLocation)
 	const int colID = [[aTableColumn identifier] intValue];
 
-	if (!fPathColumn)
-		fPathColumn = [aTableView tableColumnWithIdentifier: @"path"];
 	if (colID >= kFirstColumn && colID <= kNumColumns)
 	{
 	//	dprintf_("tableView %d: helpTags=%@ colKeys=%@", colID, helpTags[colID], colKeys[colID]);
@@ -219,6 +220,27 @@ HelpTagForWCItem (NSDictionary* wcFileInfo)
 	}
 
 	return @"";
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) tableView:       (NSTableView*)   tableView
+		 willDisplayCell: (id)             cell
+		 forTableColumn:  (NSTableColumn*) tableColumn
+		 row:             (int)            row
+{
+	#pragma unused(tableView)
+//	dprintf("col=%@ row=%d", [tableColumn identifier], row);
+
+	if (!fPathColumn)
+		fPathColumn = [tableView tableColumnWithIdentifier: @"path"];
+	if (tableColumn == fPathColumn)
+	{
+		NSDictionary* item = [[svnFilesAC arrangedObjects] objectAtIndex: row];
+		[cell setIconRef: [(MyWorkingCopy*) document iconForFile: [item objectForKey: @"path"]]];
+		[cell setTitle: [item objectForKey: @"displayPath"]];
+	}
 }
 
 

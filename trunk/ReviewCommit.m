@@ -317,7 +317,7 @@ enum {
 		if ([[item objectForKey: @"committable"] boolValue])
 		{
 			BOOL commit = commitDefault;
-			NSString* const name = [item objectForKey: @"displayPath"];
+			NSString* const name = [item objectForKey: @"path"];
 			for_each_obj(oEnum2, item2, oldFiles)
 				if ([name isEqualToString: [item2 name]])
 				{

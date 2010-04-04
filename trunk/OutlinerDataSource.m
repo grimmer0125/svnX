@@ -1,6 +1,7 @@
 #import "OutlinerDataSource.h"
 #import "MyWorkingCopy.h"
 #import "MyWorkingCopyController.h"
+#import "IconTextCell.h"
 
 
 @implementation OutlinerDataSource
@@ -60,8 +61,9 @@
 {
 	NSOutlineView* const ov = [notification object];
 
-//	NSLog(@"Outliner click : %@", [[ov itemAtRow: [ov selectedRow]] path]);
-	[document setOutlineSelectedPath: [[ov itemAtRow: [ov selectedRow]] path]];
+	NSString* treePath = [[ov itemAtRow: [ov selectedRow]] path];
+	if (treePath)
+		[document setOutlineSelectedPath: treePath];
 }
 
 
@@ -74,7 +76,7 @@
 {
 	#pragma unused(outlineView, tableColumn)
 
-	[cell setImage: [item icon: document]];
+	[cell setIconRef: [item icon: document]];
 }
 
 

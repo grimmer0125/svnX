@@ -115,7 +115,6 @@
 		F2BFB5710827F3B7008476B7 /* TaskStatusToColorTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = F2BFB5700827F3B7008476B7 /* TaskStatusToColorTransformer.m */; };
 		F2C2001306008AE0004C843B /* Add.png in Resources */ = {isa = PBXBuildFile; fileRef = F2C2001206008AE0004C843B /* Add.png */; };
 		F2C2002606008B49004C843B /* Remove.png in Resources */ = {isa = PBXBuildFile; fileRef = F2C2002506008B49004C843B /* Remove.png */; };
-		F2C205C806012B68004C843B /* ImageAndTextCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F2C205C706012B68004C843B /* ImageAndTextCell.m */; };
 		F2C20626060136D0004C843B /* TableViewDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F2C20624060136D0004C843B /* TableViewDelegate.m */; };
 		F2C2624A082B58D700077EFE /* sidebar.png in Resources */ = {isa = PBXBuildFile; fileRef = F2C26249082B58D700077EFE /* sidebar.png */; };
 		F2E13A0B05FB2F2F0068B671 /* FavoriteWorkingCopies.m in Sources */ = {isa = PBXBuildFile; fileRef = F2E13A0905FB2F2F0068B671 /* FavoriteWorkingCopies.m */; };
@@ -306,8 +305,6 @@
 		F2C2001206008AE0004C843B /* Add.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Add.png; sourceTree = "<group>"; };
 		F2C2002506008B49004C843B /* Remove.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Remove.png; sourceTree = "<group>"; };
 		F2C202930600A94D004C843B /* EditorProjectMode.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = EditorProjectMode.tiff; sourceTree = "<group>"; };
-		F2C205BF06012B59004C843B /* ImageAndTextCell.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ImageAndTextCell.h; sourceTree = "<group>"; };
-		F2C205C706012B68004C843B /* ImageAndTextCell.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = ImageAndTextCell.m; sourceTree = "<group>"; };
 		F2C20623060136D0004C843B /* TableViewDelegate.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TableViewDelegate.h; sourceTree = "<group>"; };
 		F2C20624060136D0004C843B /* TableViewDelegate.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = TableViewDelegate.m; sourceTree = "<group>"; };
 		F2C26249082B58D700077EFE /* sidebar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sidebar.png; sourceTree = "<group>"; };
@@ -425,8 +422,6 @@
 				F20524300A5D3C9A003F966A /* GetEthernetAddrSample.c */,
 				F20524310A5D3C9A003F966A /* GetEthernetAddrSample.h */,
 				F20524020A5D3945003F966A /* SUUpdater.h */,
-				F2C205BF06012B59004C843B /* ImageAndTextCell.h */,
-				F2C205C706012B68004C843B /* ImageAndTextCell.m */,
 				83C5B26B116649CD00A667E9 /* IconTextCell.h */,
 				83C5B26C116649CD00A667E9 /* IconTextCell.m */,
 				8369D49F0FD074A6002905A0 /* IconUtils.h */,
@@ -836,7 +831,6 @@
 				F217F14A05F9EC0700286411 /* SvnFileStatusToColourTransformer.m in Sources */,
 				F2E13A0B05FB2F2F0068B671 /* FavoriteWorkingCopies.m in Sources */,
 				F2AFD0E205FFE153008F4267 /* OutlinerDataSource.m in Sources */,
-				F2C205C806012B68004C843B /* ImageAndTextCell.m in Sources */,
 				F2C20626060136D0004C843B /* TableViewDelegate.m in Sources */,
 				F27CD1E606028DC600F19225 /* MyOutlineView.m in Sources */,
 				F23B32F906029317005C11F2 /* MyTableView.m in Sources */,

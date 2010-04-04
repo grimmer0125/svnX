@@ -26,14 +26,15 @@ extern NSImage* GenericFolderImage32 (void);
 	   numberOfRows:    (int)     numRows
 	   numberOfColumns: (int)     numColumns
 {
+	#pragma unused(aMode)
 	if (self = [super initWithFrame: frameRect
-							   mode: aMode
+							   mode: NSListModeMatrix
 						  prototype: aCell
 					   numberOfRows: numRows
 					numberOfColumns: numColumns])
 	{
 		// register for files dragged to the repository (-> svn import)
-		[self registerForDraggedTypes: [NSArray arrayWithObjects: NSFilenamesPboardType, nil]];
+		[self registerForDraggedTypes: [NSArray arrayWithObject: NSFilenamesPboardType]];
 	}
 
 	return self;
@@ -46,7 +47,7 @@ extern NSImage* GenericFolderImage32 (void);
 {
 	if (self = [super initWithCoder: decoder])
 	{
-		[self registerForDraggedTypes: [NSArray arrayWithObjects: NSFilenamesPboardType, nil]];
+		[self registerForDraggedTypes: [NSArray arrayWithObject: NSFilenamesPboardType]];
 	}
 	return self;
 }

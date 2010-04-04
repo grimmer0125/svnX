@@ -32,6 +32,8 @@ if [ -z "${apps##*Xcode*}" ]; then
 	CODE='Xcode'
 elif [ \( -z "${apps##*CodeWarrior*}" \) -o $DIFF = 'codewarrior' ]; then
 	CODE='CodeWarrior IDE'
+elif ( ps -xww | grep -q '[C]odeWarrior' ); then
+	CODE='CodeWarrior IDE'
 elif [ \( -z "${apps##*TextWrangler*}" \) -o $DIFF = 'textwrangler' ]; then
 	CODE='TextWrangler'
 elif [ \( -z "${apps##*BBEdit*}" \) -o $DIFF = 'bbedit' ]; then

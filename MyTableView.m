@@ -30,9 +30,15 @@
 
 - (void) keyDown: (NSEvent*) theEvent
 {
-//	NSLog(@"keyCode=0x%X", [theEvent keyCode]);
+//	dprintf("keyCode=0x%X", [theEvent keyCode]);
 	switch ([theEvent keyCode])
 	{
+		case 0x73:	// Home
+			[self scrollRowToVisible: 0];
+			break;
+		case 0x77:	// End
+			[self scrollRowToVisible: [self numberOfRows] - 1];
+			break;
 		case 0x74:	// Page Up
 		case 0x79:	// Page Down
 		case 0x7E:	// Up
@@ -46,5 +52,5 @@
 	}
 }
 
-@end
+@end	// MyTableView
 

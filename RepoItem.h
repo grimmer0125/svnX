@@ -63,6 +63,7 @@ extern ConstString kTypeRepoItem;
 - (NSImage*)	icon:			(id) iconCache;
 - (NSString*)	toolTip;
 - (NSString*)	pathWithRevision;
+- (NSString*)	pathPegRevision;
 - (NSDictionary*) dictionary;
 
 @end	// RepoItem

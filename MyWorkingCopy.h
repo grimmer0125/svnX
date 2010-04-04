@@ -6,6 +6,7 @@
 //----------------------------------------------------------------------------------------
 
 #import <Cocoa/Cocoa.h>
+#import "CommonUtils.h"
 
 enum {
 	kFilterAll		=	0,
@@ -15,6 +16,9 @@ enum {
 	kFilterConflict	=	4,
 	kFilterChanged	=	5
 };
+
+extern ConstString kUseOldParsingMethod;
+void InitWCPreferences (void);
 
 @class WCTreeEntry, MyWorkingCopyController, MySvnFilesArrayController;
 

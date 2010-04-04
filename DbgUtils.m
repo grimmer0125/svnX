@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------------------
 //	DbgUtils.m - Cocoa debugging and error handling
 //
-//	Copyright © Chris, 2003 - 2008.  All rights reserved.
+//	Copyright © Chris, 2003 - 2010.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #import "NSString+MyAdditions.h"
@@ -9,6 +9,53 @@
 
 
 #if qDebug
+//----------------------------------------------------------------------------------------
+
+static UInt32
+OSX ()
+{
+	static SInt32 response;
+	if (response == 0 && Gestalt(gestaltSystemVersion, &response) != noErr)
+		response = 1;
+//	fprintf(stderr, "response=0x%lX\n", response);
+	return response;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static const char*
+Prefix ()
+{
+	static const char* prefix = NULL;
+	if (prefix == NULL)
+		prefix = (OSX() >= 0x1050) ? "" : kAppName ": ";
+	return prefix;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static FILE*
+OS ()
+{
+	static FILE* file = NULL;
+	if (file == NULL)
+	{
+		if (OSX() >= 0x1050)
+		{
+		//	file = fopen("/tmp/" kAppName "-dbg.log", "a");
+			if (file != NULL)
+				fprintf(file, "\n------------------------------------------------------------\n");
+		}
+		if (file == NULL)
+			file = stderr;
+		setlinebuf(file);
+	}
+	return file;
+}
+
+
 //----------------------------------------------------------------------------------------
 
 ConstCStr
@@ -92,6 +139,7 @@ void
 DbgAssert (ConstCStr file, int line, ConstCStr func, ConstCStr expr)
 {
 	DbgLogF(file, line, func, "ASSERT %s", expr);
+	int n = *(int*) 0; (void) n;
 	exit(1);
 }
 
@@ -103,8 +151,8 @@ static ConstCStr
 DbgFLF (ConstCStr file, int line, ConstCStr func)
 {
 	static char buf[250];
-	snprintf(buf, sizeof(buf), "%s: [%s:%d] %s: ",
-			 kAppName, LeafName(file), line, Demangle(func));
+	snprintf(buf, sizeof(buf), "%s[%s:%d] %s: ",
+			 Prefix(), LeafName(file), line, Demangle(func));
 	return buf;
 }
 
@@ -122,7 +170,7 @@ DbgLogF (ConstCStr file, int line, ConstCStr func, ConstCStr fmt, ...)
 	if (!ToUTF8(s, buf, sizeof(buf)))
 		buf[0] = 0;
 	[s release];
-	fprintf(stderr, "%s: [%s:%d] %s: %s\n", kAppName, LeafName(file), line, Demangle(func), buf);
+	fprintf(OS(), "%s[%s:%d] %s: %s\n", Prefix(), LeafName(file), line, Demangle(func), buf);
 }
 
 
@@ -132,7 +180,7 @@ DbgLogF (ConstCStr file, int line, ConstCStr func, ConstCStr fmt, ...)
 void
 DbgLog (ConstCStr file, int line, ConstCStr func, ConstCStr msg)
 {
-//	fprintf(stderr, "%s: [%s:%d] %s: %s\n", kAppName, LeafName(file), line, Demangle(func), msg);
+//	fprintf(OS(), "%s[%s:%d] %s: %s\n", Prefix(), LeafName(file), line, Demangle(func), msg);
 	DbgLogF(file, line, func, "%s", msg);
 }
 
@@ -150,7 +198,7 @@ DbgLogF2 (ConstCStr fmt, ...)
 	if (!ToUTF8(s, buf, sizeof(buf)))
 		buf[0] = 0;
 	[s release];
-	fprintf(stderr, "%s\n", buf);
+	fprintf(OS(), "%s\n", buf);
 }
 
 
@@ -173,7 +221,7 @@ DbgSvnPrint (SvnError err)
 	if (err)
 	{
 		char buf[512];
-		fprintf(stderr, "%s\n", SvnErrorToString(err, buf, sizeof(buf), "      SvnError="));
+		fprintf(OS(), "%s\n", SvnErrorToString(err, buf, sizeof(buf), "      SvnError="));
 	}
 }
 
@@ -214,6 +262,31 @@ DbgReportCatch (ConstCStr file, int line, ConstCStr func, NSObject* err)
 		msg = buf;
 	DbgLog(file, line, func, msg);
 }
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+//----------------------------------------------------------------------------------------
+
+@interface NSObject (Debug)
+
+	- (void) doesNotRecognizeSelector: (SEL) aSelector;
+
+@end	// NSObject (Debug)
+
+
+//----------------------------------------------------------------------------------------
+
+@implementation NSObject (Debug)
+
+- (void) doesNotRecognizeSelector: (SEL) aSelector
+{
+	dprintf_("UNREGOCNISED SELECTOR: [%@:0x%X %s]",
+			 [self className], self, sel_getName(aSelector));
+	int n = *(int*) 0; (void) n;
+}
+
+@end	// NSObject (Debug)
 
 
 //----------------------------------------------------------------------------------------

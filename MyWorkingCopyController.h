@@ -1,3 +1,9 @@
+//----------------------------------------------------------------------------------------
+//	MyWorkingCopyController.h - Controller of the working copy browser
+//
+//	Copyright © Chris, 2007 - 2010.  All rights reserved.
+//----------------------------------------------------------------------------------------
+
 #import <Cocoa/Cocoa.h>
 
 @class MyWorkingCopy, MySvnFilesArrayController, DrawerLogView, RepoItem;
@@ -61,8 +67,12 @@
 - (IBAction) toggleSidebar:  (id) sender;
 - (IBAction) changeMode:     (id) sender;
 - (IBAction) updateSheetDoClick:   (id) sender;
+- (IBAction) renamePanelValidate:  (id) sender;
 - (IBAction) mergeSheetDoClick:    (id) sender;
 - (IBAction) mergeSheetURLChanged: (id) sender;
+- (IBAction) switchPanelValidate:  (id) sender;
+- (IBAction) commitPanelValidate:  (id) sender;
+- (IBAction) commitPanelCancel:    (id) sender;
 - (int)      currentMode;
 - (void)     setCurrentMode: (int) mode;
 - (void)     setStatusMessage: (NSString*) message;
@@ -94,5 +104,5 @@
 - (void) requestSvnMoveSelectedItemsToDestination: (NSString*) destination;
 - (void) requestSvnCopySelectedItemsToDestination: (NSString*) destination;
 
-@end
+@end	// MyWorkingCopyController
 

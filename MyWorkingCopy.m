@@ -17,12 +17,15 @@
 #import "SvnInterface.h"
 
 
+ConstString	kUseOldParsingMethod = @"useOldParsingMethod";
+
+
 //----------------------------------------------------------------------------------------
 
 static BOOL
 useOldParsingMethod ()
 {
-	return GetPreferenceBool(@"useOldParsingMethod");
+	return GetPreferenceBool(kUseOldParsingMethod);
 }
 
 
@@ -277,7 +280,7 @@ GenericFolderImage32 ()
 
 //----------------------------------------------------------------------------------------
 
-- (void) svnError: (NSDictionary*) taskObj
+- (void) svnError: (TaskObj*) taskObj
 {
 	NSString* errMsg = stdErr(taskObj);
 	if (errMsg)
@@ -316,12 +319,11 @@ GenericFolderImage32 ()
 		smartMode  = TRUE;
 		filterMode = kFilterAll;
 
+		[self setOutlineSelectedPath: @""];
 		// initialize svnFiles:
 		// svnFilesAC is bound in Interface Builder to this variable.
 		[self setSvnFiles: [NSArray array]];
 		svnDirectories = [WCTreeEntry alloc];
-
-		[self setOutlineSelectedPath: @""];
 
 		// register self as an observer for bound variables
 		const NSKeyValueObservingOptions kOptions = NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld;
@@ -363,7 +365,7 @@ GenericFolderImage32 ()
 	[self setWindowTitle: nil];
 	[self setSvnFiles: nil];
 	[self setSvnDirectories: nil];
-	[self setOutlineSelectedPath: nil];
+	[outlineSelectedPath release];
 	[self setRepositoryUrl: nil];
 	[self setDisplayedTaskObj: nil];
 	[subControllers release];
@@ -440,7 +442,7 @@ GenericFolderImage32 ()
 - (void) close
 {
 	// tell the task center to cancel pending callbacks to prevent crash
-	[[Tasks sharedInstance] cancelCallbacksOnTarget: self];
+	[Tasks cancelCallbacksOnTarget: self];
 
 	[self removeObserver: self forKeyPath: @"smartMode"];
 	[self removeObserver: self forKeyPath: @"flatMode"];
@@ -533,9 +535,9 @@ addDirToTree (const SvnStatusEnv* env, NSString* const fullPath, NSImage* icon)
 	NSMutableArray* children = [env->fTree objectForKey: fullPath];
 	if (children == nil)
 	{
-		NSString* const parent = [fullPath stringByDeletingLastPathComponent];
+		ConstString parent = [fullPath stringByDeletingLastPathComponent];
 		int parentLen = [parent length];
-		NSString* const name = [fullPath substringFromIndex: parentLen + 1];
+		ConstString name = [fullPath substringFromIndex: parentLen + 1];
 		children = [NSMutableArray array];
 		[env->fTree setObject: children forKey: fullPath];
 		id entry = [WCTreeEntry create: children
@@ -1401,12 +1403,12 @@ svnInfoReceiver (void*     baton,
 			ConstString line = [lines objectAtIndex: i];
 			const int lineLength = [line length];
 
-			if (!gotRev && lineLength > 9 && [[line substringWithRange: NSMakeRange(0, 10)] isEqualToString: @"Revision: "] )
+			if (!gotRev && lineLength > 9 && [line beginsWith: @"Revision: "])
 			{
 				[self setRevision: [line substringFromIndex: 10]];
 				gotRev = true;
 			}
-			else if (!gotURL && lineLength > 4 && [[line substringWithRange: NSMakeRange(0, 5)] isEqualToString: @"URL: "] )
+			else if (!gotURL && lineLength > 4 && [line beginsWith: @"URL: "])
 			{
 				NSString* urlString = [line substringFromIndex: 5];
 
@@ -1911,9 +1913,7 @@ svnInfoReceiver (void*     baton,
 - (void) setOutlineSelectedPath: (NSString*) aPath
 {
 //	dprintf("('%@')", aPath);
-	id old = outlineSelectedPath;
-	outlineSelectedPath = [aPath retain];
-	[old release];
+	SetVar(outlineSelectedPath, aPath);
 	if (svnFiles != nil)
 		[svnFilesAC rearrangeObjects];
 }

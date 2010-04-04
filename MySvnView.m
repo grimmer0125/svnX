@@ -38,7 +38,7 @@
 {
 //	dprintf("%@ 0x%X->refs=%d", [self className], self, [self retainCount]);
 	// tell the task center to cancel pending callbacks to prevent crash
-	[[Tasks sharedInstance] cancelCallbacksOnTarget: self];
+	[Tasks cancelCallbacksOnTarget: self];
 
 	[self setPendingTask: nil];
 	[fView release];	// the nib is responsible for releasing its top-level objects

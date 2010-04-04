@@ -4,6 +4,7 @@
 
 #import "MySvnFilesArrayController.h"
 #import "MyWorkingCopy.h"
+#import "CommonUtils.h"
 
 
 //----------------------------------------------------------------------------------------
@@ -27,9 +28,7 @@
 	NSString* const lowerSearch = (searchString != nil && [searchString length] > 0) ? [searchString lowercaseString] : nil;
 	BOOL isCommittable = NO;
 
-	NSEnumerator* oEnum;
-	id item;
-	for (oEnum = [objects objectEnumerator]; item = [oEnum nextObject]; )
+	for_each_obj(en, item, objects)
 	{
 		NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 		BOOL test = TRUE;

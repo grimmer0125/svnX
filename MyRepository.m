@@ -1283,7 +1283,7 @@ enum {
 - (void) extract_Completed: (id) taskObj
 {
 	// let the Finder know about the operation (required for Panther)
-	[[NSWorkspace sharedWorkspace] noteFileSystemChanged: [taskObj objectForKey: @"callbackInfo"]];
+	[[NSWorkspace sharedWorkspace] noteFileSystemChanged: callbackInfo(taskObj)];
 
 	[self svnErrorIf: taskObj];
 }
@@ -1798,7 +1798,7 @@ enum {
 		 contextInfo:                  (void*) contextInfo
 {
 	// tell the task center to cancel pending callbacks to prevent crash
-	[[Tasks sharedInstance] cancelCallbacksOnTarget: self];
+	[Tasks cancelCallbacksOnTarget: self];
 
 	[super canCloseDocumentWithDelegate: delegate
 		   shouldCloseSelector:          shouldCloseSelector

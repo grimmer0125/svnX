@@ -14,6 +14,15 @@
 						 callbackInfo:   (id)            callbackInfo
 						 taskInfo:       (id)            taskInfo;
 
++ (NSMutableDictionary*) runScript:      (NSString*)     scriptName
+						 options:        (NSArray*)      options
+						 args:           (NSArray*)      args
+						 name:           (NSString*)     name
+						 callback:       (NSInvocation*) callback
+						 callbackInfo:   (id)            callbackInfo
+						 taskInfo:       (id)            taskInfo
+						 dataOnly:       (BOOL)          dataOnly;
+
 + (NSMutableDictionary*) genericCommand: (NSString*)     command
 						 arguments:      (NSArray*)      args
 						 generalOptions: (NSInvocation*) generalOptions

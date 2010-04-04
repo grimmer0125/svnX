@@ -137,6 +137,30 @@ GetDiffAppName ()
 }
 
 
+//----------------------------------------------------------------------------------------
+
++ (NSMutableDictionary*) runScript:    (NSString*)     scriptName
+						 options:      (NSArray*)      options
+						 args:         (NSArray*)      args
+						 name:         (NSString*)     name
+						 callback:     (NSInvocation*) callback
+						 callbackInfo: (id)            callbackInfo
+						 taskInfo:     (id)            taskInfo
+						 dataOnly:     (BOOL)          dataOnly
+{
+	NSString* taskLaunchPath  = ShellScriptPath(scriptName);
+	NSMutableArray* arguments = [NSMutableArray arrayWithArray: options];
+	[arguments addObjectsFromArray: args];
+
+	id additionalTaskInfo = makeTaskInfo(name, taskLaunchPath, arguments);
+
+	return [MySvn launchTask: taskLaunchPath arguments: arguments callback: callback callbackInfo: callbackInfo
+				  taskInfo: taskInfo additionalTaskInfo: additionalTaskInfo outputToData: dataOnly];
+}
+
+
+//----------------------------------------------------------------------------------------
+
 + (NSMutableDictionary*) genericCommand: (NSString*)     command
 						 arguments:      (NSArray*)      args
 						 generalOptions: (NSInvocation*) generalOptions
@@ -566,7 +590,7 @@ ensureDict (NSDictionary* dictOrNil)
 	[pipe release];
 	[task release];
 
-	[[NSApp delegate] newTaskWithDictionary: taskObj];
+	[Tasks addTask: taskObj];
 
 	return taskObj;
 }

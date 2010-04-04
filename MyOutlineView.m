@@ -3,6 +3,11 @@
 
 @implementation MyOutlineView
 
+- (BOOL) inLiveResize { return NO; }
+
+
+//----------------------------------------------------------------------------------------
+
 - (void) awakeFromNib
 {
 	ImageAndTextCell* cell = [[ImageAndTextCell alloc] init];
@@ -20,7 +25,7 @@
 
 //----------------------------------------------------------------------------------------
 
-- (NSDragOperation) draggingEntered: (id <NSDraggingInfo>) sender
+- (NSDragOperation) draggingEntered: (id<NSDraggingInfo>) sender
 {
 	NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
 
@@ -37,4 +42,5 @@
 }
 
 
-@end
+@end	// MyOutlineView
+

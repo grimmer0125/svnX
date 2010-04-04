@@ -60,7 +60,7 @@ extern ConstString kTypeRepoItem;
 
 - (BOOL)		setUp:			(NSString*)	pathToColumn
 				url:			(NSURL*)	url;
-- (NSImage*)	icon:			(id) iconCache;
+- (IconRef)		icon;
 - (NSString*)	toolTip;
 - (NSString*)	pathWithRevision;
 - (NSString*)	pathPegRevision;

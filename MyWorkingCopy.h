@@ -118,7 +118,7 @@ void InitWCPreferences (void);
 - (NSURL*) repositoryUrl;
 - (void) setRepositoryUrl: (NSURL*) aRepositoryUrl;
 
-- (NSImage*)  iconForFile: (NSString*) relPath;
+- (IconRef)   iconForFile: (NSString*) relPath;
 - (NSString*) treeSelectedFullPath;
 - (NSString*) outlineSelectedPath;
 - (void)      setOutlineSelectedPath: (NSString*) aPath;
@@ -133,21 +133,20 @@ void InitWCPreferences (void);
 	NSMutableArray*	children;
 	NSString*		name;
 	NSString*		path;
-	NSImage*		icon;
+	IconRef			icon;
 	BOOL			sorted;
 }
 
 + (id) create: (NSMutableArray*) itsChildren
 	   name:   (NSString*)       itsName
-	   path:   (NSString*)       itsPath
-	   icon:   (NSImage*)        itsIcon;
+	   path:   (NSString*)       itsPath;
 - (void) dealloc;
 - (int) childCount;
 - (id) childAtIndex: (int) index;
 - (NSMutableArray*) children;
 - (NSString*) name;
 - (NSString*) path;
-- (NSImage*) icon: (MyWorkingCopy*) workingCopy;
+- (IconRef) icon: (MyWorkingCopy*) workingCopy;
 
 @end	// WCTreeEntry
 

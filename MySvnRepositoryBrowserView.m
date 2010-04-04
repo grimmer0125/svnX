@@ -15,37 +15,8 @@
 #import "SvnInterface.h"
 
 
-@class IconCache;
-
-enum { kMiniIconSize = 13 };
-
-
 static NSFont* gFont = nil;
 static NSDictionary* gStyle = nil;
-static IconCache* gIconCache = nil;
-
-
-//----------------------------------------------------------------------------------------
-
-static NSImage*
-makeMiniIcon (NSImage* image)
-{
-	Assert(image != nil);
-
-	static const NSRect dstRect = { 0, 0, kMiniIconSize, kMiniIconSize };
-	NSRect srcRect;
-	srcRect.origin.x =
-	srcRect.origin.y = 0;
-	srcRect.size = [image size];
-
-	NSImage* icon = [[NSImage alloc] initWithSize: dstRect.size];
-	[icon lockFocus];
-	[[NSGraphicsContext currentContext] setImageInterpolation: NSImageInterpolationHigh];
-	[image drawInRect: dstRect fromRect: srcRect operation: NSCompositeCopy fraction: 1];
-	[icon unlockFocus];
-
-	return icon;
-}
 
 
 //----------------------------------------------------------------------------------------
@@ -119,92 +90,65 @@ RepoItemsSetRevision (NSArray* repoItems, id revision)
 #pragma mark	-
 //----------------------------------------------------------------------------------------
 
-@interface IconCache : NSObject
-{
-	NSWorkspace*			fWorkspace;
-	NSMutableDictionary*	fDict;
-	NSImage*				fDirIcon;
-	NSImage*				fRootIcon;
-}
+@interface RepoCell : NSBrowserCell @end	// RepoCell
 
-- (NSImage*) iconForFileType: (NSString*) fileType;
-- (NSImage*) dirIcon;
-- (NSImage*) rootIcon;
 
-@end	// IconCache
+enum {
+	kIconSize		=	13,
+	kIconExtra		=	1,
+	kIconWidth		=	kIconSize + kIconExtra,
+};
 
 
 //----------------------------------------------------------------------------------------
-#pragma mark	-
 
-@implementation IconCache
+@implementation RepoCell
 
-- (id) init
+//----------------------------------------------------------------------------------------
+
+- (id) initRepoCell: (RepoItem*) repoItem
 {
-	extern NSImage* GenericFolderImage ();
-
-	self = [super init];
-	if (self != nil)
+	if (self = [super initTextCell: [repoItem name]])
 	{
-		fWorkspace = [NSWorkspace sharedWorkspace];
-		fDict      = [[NSMutableDictionary alloc] init];
-		fDirIcon   = makeMiniIcon(GenericFolderImage());
-		fRootIcon  = makeMiniIcon([NSImage imageNamed: @"Repository"]);
+		[self setRepresentedObject: repoItem];
 	}
-
 	return self;
 }
 
 
 //----------------------------------------------------------------------------------------
 
-- (void) dealloc
+- (void) drawWithFrame: (NSRect)  cellFrame
+		 inView:        (NSView*) controlView
 {
-	gIconCache = nil;
-	[fDict release];
-	[fDirIcon release];
-	[fRootIcon release];
-
-	[super dealloc];
-}
-
-
-//----------------------------------------------------------------------------------------
-
-- (NSImage*) iconForFileType: (NSString*) fileType
-{
-	NSImage* icon = [fDict objectForKey: fileType];
-	if (icon == nil)
+	RepoItem* const repoItem = [self representedObject];
+	if (repoItem != nil)
 	{
-		NSImage* const image = [fWorkspace iconForFileType: fileType];
-		if (image != nil)
-		{
-			icon = makeMiniIcon(image);
-			[fDict setObject: icon forKey: fileType];
-			[icon release];
-		}
+		[([self isHighlighted] || [self state]
+					? [self highlightColorInView: controlView]
+					: [NSColor whiteColor]) setFill];
+		[NSBezierPath fillRect: cellFrame];
+		const CGRect rect = {{ kIconExtra, -kIconSize }, { kIconSize, kIconSize }};
+		CGContextRef ctx = [[NSGraphicsContext currentContext] graphicsPort];
+		CGAffineTransform mat = { 1, 0, 0, -1, cellFrame.origin.x,
+								  cellFrame.origin.y + floor((cellFrame.size.height - kIconSize) * 0.5) };
+		CGContextSaveGState(ctx);
+		CGContextConcatCTM(ctx, mat);
+		WarnIf(PlotIconRefInContext(ctx, &rect, kAlignNone, kTransformNone,
+									NULL, kPlotIconRefNormalFlags, [repoItem icon]));
+		CGContextRestoreGState(ctx);
+		cellFrame.origin.x    += kIconWidth;
+		cellFrame.origin.y    += 1;
+		cellFrame.size.width  -= kIconWidth;
+		cellFrame.size.height -= 2;
 	}
-
-	return icon;
+	[super drawWithFrame: cellFrame inView: controlView];	// Draws the text
 }
 
 
 //----------------------------------------------------------------------------------------
 
-- (NSImage*) dirIcon
-{
-	return fDirIcon;
-}
-
-
-//----------------------------------------------------------------------------------------
-
-- (NSImage*) rootIcon
-{
-	return fRootIcon;
-}
-
-@end	// IconCache
+@end	// RepoCell
 
 
 //----------------------------------------------------------------------------------------
@@ -236,11 +180,6 @@ RepoItemsSetRevision (NSArray* repoItems, id revision)
 							[NSNumber numberWithFloat: 0.4], NSObliquenessAttributeName,
 							nil] retain];
 
-	if (gIconCache == nil)
-		gIconCache = [[IconCache alloc] init];
-	else
-		[gIconCache retain];
-
 	if (self = [super initWithFrame: frameRect])
 	{
 		showRoot = YES;
@@ -261,7 +200,6 @@ RepoItemsSetRevision (NSArray* repoItems, id revision)
 {
 //	dprintf("0x%X", self);
 	[self setBrowserPath: nil];
-	[gIconCache release];
 
 	[super dealloc];
 }
@@ -366,20 +304,16 @@ RepoItemsSetRevision (NSArray* repoItems, id revision)
 		const BOOL isDir = ![fRepository rootIsFile];
 		NSURL* const    url = [self url];
 		NSString* const name = isDir ? @"root" : [UnEscapeURL(url) lastPathComponent];
-		NSString* const fileType = isDir ? NSFileTypeDirectory : [name pathExtension];
 		fNameLen = [name length] + 1;
 
-		NSBrowserCell* const cell =
-			[[NSBrowserCell alloc] initImageCell: isDir ? [gIconCache rootIcon]
-														: [gIconCache iconForFileType: fileType]];
+		RepoItem* repoItem = [RepoItem repoRoot: isDir name: name
+									   revision: SvnRevNumFromString(revision) url: url];
+		RepoCell* const cell = [[RepoCell alloc] initRepoCell: repoItem];
+		[repoItem release];
 		[cell setAttributedStringValue: [[[NSAttributedString alloc]
 												initWithString: name attributes: gStyle] autorelease]];
 		[cell setLeaf: !isDir];
 		[cell setLineBreakMode: NSLineBreakByTruncatingTail];
-		id repoItem = [RepoItem repoRoot: isDir name: name
-								revision: SvnRevNumFromString(revision) url: url];
-		[cell setRepresentedObject: repoItem];
-		[repoItem release];
 
 		[matrix addRowWithCells: [NSArray arrayWithObject: cell]];
 		[matrix putCell: cell atRow: 0 column: 0];
@@ -532,7 +466,7 @@ svnListReceiver (void*        baton,
 			dprintf("svn_client_list: time=%g ms", t * 1e-3);
 		#endif
 
-			[self performSelectorOnMainThread: (!isHead && t > 50e3 && GetPreferenceBool(@"cacheSvnQueries"))
+			[self performSelectorOnMainThread: (!isHead && t > 2e3 && GetPreferenceBool(@"cacheSvnQueries"))
 													? @selector(displayDirCache:)
 													: @selector(displayDirNoCache:)
 				  withObject: info waitUntilDone: YES];
@@ -718,7 +652,6 @@ svnListReceiver (void*        baton,
 		 matrix:             (NSMatrix*) matrix
 {
 	//NSLog(@"matrix %@ %@ %d %@", browser, matrix, column, [self pathToColumn: column]);
-	NSImage* const dirIcon = [gIconCache dirIcon];
 	NSString* const pathToColumn = [self pathToColumn: column];
 	NSURL* const url = [self url];
 
@@ -728,11 +661,10 @@ svnListReceiver (void*        baton,
 		RepoItem* const item = [resultArray objectAtIndex: i];
 		const BOOL isDir = [item setUp: pathToColumn url: url];
 
-		NSBrowserCell* const cell = [[NSBrowserCell alloc] initTextCell: [item name]];
+		RepoCell* const cell = [[RepoCell alloc] initRepoCell: item];
 		if (!isDir && disallowLeaves)
 			[cell setEnabled: NO];
 		[cell setFont: gFont];
-		[cell setImage: isDir ? dirIcon : [item icon: gIconCache]];
 		[cell setLeaf: !isDir];
 		[cell setRepresentedObject: item];
 	//	NSLog(@"item=%@", item);

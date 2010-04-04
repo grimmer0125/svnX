@@ -7,6 +7,7 @@
 #import "NSString+MyAdditions.h"
 #import "RepoItem.h"
 #import "CommonUtils.h"
+#import "IconUtils.h"
 
 
 //----------------------------------------------------------------------------------------
@@ -115,6 +116,8 @@ ConstString kTypeRepoItem = @"svnX_REPO_ITEM";
 		obj->fRevision =
 		obj->fModRev   = revision;
 		obj->fURL      = [url retain];
+		if (!isDir)
+			obj->fFileType = [[name pathExtension] retain];
 	}
 
 	return obj;
@@ -188,7 +191,7 @@ ConstString kTypeRepoItem = @"svnX_REPO_ITEM";
 
 - (NSString*) path
 {
-	return fPath ? fPath : @"";
+	return fPath ? [[fPath stringByAppendingPathComponent: fName] trimSlashes] : @"";
 }
 
 
@@ -284,7 +287,12 @@ ConstString kTypeRepoItem = @"svnX_REPO_ITEM";
 
 - (NSURL*) url
 {
-	return fURL;
+	if (fIsRoot)
+		return fURL;
+
+	ConstString path = [[self path] escapeURL];
+	return [NSURL URLWithString: fIsDir ? [path stringByAppendingString: @"/"] : path
+				  relativeToURL: fURL];
 }
 
 
@@ -293,26 +301,23 @@ ConstString kTypeRepoItem = @"svnX_REPO_ITEM";
 - (BOOL) setUp: (NSString*) pathToColumn
 		 url:   (NSURL*)    url
 {
-	NSString* path = [[pathToColumn stringByAppendingPathComponent: fName] trimSlashes];
-	NSString* urlPath = [path escapeURL];
-	if (fIsDir)
-		urlPath = [urlPath stringByAppendingString: @"/"];
-	NSURL* theURL = [NSURL URLWithString: urlPath relativeToURL: url];
-
 	Assert(fFileType == nil && fPath == nil && fURL == nil);
 	if (!fIsDir)
 		fFileType = [[fName pathExtension] retain];
-	fPath = [path   retain];
-	fURL  = [theURL retain];
+	fPath = [pathToColumn retain];
+	fURL  = [url retain];
 	return fIsDir;
 }
 
 
 //----------------------------------------------------------------------------------------
 
-- (NSImage*) icon: (id) iconCache
+- (IconRef) icon
 {
-	return [iconCache iconForFileType: fFileType];
+	if (fIsDir)
+		return fIsRoot ? RepositoryIcon() : GenericFolderIcon();
+
+	return GetFileTypeIcon(fFileType);
 }
 
 
@@ -336,7 +341,7 @@ ConstString kTypeRepoItem = @"svnX_REPO_ITEM";
 
 - (NSString*) pathWithRevision
 {
-	return self ? PathWithRevision(fURL, [self revision])
+	return self ? PathWithRevision([self url], [self revision])
 				: @"";
 }
 

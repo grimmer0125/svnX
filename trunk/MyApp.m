@@ -8,6 +8,7 @@
 #import <CoreServices/CoreServices.h>
 #import "MyApp.h"
 #import "MySVN.h"
+#import "MyWorkingCopy.h"
 #import "GetEthernetAddrSample.h"
 #import "FavoriteWorkingCopies.h"
 #import "RepositoriesController.h"
@@ -18,6 +19,7 @@
 #import "TrimNewLinesTransformer.h"
 #import "Tasks.h"
 #import "CommonUtils.h"
+#import "ViewUtils.h"
 #import "SvnInterface.h"
 
 
@@ -42,7 +44,6 @@ addTransform (Class itsClass, NSString* itsName)
 
 @implementation MyApp
 
-#define	kUseOldParsingMethod	@"useOldParsingMethod"
 
 //----------------------------------------------------------------------------------------
 
@@ -63,6 +64,7 @@ addTransform (Class itsClass, NSString* itsName)
 
 + (void) initialize
 {
+	InitViewUtils();
 	NSMutableDictionary* const dictionary = [NSMutableDictionary dictionary];
 	[SvnFileStatusToColourTransformer initialize: dictionary];
 
@@ -100,6 +102,8 @@ addTransform (Class itsClass, NSString* itsName)
 	[Preferences() registerDefaults: dictionary];
 	[[NSUserDefaultsController sharedUserDefaultsController] setInitialValues: dictionary];
 	[SvnFileStatusToColourTransformer update];
+
+	InitWCPreferences();
 
 	// Transformers																		// Used by:
 	addTransform([SvnFileStatusToColourTransformer class], @"FileStatusToColor");		// MyWorkingCopy

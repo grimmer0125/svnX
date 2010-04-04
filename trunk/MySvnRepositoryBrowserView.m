@@ -643,7 +643,7 @@ svnListReceiver (void*        baton,
 	NSArray* const resultArray = [SvnListParser parseData: stdOutData(taskObj)];
 	NSString* const revision = [self revision];
 	[self displayDirList: RepoItemsSetRevision(resultArray, revision)
-		  info:           [taskObj objectForKey: @"callbackInfo"]
+		  info:           callbackInfo(taskObj)
 		  shouldCache:    ![revision isEqualToString: @"HEAD"]];
 }
 

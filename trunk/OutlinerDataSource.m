@@ -54,14 +54,18 @@
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) outlineViewSelectionDidChange: (NSNotification*) notification
 {
-	NSOutlineView *ov = [notification object];
+	NSOutlineView* const ov = [notification object];
 
 //	NSLog(@"Outliner click : %@", [[ov itemAtRow: [ov selectedRow]] path]);
 	[document setOutlineSelectedPath: [[ov itemAtRow: [ov selectedRow]] path]];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) outlineView:     (NSOutlineView*) outlineView
 		 willDisplayCell: (id)             cell
@@ -77,10 +81,10 @@
 //----------------------------------------------------------------------------------------
 // Dragging
 
-- (unsigned int) outlineView:        (NSOutlineView*)     outlineView
-				 validateDrop:       (id<NSDraggingInfo>) sender
-				 proposedItem:       (id)                 item
-				 proposedChildIndex: (int)                childIndex
+- (NSDragOperation) outlineView:        (NSOutlineView*)     outlineView
+					validateDrop:       (id<NSDraggingInfo>) sender
+					proposedItem:       (id)                 item
+					proposedChildIndex: (int)                childIndex
 {
 	#pragma unused(outlineView, item)
 	if (childIndex != -1 || [sender draggingSource] != [controller valueForKey: @"tableResult"])
@@ -99,6 +103,8 @@
 	return NSDragOperationNone;
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (BOOL) outlineView: (NSOutlineView*)     outlineView
 		 acceptDrop:  (id<NSDraggingInfo>) sender

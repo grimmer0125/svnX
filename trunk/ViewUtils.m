@@ -150,6 +150,120 @@ WViewShow (NSWindow* window, int tag, bool isVisible)
 #pragma mark	-
 //----------------------------------------------------------------------------------------
 
+void
+ViewSetX (NSView* view, GCoord x)
+{
+	NSPoint pt = [view frame].origin;
+	pt.x = x;
+	[view setFrameOrigin: pt];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+ViewSetY (NSView* view, GCoord y)
+{
+	NSPoint pt = [view frame].origin;
+	pt.y = y;
+	[view setFrameOrigin: pt];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+ViewAdjustOrigin (NSView* view, GCoord deltaX, GCoord deltaY)
+{
+	NSPoint pt = [view frame].origin;
+	pt.x += deltaX;
+	pt.y += deltaY;
+	[view setFrameOrigin: pt];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+ViewAdjustX (NSView* view, GCoord delta)
+{
+	NSPoint pt = [view frame].origin;
+	pt.x += delta;
+	[view setFrameOrigin: pt];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+ViewAdjustY (NSView* view, GCoord delta)
+{
+	NSPoint pt = [view frame].origin;
+	pt.y += delta;
+	[view setFrameOrigin: pt];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+ViewSetWidth (NSView* view, GCoord width)
+{
+	NSSize size = [view frame].size;
+	size.width = width;
+	[view setFrameSize: size];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+ViewSetHeight (NSView* view, GCoord height)
+{
+	NSSize size = [view frame].size;
+	size.height = height;
+	[view setFrameSize: size];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+ViewAdjustSize (NSView* view, GCoord deltaX, GCoord deltaY)
+{
+	NSSize size = [view frame].size;
+	size.width  += deltaX;
+	size.height += deltaY;
+	[view setFrameSize: size];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+ViewAdjustWidth (NSView* view, GCoord delta)
+{
+	NSSize size = [view frame].size;
+	size.width += delta;
+	[view setFrameSize: size];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+ViewAdjustHeight (NSView* view, GCoord delta)
+{
+	NSSize size = [view frame].size;
+	size.height += delta;
+	[view setFrameSize: size];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+//----------------------------------------------------------------------------------------
+
 int
 TagOfSelectedItem (NSPopUpButton* view)
 {
@@ -183,11 +297,75 @@ IsViewInResponderChain (NSView* obj)
 
 //----------------------------------------------------------------------------------------
 
+void
+ChangeMenuCheck (NSMenu* menu, int checkTag, int uncheckTag)
+{
+	Assert(menu != NULL);
+	if (uncheckTag)
+		[[menu itemWithTag: uncheckTag] setState: NSOffState];
+	if (checkTag)
+		[[menu itemWithTag: checkTag] setState: NSOnState];
+}
+
+
+//----------------------------------------------------------------------------------------
+
 NSPoint
 locationInView (NSEvent* event, NSView* destView)
 {
 	return [destView convertPoint: [event locationInWindow] fromView: nil];
 }
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+#pragma mark	CPopUpButton
+//----------------------------------------------------------------------------------------
+// An NSButton that displays its pop-up menu when clicked.
+
+@interface CPopUpButton : NSButton @end
+
+
+//----------------------------------------------------------------------------------------
+
+@implementation CPopUpButton
+
+- (void) mouseDown: (NSEvent*) theEvent
+{
+	NSWindow* const window = [self window];
+	NSMenu* const menu = [self menu];
+	const NSSize size = [self frame].size;
+	NSPoint pt = [self convertPoint: NSMakePoint(0, size.height + 2) toView: nil];
+	const GCoord y = [window frame].origin.y + pt.y - [[window screen] visibleFrame].origin.y;
+	if (y < 17 * [menu numberOfItems] + 24)
+	{
+		pt.x += size.width;
+		pt.y += size.height;
+	}
+
+	[self highlight: YES];
+	theEvent = [NSEvent mouseEventWithType: NSLeftMouseDown
+								  location: pt
+							 modifierFlags: 0
+								 timestamp: [theEvent timestamp]
+							  windowNumber: [theEvent windowNumber]
+								   context: [theEvent context]
+							   eventNumber: [theEvent eventNumber]
+								clickCount: 1
+								  pressure: [theEvent pressure]];
+	[NSMenu popUpContextMenu: menu withEvent: theEvent forView: self withFont: [self font]];
+	[self highlight: NO];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (BOOL) performKeyEquivalent: (NSEvent*) theEvent
+{
+	return [[self menu] performKeyEquivalent: theEvent];
+}
+
+@end	// CPopUpButton
 
 
 //----------------------------------------------------------------------------------------
@@ -263,7 +441,7 @@ trackMouse (NSCell* self, NSRect cellFrame, NSView* controlView)
 	{
 		NSTableColumn* column = [[self tableColumns] objectAtIndex: colIndex];
 		NSCell* cell = [column dataCellForRow: rowIndex];
-		if ([cell isKindOfClass: [NSButtonCell class]])
+		if (ISA(cell, NSButtonCell))
 		{
 			id delegate = [self delegate];
 			BOOL value = [[delegate tableView: self objectValueForTableColumn: column
@@ -403,6 +581,9 @@ point_xy (NSPoint* point, BOOL isY)
 void
 initSplitView (NSSplitView* splitView, GCoord value, id delegate)
 {
+/*	if (splitView == nil || value <= 0)
+		dprintf("(splitView=%@, value=%g, delegate=%@)",
+				splitView, value, delegate);*/
 	if (splitView)
 	{
 		if (value > 0)
@@ -414,6 +595,9 @@ initSplitView (NSSplitView* splitView, GCoord value, id delegate)
 			NSView* const view1 = [[splitView subviews] objectAtIndex: 1];
 
 			NSRect frame = [view0 frame];
+		/*	dprintf("(%@, %g, %@): splitSize=%g frame.%s=%g",
+					splitView, value, delegate, splitSize,
+					isHorizontal ? "height" : "width", WH(frame.size, isHorizontal));*/
 			if (value <= splitSize - dividerThickness)
 			{
 				WH(frame.size, isHorizontal) = value;
@@ -438,7 +622,7 @@ initSplitView (NSSplitView* splitView, GCoord value, id delegate)
 void
 initSplitViewWithPref (NSSplitView* splitView, NSString* prefsKey, id delegate)
 {
-	initSplitView(splitView, [[NSUserDefaults standardUserDefaults] floatForKey: prefsKey], delegate);
+	initSplitView(splitView, GetPreferenceFloat(prefsKey), delegate);
 }
 
 
@@ -602,7 +786,8 @@ setupSplitViews (NSWindow* window, NSArray* values, id delegate)
 void
 loadSplitViews (NSWindow* window, NSString* prefsKey, id delegate)
 {
-	setupSplitViews(window, [[NSUserDefaults standardUserDefaults] arrayForKey: prefsKey], delegate);
+	id values = GetPreference(prefsKey);
+	setupSplitViews(window, ISA(values, NSArray) ? values : nil, delegate);
 }
 
 
@@ -614,7 +799,7 @@ saveSplitViews (NSWindow* window, NSString* prefsKey)
 	NSArray* values = getValuesForSplitViews(window);
 
 //	NSLog(@"saveSplitViews: %@", values);
-	[[NSUserDefaults standardUserDefaults] setObject: values forKey: prefsKey];
+	SetPreference(prefsKey, values);
 //	NSLog(@"saveSplitViews: done");
 }
 
@@ -668,6 +853,18 @@ saveSplitViews (NSWindow* window, NSString* prefsKey)
 
 
 @end	// NSWindow (ViewUtils)
+
+
+//----------------------------------------------------------------------------------------
+
+void
+InitViewUtils ()
+{
+	static BOOL inited = NO;
+	if (inited)
+		return;
+	inited = YES;
+}
 
 
 //----------------------------------------------------------------------------------------

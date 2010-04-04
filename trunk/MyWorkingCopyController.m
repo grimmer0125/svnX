@@ -1,6 +1,8 @@
+//----------------------------------------------------------------------------------------
+//	MyWorkingCopyController.m - Controller of the working copy browser
 //
-// MyWorkingCopyController.m - Controller of the working copy browser
-//
+//	Copyright © Chris, 2007 - 2010.  All rights reserved.
+//----------------------------------------------------------------------------------------
 
 #import "MyWorkingCopyController.h"
 #import "MyWorkingCopy.h"
@@ -138,6 +140,14 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 		return isDir ? @"This working copy" : nil;
 	return [NSString stringWithFormat: @"%@ %C%@%C",
 			(isDir ? @"Directory" : @"File"), 0x201C, name, 0x201D];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+InitWCPreferences (void)
+{
 }
 
 

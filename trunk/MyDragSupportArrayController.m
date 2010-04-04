@@ -1,4 +1,5 @@
 #import "MyDragSupportArrayController.h"
+#import "CommonUtils.h"
 
 @implementation MyDragSupportArrayController
 
@@ -30,9 +31,7 @@
 - (NSIndexSet*) indexSetFromRows: (NSArray*) rows
 {
 	NSMutableIndexSet* indexSet = [NSMutableIndexSet indexSet];
-	NSEnumerator *rowEnumerator = [rows objectEnumerator];
-	NSNumber *idx;
-	while (idx = [rowEnumerator nextObject])
+	for_each_obj(en, idx, rows)
 	{
 		[indexSet addIndex: [idx intValue]];
 	}

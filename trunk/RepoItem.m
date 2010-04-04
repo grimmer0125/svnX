@@ -343,6 +343,14 @@ ConstString kTypeRepoItem = @"svnX_REPO_ITEM";
 
 //----------------------------------------------------------------------------------------
 
+- (NSString*) pathPegRevision
+{
+	return PathPegRevision([self url], [self revision]);
+}
+
+
+//----------------------------------------------------------------------------------------
+
 - (NSDictionary*) dictionary
 {
 	id size = fIsDir ? nil : [NSNumber numberWithLongLong: fSize];

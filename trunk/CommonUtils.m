@@ -60,6 +60,24 @@ GetPreferenceInt (NSString* prefKey)
 
 //----------------------------------------------------------------------------------------
 
+float
+GetPreferenceFloat (NSString* prefKey)
+{
+	return [Preferences() floatForKey: prefKey];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+double
+GetPreferenceDouble (NSString* prefKey)
+{
+	return [GetPreference(prefKey) doubleValue];
+}
+
+
+//----------------------------------------------------------------------------------------
+
 void
 SetPreference (NSString* prefKey, id prefValue)
 {
@@ -82,6 +100,33 @@ void
 SetPreferenceInt (NSString* prefKey, int prefValue)
 {
 	[Preferences() setInteger: prefValue forKey: prefKey];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+SetPreferenceFloat (NSString* prefKey, float prefValue)
+{
+	return [Preferences() setFloat: prefValue forKey: prefKey];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+SetPreferenceDouble (NSString* prefKey, double prefValue)
+{
+	return SetPreference(prefKey, [NSNumber numberWithDouble: prefValue]);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+void
+DeletePreference (NSString* prefKey)
+{
+	[Preferences() removeObjectForKey: prefKey];
 }
 
 

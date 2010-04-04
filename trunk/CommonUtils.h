@@ -62,9 +62,14 @@ BOOL			SyncPreference			(void);
 id				GetPreference			(NSString* prefKey);
 BOOL			GetPreferenceBool		(NSString* prefKey);
 int				GetPreferenceInt		(NSString* prefKey);
+float			GetPreferenceFloat		(NSString* prefKey);
+double			GetPreferenceDouble		(NSString* prefKey);
 void			SetPreference			(NSString* prefKey, id prefValue);
 void			SetPreferenceBool		(NSString* prefKey, BOOL prefValue);
 void			SetPreferenceInt		(NSString* prefKey, int prefValue);
+void			SetPreferenceFloat		(NSString* prefKey, float prefValue);
+void			SetPreferenceDouble		(NSString* prefKey, double prefValue);
+void			DeletePreference		(NSString* prefKey);
 
 NSInvocation*	MakeCallbackInvocation	(id target, SEL selector);
 bool			AltOrShiftPressed		(void);

@@ -14,7 +14,7 @@
 // Task dictionary object accessors
 
 BOOL
-isCompleted (NSDictionary* taskObj)
+isCompleted (TaskObj* taskObj)
 {
 	return [[taskObj objectForKey: @"status"] isEqualToString: @"completed"];
 }
@@ -23,7 +23,7 @@ isCompleted (NSDictionary* taskObj)
 //----------------------------------------------------------------------------------------
 
 NSString*
-stdErr (NSDictionary* taskObj)
+stdErr (TaskObj* taskObj)
 {
 	NSString* str = [taskObj objectForKey: @"stderr"];
 	return (str && [str length] != 0) ? str : nil;
@@ -33,7 +33,7 @@ stdErr (NSDictionary* taskObj)
 //----------------------------------------------------------------------------------------
 
 NSString*
-stdOut (NSDictionary* taskObj)
+stdOut (TaskObj* taskObj)
 {
 	return [taskObj objectForKey: @"stdout"];
 }
@@ -42,9 +42,18 @@ stdOut (NSDictionary* taskObj)
 //----------------------------------------------------------------------------------------
 
 NSData*
-stdOutData (NSDictionary* taskObj)
+stdOutData (TaskObj* taskObj)
 {
 	return [taskObj objectForKey: @"stdoutData"];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+id
+callbackInfo (TaskObj* taskObj)
+{
+	return [taskObj objectForKey: @"callbackInfo"];
 }
 
 
@@ -62,25 +71,17 @@ enum {
 
 @implementation Tasks
 
-static id sharedInstance;
+static Tasks* gTasks = nil;
 static NSDictionary* gTextStyleStd = nil, *gTextStyleErr = nil;
 static int gLogLevel = kLogLevelAll;
-
-
-+ (id) sharedInstance
-{
-	return sharedInstance;
-}
 
 
 //----------------------------------------------------------------------------------------
 
 - (id) init
 {
-	if ( self = [super init] )
-	{
-		sharedInstance = self;
-	}
+	Assert(gTasks == nil);
+	gTasks = self;
 
 	if (gTextStyleStd == nil)
 	{
@@ -127,11 +128,11 @@ static int gLogLevel = kLogLevelAll;
 
 	if ([selectedTasks count] == 1)
 	{
-		NSDictionary* taskObj = [selectedTasks objectAtIndex: 0];
+		NSDictionary* taskObj = [selectedTasks lastObject];
 
 		if (taskObj != currentTaskObj)	// the selection must have changed
 		{
-			[[logTextView textStorage] setAttributedString: [taskObj valueForKey: @"combinedLog"]];
+			[[logTextView textStorage] setAttributedString: [taskObj objectForKey: @"combinedLog"]];
 			currentTaskObj = taskObj;
 		}
 		else if ([keyPath isEqualToString: @"selection.newStdout"])
@@ -243,7 +244,7 @@ static int gLogLevel = kLogLevelAll;
 
 //----------------------------------------------------------------------------------------
 
-- (void) taskIsDone: (NSMutableDictionary*) taskObj
+- (void) taskIsDone: (TaskObj*) taskObj
 {
 	// we want to make sure the callback will not be called twice (by the stdout finishing, and by the stderr)
 	// so we need a lock. Moreover, stderr can finish first. So we want both to be finished before we call the callback.
@@ -279,7 +280,7 @@ static int gLogLevel = kLogLevelAll;
 #pragma mark	Control
 //----------------------------------------------------------------------------------------
 
-- (void) newTaskWithDictionary: (NSMutableDictionary*) taskObj
+- (void) newTaskWithDictionary: (TaskObj*) taskObj
 {
 	NSTask* task = [taskObj objectForKey: @"task"];
 	NSFileHandle* handle = [taskObj objectForKey: @"handle"];
@@ -356,7 +357,7 @@ static int gLogLevel = kLogLevelAll;
 
 	NSString* const key = isError ? @"errorHandle" : @"handle";
 	NSEnumerator *e = [[tasksAC arrangedObjects] objectEnumerator];
-	NSMutableDictionary* taskObj;
+	TaskObj* taskObj;
 	while ( taskObj = [e nextObject] )
 	{
 		if ( taskHandle == [taskObj objectForKey: key] )
@@ -424,10 +425,10 @@ static int gLogLevel = kLogLevelAll;
 				if (tmpIncomingDataBytes[offset] & 0x80)
 				{
 					int noFirstBytesLength = 0;
-					while ((tmpIncomingDataBytes[offset] & 0xC0) == 0x80)
+					while (offset && (tmpIncomingDataBytes[offset] & 0xC0) == 0x80)
 					{
-						noFirstBytesLength++;
-						offset--;
+						++noFirstBytesLength;
+						--offset;
 					}
 
 					int excessLength = noFirstBytesLength + 1;
@@ -495,7 +496,7 @@ static int gLogLevel = kLogLevelAll;
 {
 	NSTask* notifTask = [aNotification object];
 	NSEnumerator* e = [[tasksAC arrangedObjects] objectEnumerator];
-	NSMutableDictionary* taskObj;
+	TaskObj* taskObj;
 	BOOL found = NO;
 
 	while (taskObj = [e nextObject])
@@ -519,12 +520,23 @@ static int gLogLevel = kLogLevelAll;
 
 
 //----------------------------------------------------------------------------------------
+
++ (void) addTask: (TaskObj*) taskObj
+{
+	Assert(gTasks != nil);
+	[gTasks newTaskWithDictionary: taskObj];
+}
+
+
+//----------------------------------------------------------------------------------------
 // This is called from the target, before it's closed, because a callback on a closing target is likely to crash.
 // The task is not stopped, though.
 
-- (void) cancelCallbacksOnTarget: (id) target
++ (void) cancelCallbacksOnTarget: (id) target
 {
-	for_each_obj(en, callback, [[tasksAC arrangedObjects] valueForKey: @"callback"])
+	Assert(gTasks != nil);
+
+	for_each_obj(en, callback, [[gTasks->tasksAC arrangedObjects] valueForKey: @"callback"])
 	{
 		 if (target == [callback target])
 		 {

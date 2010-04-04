@@ -15,58 +15,6 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 
 //----------------------------------------------------------------------------------------
 
-
-static inline BOOL
-IsURLChar (unichar ch)
-{
-	// Based on table in http://www.opensource.apple.com/darwinsource/10.5.6/CF-476.17/CFURL.c
-	if (ch >= 33 && ch <= 126)
-		if (ch != '"' && ch != '%' && ch != '<' && ch != '>' &&
-						(ch < '[' || ch > '^') && ch != '`' && (ch < '{' || ch == '~'))
-			return TRUE;
-	return FALSE;
-}
-
-
-//----------------------------------------------------------------------------------------
-
-static inline BOOL
-IsHexChar (unichar ch)
-{
-	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
-}
-
-
-//----------------------------------------------------------------------------------------
-
-static NSURL*
-StringToURL (NSString* urlString)
-{
-	int length = [urlString length];
-	if ([urlString characterAtIndex: length - 1] != '/')
-		urlString = [urlString stringByAppendingString: @"/"];
-
-	// Escape urlString iff it isn't already escaped
-	for (int i = 0; i < length; ++i)
-	{
-		unichar ch = [urlString characterAtIndex: i];
-		if (!IsURLChar(ch) &&
-			(ch != '%' || i >= length - 2 || !IsHexChar([urlString characterAtIndex: i + 1]) ||
-											 !IsHexChar([urlString characterAtIndex: i + 2])))
-		{
-			urlString = [urlString stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
-			break;
-		}
-	}
-
-	return [NSURL URLWithString: urlString];
-}
-
-
-//----------------------------------------------------------------------------------------
-#pragma mark	-
-//----------------------------------------------------------------------------------------
-
 @implementation RepositoriesController
 
 - (id) init
@@ -129,7 +77,7 @@ StringToURL (NSString* urlString)
 - (BOOL) showExtantWindow: (NSString*) name
 		 url:              (NSString*) urlString
 {
-	NSURL* const url = StringToURL(urlString);
+	NSURL* const url = StringToURL(urlString, YES);
 
 	for_each_obj(en, doc, [[NSDocumentController sharedDocumentController] documents])
 	{
@@ -189,7 +137,7 @@ StringToURL (NSString* urlString)
 	const id docController = [NSDocumentController sharedDocumentController];
 
 	MyRepository* newDoc = [docController makeUntitledDocumentOfType: kDocType];
-	[newDoc setupTitle: title username: user password: pass url: StringToURL(url)];
+	[newDoc setupTitle: title username: user password: pass url: StringToURL(url, YES)];
 
 	[docController addDocument: newDoc];
 

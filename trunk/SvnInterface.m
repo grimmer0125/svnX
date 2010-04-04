@@ -297,29 +297,23 @@ SvnAuth_ssl_server_trust_prompt (svn_auth_cred_ssl_server_trust_t** cred_p,
 	#pragma unused(baton)
 //	const id delegate = (id) baton;
 	NSMutableString* msg = [NSMutableString string];
+	#define	APPEND_MSG(m)	[msg appendString: UTF_8_16("\xE2\x80\xA2 " m, "\u2022 " m)]
 	if (failures & SVN_AUTH_SSL_UNKNOWNCA)
-		[msg appendString: UTF8("\xE2\x80\xA2 The certificate is not issued by a trusted authority.\n"
-								"   Use the fingerprint to validate the certificate manually!\n")];
+		APPEND_MSG("The certificate is not issued by a trusted authority.\n"
+				   "   Use the fingerprint to validate the certificate manually!\n");
 
 	if (failures & SVN_AUTH_SSL_CNMISMATCH)
-	{
-		[msg appendString: UTF8("\xE2\x80\xA2 The certificate hostname does not match.\n")];
-	}
+		APPEND_MSG("The certificate hostname does not match.\n");
 
 	if (failures & SVN_AUTH_SSL_NOTYETVALID)
-	{
-		[msg appendString: UTF8("\xE2\x80\xA2 The certificate is not yet valid.\n")];
-	}
+		APPEND_MSG("The certificate is not yet valid.\n");
 
 	if (failures & SVN_AUTH_SSL_EXPIRED)
-	{
-		[msg appendString: UTF8("\xE2\x80\xA2 The certificate has expired.\n")];
-	}
+		APPEND_MSG("The certificate has expired.\n");
 
 	if (failures & SVN_AUTH_SSL_OTHER)
-	{
-		[msg appendString: UTF8("\xE2\x80\xA2 The certificate has an unknown error.\n")];
-	}
+		APPEND_MSG("The certificate has an unknown error.\n");
+	#undef	APPEND_MSG
 
 	[msg appendFormat: @"Certificate information:\n"
 						" - Hostname: %s\n"

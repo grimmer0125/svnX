@@ -2,10 +2,12 @@
 
 #import <Cocoa/Cocoa.h>
 
-BOOL		isCompleted	(NSDictionary* taskObj);
-NSString*	stdErr		(NSDictionary* taskObj);
-NSString*	stdOut		(NSDictionary* taskObj);
-NSData*		stdOutData	(NSDictionary* taskObj);
+#define	TaskObj		NSMutableDictionary
+BOOL		isCompleted	(TaskObj* taskObj);
+NSString*	stdErr		(TaskObj* taskObj);
+NSString*	stdOut		(TaskObj* taskObj);
+NSData*		stdOutData	(TaskObj* taskObj);
+id			callbackInfo(TaskObj* taskObj);
 
 
 //----------------------------------------------------------------------------------------
@@ -20,14 +22,12 @@ NSData*		stdOutData	(NSDictionary* taskObj);
 	id currentTaskObj;
 }
 
-+ (id) sharedInstance;
-
 - (IBAction) stopTask:       (id) sender;
 - (IBAction) clearCompleted: (id) sender;
 
-- (void) newTaskWithDictionary: (NSMutableDictionary*) taskObj;
 - (void) taskDataAvailable: (NSNotification*) aNotification isError: (BOOL) isError;
-- (void) cancelCallbacksOnTarget: (id) target;
++ (void) addTask: (TaskObj*) taskObj;
++ (void) cancelCallbacksOnTarget: (id) target;
 
 @end	// Tasks
 

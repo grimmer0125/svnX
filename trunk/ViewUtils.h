@@ -84,8 +84,22 @@ static inline
 int			SelectedTag				(NSMatrix* view)
 										{ return [[view selectedCell] tag]; }
 
+void		ViewSetX				(NSView* view, GCoord x);
+void		ViewSetY				(NSView* view, GCoord y);
+void		ViewAdjustOrigin		(NSView* view, GCoord deltaX, GCoord deltaY);
+void		ViewAdjustX				(NSView* view, GCoord delta);
+void		ViewAdjustY				(NSView* view, GCoord delta);
+
+void		ViewSetWidth			(NSView* view, GCoord width);
+void		ViewSetHeight			(NSView* view, GCoord height);
+void		ViewAdjustSize			(NSView* view, GCoord deltaX, GCoord deltaY);
+void		ViewAdjustWidth			(NSView* view, GCoord delta);
+void		ViewAdjustHeight		(NSView* view, GCoord delta);
+
 bool		IsInResponderChain		(NSWindow* window, NSResponder* obj);
 bool		IsViewInResponderChain	(NSView* obj);
+
+void		ChangeMenuCheck			(NSMenu* menu, int checkTag, int uncheckTag);
 
 NSPoint		locationInView			(NSEvent* event, NSView* destView);
 
@@ -100,6 +114,8 @@ NSArray*	getValuesForSplitViews	(NSWindow* window);
 void		setupSplitViews			(NSWindow* window, NSArray* values, id delegate);
 void		loadSplitViews			(NSWindow* window, NSString* prefsKey, id delegate);
 void		saveSplitViews			(NSWindow* window, NSString* prefsKey);
+
+void		InitViewUtils			(void);
 
 
 //----------------------------------------------------------------------------------------

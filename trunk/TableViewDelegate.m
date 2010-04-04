@@ -70,6 +70,7 @@ HelpTagForWCItem (NSDictionary* wcFileInfo)
 			 " This also indicates that a directory is incomplete (a checkout or update was interrupted).", @"!",
 			@"Item is versioned as one kind of object (file, directory, link),"
 			 " but has been replaced by different kind of object.", @"~",
+			@"Item has been modified and has received updates from the repository.", @"G",
 			nil];
 
 		// Properties
@@ -102,10 +103,14 @@ HelpTagForWCItem (NSDictionary* wcFileInfo)
 			@"Item is not locked in this working copy.", @" ",
 			@"Item is locked in this working copy.", @"K",
 			@"Item is locked either by another user or in another working copy.", @"O",
-			UTF8("Item was locked in this working copy, but the lock has been \xE2\x80\x98"
-				 "stolen\xE2\x80\x99 and is invalid. The file is currently locked in the repository."), @"T",
-			UTF8("Item was locked in this working copy, but the lock has been \xE2\x80\x98"
-				 "broken\xE2\x80\x99 and is invalid. The file is no longer locked."), @"B",
+			UTF_8_16("Item was locked in this working copy, but the lock has been \xE2\x80\x98"
+					 "stolen\xE2\x80\x99 and is invalid. The file is currently locked in the repository.",
+					 "Item was locked in this working copy, but the lock has been \u2018"
+					 "stolen\u2019 and is invalid. The file is currently locked in the repository."), @"T",
+			UTF_8_16("Item was locked in this working copy, but the lock has been \xE2\x80\x98"
+					 "broken\xE2\x80\x99 and is invalid. The file is no longer locked.",
+					 "Item was locked in this working copy, but the lock has been \u2018"
+					 "broken\u2019 and is invalid. The file is no longer locked."), @"B",
 			nil];
 
 		// Out-of-date information
@@ -117,7 +122,8 @@ HelpTagForWCItem (NSDictionary* wcFileInfo)
 
 		helpTags[8] = [NSDictionary dictionaryWithObjectsAndKeys:
 			@"Item has properties", @"P",
-			UTF8("Item doesn\xE2\x80\x99t have any properties."), @" ",
+			UTF_8_16("Item doesn\xE2\x80\x99t have any properties.",
+					 "Item doesn\u2019t have any properties."), @" ",
 			nil];
 
 		for (int i = kFirstColumn; i <= kNumColumns; ++i)
@@ -199,13 +205,15 @@ HelpTagForWCItem (NSDictionary* wcFileInfo)
 	#pragma unused(aTableView, aCell, rect, mouseLocation)
 	const int colID = [[aTableColumn identifier] intValue];
 
+	if (!fPathColumn)
+		fPathColumn = [aTableView tableColumnWithIdentifier: @"path"];
 	if (colID >= kFirstColumn && colID <= kNumColumns)
 	{
 	//	dprintf_("tableView %d: helpTags=%@ colKeys=%@", colID, helpTags[colID], colKeys[colID]);
 		NSDictionary* rowDict = [[svnFilesAC arrangedObjects] objectAtIndex: row];
 		return [helpTags[colID] objectForKey: [rowDict objectForKey: colKeys[colID]]];
 	}
-	else if ([[aTableColumn identifier] isEqualToString: @"path"])
+	else if (aTableColumn == fPathColumn)
 	{
 		return HelpTagForWCItem([[svnFilesAC arrangedObjects] objectAtIndex: row]);
 	}

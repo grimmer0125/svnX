@@ -1,10 +1,10 @@
+//----------------------------------------------------------------------------------------
+//	NSString+MyAdditions.m - Additional NSString methods & utilities.
 //
-//  NSString+MyAdditions.m
-//  svnX
-//
-//  Created by Dominique PERETTI on Sun Jul 18 2004.
-//  Copyright (c) 2004 __MyCompanyName__. All rights reserved.
-//
+//	Created by Dominique PERETTI on Sun Jul 18 2004.
+//	Copyright (c) 2004 __MyCompanyName__. All rights reserved.
+//	Copyright © Chris, 2007 - 2010.  All rights reserved.
+//----------------------------------------------------------------------------------------
 
 #import "NSString+MyAdditions.h"
 
@@ -45,6 +45,103 @@ UnEscapeURL (id url)
 	if ([url isKindOfClass: [NSURL class]])
 		url = [url absoluteString];
 	return [url stringByReplacingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static inline BOOL
+isURLChar (unichar ch)
+{
+	// Based on table in http://www.opensource.apple.com/darwinsource/10.5.6/CF-476.17/CFURL.c
+	if (ch >= 33 && ch <= 126)
+		if (ch != '"' && ch != '%' && ch != '<' && ch != '>' &&
+						(ch < '[' || ch > '^') && ch != '`' && (ch < '{' || ch == '~'))
+			return TRUE;
+	return FALSE;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static inline BOOL
+isHexChar (unichar ch)
+{
+	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
+}
+
+
+//----------------------------------------------------------------------------------------
+// Convert a string to a URL, escaping if necessary.
+
+NSURL*
+StringToURL (NSString* urlString, BOOL isDirectory)
+{
+	int length = [urlString length];
+	if (isDirectory && [urlString characterAtIndex: length - 1] != '/')
+		urlString = [urlString stringByAppendingString: @"/"];
+
+	// Escape urlString iff it isn't already escaped
+	for (int i = 0; i < length; ++i)
+	{
+		unichar ch = [urlString characterAtIndex: i];
+		if (!isURLChar(ch) &&
+			(ch != '%' || i >= length - 2 || !isHexChar([urlString characterAtIndex: i + 1]) ||
+											 !isHexChar([urlString characterAtIndex: i + 2])))
+		{
+			urlString = [urlString stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+			break;
+		}
+	}
+
+	return [NSURL URLWithString: urlString];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Returns "<path>" of "<path>/+<name>/*"
+
+NSString*
+DeleteLastComponent (NSString* path)
+{
+	Assert(path != nil);
+	unsigned int length0 = [path length], length = length0;
+
+	// Strip trailing '/'s
+	while (length > 0 && [path characterAtIndex: length - 1] == '/')
+		--length;
+
+	// Strip trailing name
+	while (length > 0 && [path characterAtIndex: length - 1] != '/')
+		--length;
+
+	// Strip final '/'
+	if (length > 0)
+		--length;
+
+	if (length == 0 && length0 > 0 && [path characterAtIndex: 0] == '/')
+		return @"/";
+
+	return [path substringToIndex: length];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Returns "<path>/<name>"
+
+NSString*
+AppendPathComponent (NSString* path, NSString* name)
+{
+	Assert(path != nil);
+	Assert(name != nil);
+	unsigned int length = [path length];
+	if (length == 0)
+		return name;
+
+	if ([path characterAtIndex: length - 1] != '/')
+		return [path stringByAppendingFormat: @"/%@", name];
+
+	return [path stringByAppendingString: name];
 }
 
 
@@ -282,5 +379,38 @@ MessageString (NSString* str)
 }
 
 
+//----------------------------------------------------------------------------------------
+// Returns TRUE if self begins with <str>
+
+- (BOOL) beginsWith: (NSString*) str
+{
+	Assert(str != nil);
+	return [self rangeOfString: str options: NSLiteralSearch | NSAnchoredSearch].location == 0;
+}
+
+
+//----------------------------------------------------------------------------------------
+// Returns TRUE if self ends with <str>
+
+- (BOOL) endsWith: (NSString*) str
+{
+	Assert(str != nil);
+	const unsigned flags = NSLiteralSearch | NSAnchoredSearch | NSBackwardsSearch;
+	return [self rangeOfString: str options: flags].location != NSNotFound;
+}
+
+
+//----------------------------------------------------------------------------------------
+// Returns TRUE if self contains <str>
+
+- (BOOL) contains: (NSString*) str
+{
+	Assert(str != nil);
+	return [self rangeOfString: str options: NSLiteralSearch].location != NSNotFound;
+}
+
+
 @end
 
+//----------------------------------------------------------------------------------------
+// End of NSString+MyAdditions.m

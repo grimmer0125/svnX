@@ -39,8 +39,6 @@
 - (void)      openRepository:   (NSURL*)    url
 			  user:             (NSString*) user
 			  pass:             (NSString*) pass;
-
-- (void)      newTaskWithDictionary: (NSMutableDictionary*) taskObj;
 - (NSString*) getMACAddress;
 
 @end

@@ -86,35 +86,6 @@ getImageForIcon16 (IconRef iconRef)
 }
 
 
-//----------------------------------------------------------------------------------------
-
-static NSImage*
-getImageForIconType (OSType iconType, GCoord size)
-{
-	IconRef iconRef;
-	if (WarnIf(GetIconRef(kOnSystemDisk, kSystemIconsCreator, iconType, &iconRef)) == noErr)
-	{
-		NSImage* image = getImageForIconSize(iconRef, size);
-		WarnIf(ReleaseIconRef(iconRef));
-		return image;
-	}
-
-	return nil;
-}
-
-
-//----------------------------------------------------------------------------------------
-
-static NSImage*
-setImageForIconType (NSString* name, OSType iconType)
-{
-	NSImage* image = getImageForIconType(iconType, 32);
-	if (image == nil || ![image setName: name])
-		dprintf("WARNING: init image '%@' FAILED", name);
-
-	return image;
-}
-
 
 //----------------------------------------------------------------------------------------
 
@@ -152,17 +123,6 @@ initIconCache ()
 		// 16 x 16 icons
 		initICEntry(&gIconFolder, kGenericFolderIcon);
 		initICEntry(&gIconFile, kGenericDocumentIcon);
-		if (![gIconFolder.fImage setName: @"FolderRef"])
-			dprintf("WARNING: init image 'FolderRef' FAILED");
-
-		// 32 x 32 icons
-		setImageForIconType(@"Finder", kFinderIcon);
-		setImageForIconType(@"delete", kToolbarDeleteIcon);
-		NSImage* image = setImageForIconType(@"mkdir", kGenericFolderIcon);
-		gIconFolder32 = [image copy];
-		[image lockFocus];
-		[[NSImage imageNamed: @"PlusTopRight"] compositeToPoint: NSMakePoint(0, 0) operation: NSCompositeSourceOver];
-		[image unlockFocus];
 	}
 }
 
@@ -405,7 +365,7 @@ GenericFolderImage32 ()
 - (void) registerSubController: (id) aController
 {
 	if (subControllers == nil)
-		subControllers = [[NSMutableSet alloc] init];
+		subControllers = [NSMutableSet new];
 	[subControllers addObject: aController];
 }
 
@@ -425,6 +385,20 @@ GenericFolderImage32 ()
 - (id) anySubController
 {
 	return [subControllers anyObject];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (int) countUnsavedSubControllers
+{
+	int count = 0;
+	for_each_obj(en, it, subControllers)
+	{
+		if ([it isDocumentEdited])
+			++count;
+	}
+	return count;
 }
 
 

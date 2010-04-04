@@ -19,6 +19,7 @@
 #import "TrimNewLinesTransformer.h"
 #import "Tasks.h"
 #import "CommonUtils.h"
+#import "IconUtils.h"
 #import "ViewUtils.h"
 #import "SvnInterface.h"
 
@@ -93,6 +94,7 @@ addTransform (Class itsClass, NSString* itsName)
 	[dictionary setObject: [NSArray arrayWithContentsOfFile:
 										[[NSBundle mainBundle] pathForResource: @"Templates" ofType: @"plist"]]
 				forKey:    @"msgTemplates"];
+	[dictionary setObject: @"0"    forKey: @"diffDefaultTab"];		// 0=>side by side, 1=>inline, 2=>unified
 	[dictionary setObject: @"5"    forKey: @"diffContextLines"];
 	[dictionary setObject: kNSTrue forKey: @"diffShowFunction"];
 	[dictionary setObject: kNSTrue forKey: @"diffShowCharacters"];
@@ -177,6 +179,7 @@ addTransform (Class itsClass, NSString* itsName)
 - (void) applicationWillFinishLaunching: (NSNotification*) note
 {
 	#pragma unused(note)
+	InitIconCache();
 	if (GetPreferenceBool(@"installSvnxTool"))
 	{
 		NSString* target = [NSHomeDirectory() stringByAppendingPathComponent: @"bin/svnx"];
@@ -446,14 +449,32 @@ static BOOL gCanFocus = YES;
 
 
 //----------------------------------------------------------------------------------------
-#pragma mark	-
-#pragma mark	Tasks management
-//----------------------------------------------------------------------------------------
-// called from MySvn class
+// svnX -> Quit sends this message.  Alert user if any R&C messages are uncommitted.
 
-- (void) newTaskWithDictionary: (NSMutableDictionary*) taskObj
+- (IBAction) quitApp: (id) sender
 {
-	[tasksManager newTaskWithDictionary: taskObj];
+	#pragma unused(sender)
+	int unsavedCount = 0;
+	for_each_obj(en, it, [[NSDocumentController sharedDocumentController] documents])
+	{
+		if (ISA(it, MyWorkingCopy))
+			unsavedCount += [it countUnsavedSubControllers];
+	}
+
+	if (unsavedCount != 0)
+	{
+		NSBeep();
+		NSAlert* alert = [NSAlert alertWithMessageText: @"Quit svnX."
+										 defaultButton: @"Quit"
+									   alternateButton: @"Cancel"
+										   otherButton: nil
+							 informativeTextWithFormat: @"Quitting svnX will close %u uncommitted message%@.",
+														unsavedCount, (unsavedCount > 1) ? @"s" : @""];
+		if ([alert runModal] != NSAlertDefaultReturn)
+			return;
+	}
+
+	[NSApp terminate: nil];
 }
 
 

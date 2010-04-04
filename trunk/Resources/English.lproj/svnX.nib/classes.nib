@@ -1,92 +1,214 @@
-{
-    IBClasses = (
-        {
-            ACTIONS = {
-                newItem = id; 
-                onDoubleClick = id; 
-                onValidate = id; 
-                openPath = id; 
-                removeItem = id; 
-                toggleEdit = id; 
-            }; 
-            CLASS = EditListResponder; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {
-                fAC = MyDragSupportArrayController; 
-                fEditBox = NSBox; 
-                fTableView = NSTableView; 
-                fWindow = NSWindow; 
-            }; 
-            SUPERCLASS = NSResponder; 
-        }, 
-        {
-            CLASS = FavoriteWorkingCopies; 
-            LANGUAGE = ObjC; 
-            SUPERCLASS = EditListResponder; 
-        }, 
-        {
-            ACTIONS = {"" = id; }; 
-            CLASS = FirstResponder; 
-            LANGUAGE = ObjC; 
-            SUPERCLASS = NSObject; 
-        }, 
-        {CLASS = HelpDocView; LANGUAGE = ObjC; SUPERCLASS = NSTextView; }, 
-        {
-            ACTIONS = {
-                openFavorite = id; 
-                openPreferences = id; 
-                stopSvnOperation = id; 
-                svnCmdPathChanged = id; 
-                test = id; 
-            }; 
-            CLASS = MyApp; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {
-                favoriteWorkingCopies = FavoriteWorkingCopies; 
-                favoriteWorkingCopiesWindow = id; 
-                preferencesWindow = id; 
-                repositoriesController = id; 
-                tasksManager = id; 
-            }; 
-            SUPERCLASS = NSObject; 
-        }, 
-        {
-            CLASS = MyDragSupportArrayController; 
-            LANGUAGE = ObjC; 
-            SUPERCLASS = NSArrayController; 
-        }, 
-        {CLASS = MyDragSupportTableView; LANGUAGE = ObjC; SUPERCLASS = NSTableView; }, 
-        {CLASS = NSDatePicker; LANGUAGE = ObjC; SUPERCLASS = NSControl; }, 
-        {CLASS = NSObject; LANGUAGE = ObjC; }, 
-        {
-            CLASS = RepositoriesController; 
-            LANGUAGE = ObjC; 
-            SUPERCLASS = EditListResponder; 
-        }, 
-        {
-            ACTIONS = {checkForUpdates = id; closeProfileInfoSheet = id; }; 
-            CLASS = SUUpdater; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {
-                delegate = id; 
-                profileMoreInfoButton = NSButton; 
-                profileMoreInfoView = NSView; 
-                profileMoreInfoWindow = NSWindow; 
-            }; 
-            SUPERCLASS = NSObject; 
-        }, 
-        {
-            ACTIONS = {clearCompleted = id; stopTask = id; }; 
-            CLASS = Tasks; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {
-                activityWindow = NSTextView; 
-                logDrawer = NSDrawer; 
-                logTextView = id; 
-                tasksAC = NSArrayController; 
-            }; 
-            SUPERCLASS = NSObject; 
-        }
-    ); 
-    IBVersion = 1; 
-}
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IBClasses</key>
+	<array>
+		<dict>
+			<key>ACTIONS</key>
+			<dict>
+				<key>closePreferences</key>
+				<string>id</string>
+				<key>openFavorite</key>
+				<string>id</string>
+				<key>openPreferences</key>
+				<string>id</string>
+				<key>quitApp</key>
+				<string>id</string>
+				<key>stopSvnOperation</key>
+				<string>id</string>
+				<key>svnCmdPathChanged</key>
+				<string>id</string>
+				<key>test</key>
+				<string>id</string>
+			</dict>
+			<key>CLASS</key>
+			<string>MyApp</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>OUTLETS</key>
+			<dict>
+				<key>favoriteWorkingCopies</key>
+				<string>FavoriteWorkingCopies</string>
+				<key>favoriteWorkingCopiesWindow</key>
+				<string>id</string>
+				<key>preferencesWindow</key>
+				<string>id</string>
+				<key>repositoriesController</key>
+				<string>RepositoriesController</string>
+				<key>tasksManager</key>
+				<string>id</string>
+			</dict>
+			<key>SUPERCLASS</key>
+			<string>NSObject</string>
+		</dict>
+		<dict>
+			<key>ACTIONS</key>
+			<dict>
+				<key>clearCompleted</key>
+				<string>id</string>
+				<key>stopTask</key>
+				<string>id</string>
+			</dict>
+			<key>CLASS</key>
+			<string>Tasks</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>OUTLETS</key>
+			<dict>
+				<key>activityWindow</key>
+				<string>NSPanel</string>
+				<key>currentTaskObj</key>
+				<string>id</string>
+				<key>logDrawer</key>
+				<string>NSDrawer</string>
+				<key>logTextView</key>
+				<string>NSTextView</string>
+				<key>tasksAC</key>
+				<string>NSArrayController</string>
+			</dict>
+			<key>SUPERCLASS</key>
+			<string>NSObject</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>HelpDocView</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSTextView</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>RepositoriesController</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>EditListResponder</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSTextView</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSText</string>
+		</dict>
+		<dict>
+			<key>ACTIONS</key>
+			<dict>
+				<key></key>
+				<string>id</string>
+			</dict>
+			<key>CLASS</key>
+			<string>FirstResponder</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSObject</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSObject</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+		</dict>
+		<dict>
+			<key>ACTIONS</key>
+			<dict>
+				<key>newItem</key>
+				<string>id</string>
+				<key>onDoubleClick</key>
+				<string>id</string>
+				<key>onValidate</key>
+				<string>id</string>
+				<key>openPath</key>
+				<string>id</string>
+				<key>removeItem</key>
+				<string>id</string>
+				<key>toggleEdit</key>
+				<string>id</string>
+			</dict>
+			<key>CLASS</key>
+			<string>EditListResponder</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>OUTLETS</key>
+			<dict>
+				<key>fAC</key>
+				<string>NSArrayController</string>
+				<key>fEditBox</key>
+				<string>NSBox</string>
+				<key>fTableView</key>
+				<string>NSTableView</string>
+				<key>fWindow</key>
+				<string>NSWindow</string>
+			</dict>
+			<key>SUPERCLASS</key>
+			<string>NSResponder</string>
+		</dict>
+		<dict>
+			<key>ACTIONS</key>
+			<dict>
+				<key>checkForUpdates</key>
+				<string>id</string>
+				<key>closeProfileInfoSheet</key>
+				<string>id</string>
+			</dict>
+			<key>CLASS</key>
+			<string>SUUpdater</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>OUTLETS</key>
+			<dict>
+				<key>checkForUpdatesText</key>
+				<string>NSTextField</string>
+				<key>delegate</key>
+				<string>id</string>
+				<key>profileMoreInfoButton</key>
+				<string>NSButton</string>
+				<key>profileMoreInfoView</key>
+				<string>NSView</string>
+				<key>profileMoreInfoWindow</key>
+				<string>NSWindow</string>
+			</dict>
+			<key>SUPERCLASS</key>
+			<string>NSObject</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>MyDragSupportArrayController</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSArrayController</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSWindow</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSResponder</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>FavoriteWorkingCopies</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>EditListResponder</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>MyDragSupportTableView</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSTableView</string>
+		</dict>
+	</array>
+	<key>IBVersion</key>
+	<string>1</string>
+</dict>
+</plist>

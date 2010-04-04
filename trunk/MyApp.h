@@ -31,6 +31,7 @@
 
 - (IBAction)  openPreferences:  (id) sender;
 - (IBAction)  closePreferences: (id) sender;
+- (IBAction)  quitApp:          (id) sender;
 - (BOOL)      svnHasLibs;
 - (void)      setSvnHasLibs:    (id) ignore;
 - (UInt32)    svnVersionNum;

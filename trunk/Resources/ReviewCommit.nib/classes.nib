@@ -1,54 +1,165 @@
-{
-    IBClasses = (
-        {CLASS = CButtonCell; LANGUAGE = ObjC; SUPERCLASS = NSButtonCell; }, 
-        {CLASS = CStyledTextCell; LANGUAGE = ObjC; SUPERCLASS = NSTextFieldCell; }, 
-        {CLASS = CTableView; LANGUAGE = ObjC; SUPERCLASS = NSTableView; }, 
-        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
-        {CLASS = ImageAndTextCell; LANGUAGE = ObjC; SUPERCLASS = NSTextFieldCell; }, 
-        {
-            CLASS = MyWorkingCopy; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {
-                controller = MyWorkingCopyController; 
-                svnFilesAC = MySvnFilesArrayController; 
-            }; 
-            SUPERCLASS = NSDocument; 
-        }, 
-        {CLASS = NSSegmentedControl; LANGUAGE = ObjC; SUPERCLASS = NSControl; }, 
-        {
-            ACTIONS = {
-                addTemplate = id; 
-                changeEditView = id; 
-                checkAllFiles = id; 
-                checkNoFiles = id; 
-                commitFiles = id; 
-                diffSelectedFile = id; 
-                insertRecent = id; 
-                insertTemplate = id; 
-                openSelectedFile = id; 
-                refreshFiles = id; 
-                revealSelectedFile = id; 
-                toggleSelectedFile = id; 
-                validateTemplate = id; 
-            }; 
-            CLASS = ReviewController; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {
-                fDiffView = WebView; 
-                fEditState = int; 
-                fFiles = NSMutableArray; 
-                fFilesAC = NSArrayController; 
-                fFilesView = NSTableView; 
-                fMessageView = NSTextView; 
-                fRecentAC = NSArrayController; 
-                fRecentView = NSTableView; 
-                fTemplatesAC = NSArrayController; 
-                fTemplatesView = NSTableView; 
-                fWindow = NSWindow; 
-            }; 
-            SUPERCLASS = NSResponder; 
-        }, 
-        {CLASS = WCTreeEntry; LANGUAGE = ObjC; SUPERCLASS = NSObject; }
-    ); 
-    IBVersion = 1; 
-}
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IBClasses</key>
+	<array>
+		<dict>
+			<key>CLASS</key>
+			<string>NSMutableArray</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSArray</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSSegmentedControl</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSControl</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>IconTextCell</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSTextFieldCell</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSTextView</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSText</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSArray</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSObject</string>
+		</dict>
+		<dict>
+			<key>ACTIONS</key>
+			<dict>
+				<key>addTemplate</key>
+				<string>id</string>
+				<key>changeEditView</key>
+				<string>id</string>
+				<key>checkAllFiles</key>
+				<string>id</string>
+				<key>checkNoFiles</key>
+				<string>id</string>
+				<key>commitFiles</key>
+				<string>id</string>
+				<key>diffSelectedFile</key>
+				<string>id</string>
+				<key>insertRecent</key>
+				<string>id</string>
+				<key>insertTemplate</key>
+				<string>id</string>
+				<key>openSelectedFile</key>
+				<string>id</string>
+				<key>refreshFiles</key>
+				<string>id</string>
+				<key>revealSelectedFile</key>
+				<string>id</string>
+				<key>setContextLines</key>
+				<string>id</string>
+				<key>setDefaultTab</key>
+				<string>id</string>
+				<key>setOption</key>
+				<string>id</string>
+				<key>toggleSelectedFile</key>
+				<string>id</string>
+				<key>validateTemplate</key>
+				<string>id</string>
+			</dict>
+			<key>CLASS</key>
+			<string>ReviewController</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>OUTLETS</key>
+			<dict>
+				<key>fDiffView</key>
+				<string>WebView</string>
+				<key>fEditState</key>
+				<string>int</string>
+				<key>fFiles</key>
+				<string>NSMutableArray</string>
+				<key>fFilesAC</key>
+				<string>NSArrayController</string>
+				<key>fFilesView</key>
+				<string>NSTableView</string>
+				<key>fMessageView</key>
+				<string>NSTextView</string>
+				<key>fRecentAC</key>
+				<string>NSArrayController</string>
+				<key>fRecentView</key>
+				<string>NSTableView</string>
+				<key>fTemplatesAC</key>
+				<string>NSArrayController</string>
+				<key>fTemplatesView</key>
+				<string>NSTableView</string>
+				<key>fWindow</key>
+				<string>NSWindow</string>
+			</dict>
+			<key>SUPERCLASS</key>
+			<string>NSResponder</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>FirstResponder</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSObject</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSObject</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>CPopUpButton</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSButton</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSWindow</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSResponder</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>CStyledTextCell</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSTextFieldCell</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>CTableView</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSTableView</string>
+		</dict>
+	</array>
+	<key>IBVersion</key>
+	<string>1</string>
+</dict>
+</plist>

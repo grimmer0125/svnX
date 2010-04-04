@@ -17,7 +17,7 @@ dmp.prototype.cleanupMerge=function(a){a.push([0,'']);var b=0,c=0,d=0,e='',f='',
 var DIFF = new dmp;
 
 
-function diffOldNew(tA, tB)
+function diffChars(tA, tB)
 {
 	var diffs = DIFF.main(tA, tB);
 	DIFF.cleanupSemantic(diffs);
@@ -25,8 +25,7 @@ function diffOldNew(tA, tB)
 	for (var x = 0; x < n; ++x)
 	{
 		d = diffs[x];
-		text = d[1].replace(/ /g, ' ').replace(/&/g, '&amp;').replace(/</g, '&lt;')
-				   .replace(/>/g, '&gt;').replace(/\t/g, '    ');
+		text = d[1].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\t/g, '    ');
 		d = d[0];
 		if (d < 0)
 			sA = sA.concat('<del>', text.replace(/\n/g, '</del>\n<del>'), '</del>');
@@ -41,138 +40,5 @@ function diffOldNew(tA, tB)
 	return (sA + sB).replace(/\r/g, "<br/>").split('\n');
 }
 
-
-function diffChars(lines)
-{
-	var t = diffHead(lines), i = t.i, S = t.S, ip = t.p,
-		numA = 0, numB = 0, line, linCount = lines.length,
-		prevTyp, typ = 3, nextTyp, LINES = [{t:0, a:0, b:0, txt:""}], n = 0;
-
-	if (ip)
-	  while (i < linCount)
-	  {
-		line = lines[i++];
-		if (typ == 2) ++numA; else ++numB;
-		if (line.beginswith("Name: "))
-			LINES.push({t:8, a:numA=0, b:numB=0, txt:line.substring(6)});
-		else if (line.beginswith("   + "))
-			LINES.push({t:typ=1, a:0, b:numB, txt:line.substring(5)});
-		else if (line.beginswith("   - "))
-			LINES.push({t:typ=2, a:numA, b:0, txt:line.substring(5), ins:0});
-		else if (line.length)
-			LINES.push({t:typ, a:numA, b:numB, txt:line});
-	  }
-	else
-	  while (i < linCount)
-	  {
-		line = lines[i++];
-		typ = line.charCodeAt(0);
-		t = line.substring(1);
-		switch (typ)
-		{
-		case 64:	// '@'
-			n = 0;
-			t = line.match(lnumRE);
-			numA = parseInt(t[1]);
-			numB = parseInt(t[2]);
-			if (t[3].length > 0)
-				LINES.push({t:9, a:0, b:0, txt:t[3]});
-			break;
-		case 43:	// '+'
-			if (n != 0) LINES[n].ins = LINES.length; else n = 0;
-			LINES.push({t:1, a:0, b:numB++, txt:t});
-			break;
-		case 45:	// '-'
-			if (n == 0) n = LINES.length;
-			LINES.push({t:2, a:numA++, b:0, txt:t, ins:0});
-			break;
-		case 32:	// ' '
-			n = 0;
-			LINES.push({t:3, a:numA++, b:numB++, txt:t});
-			break;
-		case 92:	// '\\'
-			LINES.push({t:3, a:'', b:'', txt:t});
-			break;
-		}
-		prevTyp = typ;
-	  }
-
-	LINES.push(LINES[0]);
-	linCount = LINES.length - 1;
-	var tA = "", tB = "", m = "";
-	for (i = 1; i <= linCount; ++i)
-	{
-		line = LINES[i];
-		typ = line.t;
-		t = line.txt;
-		if (typ == 2 && line.ins)
-		{
-			n = i;
-			tA = t + '\n';
-		}
-		else if (tA.length)
-		{
-			if (typ == 2)
-				tA = tA.concat(t, '\n');
-			else if (typ == 1)
-				tB = tB.concat(t, '\n');
-			else
-			{
-				m = diffOldNew(tA, tB);
-				for (var j = 0; n < i; ++j)
-					LINES[n++].txt = m[j];
-				line.txt = esc(t);
-				tA = tB = "";
-			}
-		}
-		else
-			line.txt = esc(t);
-	}
-
-	typ = 9;
-	nextTyp = LINES[1].t;
-	var isFirst, isLast, tr;
-	for (i = 1; i < linCount; )
-	{
-		line = LINES[i];
-		prevTyp = typ;
-		typ = nextTyp;
-		nextTyp = LINES[++i].t;
-		t = line.txt;
-		isFirst = (typ != prevTyp);
-		isLast  = (typ != nextTyp);
-		tr = isLast ? "</td></tr></tbody>\n" : "</td></tr>\n";
-		switch (typ)
-		{
-		case 1:		// '+'
-			S = S.concat(isFirst ? "<tbody>" : "",
-						 (isFirst && prevTyp != 2) ? (isLast ? cOnly : cFirst) : (isLast ? cLast : cOther),
-						 "<th></th><th>", line.b, "</th><td class='R'>", t, tr);
-			break;
-		case 2:		// '-'
-			S = S.concat(isFirst ? "<tbody>" : "",
-						 (isLast && nextTyp != 1) ? (isFirst ? cOnly : cLast) : (isFirst ? cFirst : cOther),
-						 "<th>", line.a, "</th><th></th><td class='L'>", t, tr);
-			break;
-		case 3:		// ' '
-			S = S.concat(isFirst ? "<tbody><tr><th>" : "<tr><th>",
-						 line.a, "</th><th>", line.b, "</th><td>", t, tr);
-			break;
-		case 8:
-			S = S.concat("<tr><th colspan='2'>Property:</th><td class='F'>", t, "</td></tr>");
-			break;
-		case 9:		// '@'
-			if (t.length)
-				S = S.concat("<tr><th colspan='2'>Function:</th><td class='F'>", t, "</td></tr>");
-			else if (i > 2)
-				S += "<tr><th>…</th><th>…</th><td class='F'></td></tr>";
-			break;
-		}
-	}
-
-	t = lines.join('\n').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-	return S.concat("</table><pre style='display:none'>", t, "</pre></li></ul></div>\n");
-}
-
-diff = diffChars;
+diffLine = diffChars;
 

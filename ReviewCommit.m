@@ -16,7 +16,9 @@
 #import "SvnDateTransformer.h"
 #import "TableViewDelegate.h"
 #import "Tasks.h"
+#import "IconTextCell.h"
 #import "CommonUtils.h"
+#import "IconUtils.h"
 #import "ViewUtils.h"
 #import "NSString+MyAdditions.h"
 
@@ -26,6 +28,7 @@
 @interface ReviewFile : NSObject
 {
 	NSDictionary*	fItem;
+	IconRef			fIcon;
 	BOOL			fCommit;
 }
 
@@ -104,6 +107,8 @@ compareTemplateNames (id obj1, id obj2, void* context)
 - (void) dealloc
 {
 	[fItem release];
+	if (fIcon)
+		WarnIf(ReleaseIconRef(fIcon));
 	[super dealloc];
 }
 
@@ -148,6 +153,20 @@ compareTemplateNames (id obj1, id obj2, void* context)
 }
 
 
+//----------------------------------------------------------------------------------------
+
+- (IconRef) icon
+{
+	if (fIcon == NULL)
+	{
+		Boolean isDir = false;
+		ConstString fullPath = [self fullPath];
+		fIcon = GetFileOrTypeIcon([fullPath fileSystemRepresentation], fullPath, &isDir);
+	}
+	return fIcon;
+}
+
+
 @end	// ReviewFile
 
 
@@ -160,10 +179,21 @@ compareTemplateNames (id obj1, id obj2, void* context)
 static ConstString kPrefTemplates = @"msgTemplates",
 				   kPrefKeySplits = @"reviewSplits";
 
+static ConstString kPrefDefaultTab   = @"diffDefaultTab",
+				   kPrefContextLines = @"diffContextLines",
+				   kPrefShowFunction = @"diffShowFunction",
+				   kPrefShowChars    = @"diffShowCharacters";
+
 enum {
 	kPaneMessage	=	0,
 	kPaneRecent		=	1,
 	kPaneTemplates	=	2,
+
+	cmdDefaultTab		=	1000,
+	cmdShowFunction		=	2000,
+	cmdShowChars		=	2001,
+
+	vDiffSettingsPopUp	=	510,	// NSPopUpButton
 
 	kMaxTempHTMLFiles	=	8
 };
@@ -242,6 +272,7 @@ enum {
 		iBusyIndicator	=	0		// NSProgressIndicator
 	};
 
+	[Tasks cancelCallbacksOnTarget: self];
 	NSWindow* const window = fWindow;
 	fWindow = NULL;
 	NSView* const root = [window contentView];
@@ -337,16 +368,15 @@ enum {
 	[MySvn		log: [[fDocument repositoryUrl] absoluteString]
 	 generalOptions: [fDocument svnOptionsInvocation]
 			options: [NSArray arrayWithObjects: @"--limit", (full ? @"50" : @"1"), @"--xml", nil]
-		   callback: [self makeCallback: @selector(recentCallback:)]
+		   callback: [self makeCallback: @selector(buildRecentMessages:)]
 	   callbackInfo: nil
 		   taskInfo: nil];
 }
 
 
 //----------------------------------------------------------------------------------------
-// Private:
 
-- (void) recentCallback: (id) taskObj
+- (void) buildRecentMessages: (id) taskObj
 {
 	if ([fWindow isVisible] && isCompleted(taskObj) && stdErr(taskObj) == nil)
 	{
@@ -521,7 +551,7 @@ enum {
 
 //----------------------------------------------------------------------------------------
 
-- (void) diffCallback: (id) taskObj
+- (void) svnDiff_Completed: (id) taskObj
 {
 	if ([fWindow isVisible])
 	{
@@ -539,22 +569,22 @@ enum {
 	ReviewFile* item = [self selectedItemOrNil];
 	if (item)
 		[fDocument diffItems: [NSArray arrayWithObject: [item fullPath]]
-					callback: [self makeCallback: @selector(diffCallback:)]
+					callback: [self makeCallback: @selector(svnDiff_Completed:)]
 				callbackInfo: nil];
 }
 
 
 //----------------------------------------------------------------------------------------
 
-- (void) commitCallback: (id) taskObj
+- (void) svnCommit_Completed: (id) taskObj
 {
 //	dprintf("0x%X taskObj=%@", self, taskObj);
 	if ([fWindow isVisible])
 	{
 		[self setIsBusy: NO];
-		[self refreshFiles: nil];
 		if (![self svnError: taskObj])
 		{
+			[self refreshFiles: nil];
 			[self buildRecentList: NO];
 		}
 	}
@@ -577,7 +607,7 @@ enum {
 	[self setIsBusy: YES];
 	[fDocument svnCommit: commitFiles
 				 message: [fMessageView string]
-				callback: [self makeCallback: @selector(commitCallback:)]
+				callback: [self makeCallback: @selector(svnCommit_Completed:)]
 			callbackInfo: nil];
 }
 
@@ -713,9 +743,10 @@ enum {
 		NSArray* arguments = [NSArray arrayWithObjects:
 			SvnCmdPath(),											// svn tool
 			@"",													// options
-			GetPreference(@"diffContextLines"),						// context lines
-			GetPreferenceBool(@"diffShowFunction") ? @"1" : @"",	// show function
-			GetPreferenceBool(@"diffShowCharacters") ? @"1" : @"",	// show characters
+			GetPreference(kPrefDefaultTab),							// default tab
+			GetPreference(kPrefContextLines),						// context lines
+			GetPreferenceBool(kPrefShowFunction) ? @"1" : @"",		// show function
+			GetPreferenceBool(kPrefShowChars) ? @"1" : @"",			// show characters
 			tmpHtmlPath,											// destination html file
 			[item fullPath],										// path
 			nil];
@@ -732,6 +763,43 @@ enum {
 - (void) displaySelectedFileDiff
 {
 	[self displayFileDiff: [self selectedItemOrNil]];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) alertUserShouldClose
+{
+	NSAlert* alert =
+		[NSAlert alertWithMessageText: @"Close this window?"
+						defaultButton: @"Close"
+					  alternateButton: @"Cancel"
+						  otherButton: nil
+			informativeTextWithFormat: @"You have selected items &"
+										" a message that has not been commited."];
+
+	[alert setAlertStyle: NSWarningAlertStyle];
+	[alert beginSheetModalForWindow: fWindow
+					  modalDelegate: self
+					 didEndSelector: @selector(shouldClose:returnCode:contextInfo:)
+						contextInfo: nil];
+	NSBeep();
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) shouldClose: (NSAlert*) alert
+		 returnCode:  (int)      returnCode
+		 contextInfo: (void*)    context
+{
+	#pragma unused(alert, context)
+	if (returnCode == NSOKButton)
+	{
+		fSuppressAutoRefresh = TRUE;
+		[fWindow setDocumentEdited: FALSE];
+		[fWindow performSelector: @selector(performClose:) withObject: self afterDelay: 0];
+	}
 }
 
 
@@ -762,12 +830,13 @@ enum {
 
 
 //----------------------------------------------------------------------------------------
-// Dummy method called by 'textDidChange' & 'setCommitFileCount'.
-// Forces NIB to re-evaluate 'canCommit'.
+// Called by 'textDidChange' & 'setCommitFileCount'.
+// Forces NIB to re-evaluate 'canCommit' and updates window 'dirty' flag.
 
 - (void) setCanCommit: (id) ignored
 {
 	#pragma unused(ignored)
+	[fWindow setDocumentEdited: [self canCommit]];
 }
 
 
@@ -847,6 +916,14 @@ enum {
 - (NSWindow*) window
 {
 	return fWindow;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (BOOL) isDocumentEdited
+{
+	return [fWindow isDocumentEdited];
 }
 
 
@@ -1025,6 +1102,51 @@ enum {
 
 
 //----------------------------------------------------------------------------------------
+
+- (IBAction) setDefaultTab: (id) sender
+{
+	const int newValue = [sender tag],
+			  oldValue = [GetPreference(kPrefDefaultTab) intValue] + cmdDefaultTab;
+	if (newValue != oldValue)
+	{
+		SetPreference(kPrefDefaultTab,
+					  (newValue == cmdDefaultTab) ? @"0"
+												  : ((newValue == cmdDefaultTab + 1) ? @"1" : @"2"));
+		[self displaySelectedFileDiff];
+		ChangeMenuCheck([sender menu], newValue, oldValue);
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+// Show Function & Show Characters
+
+- (IBAction) setOption: (id) sender
+{
+	ConstString prefId = ([sender tag] == cmdShowChars) ? kPrefShowChars : kPrefShowFunction;
+	const BOOL value = !GetPreferenceBool(prefId);
+	SetPreferenceBool(prefId, value);
+	[self displaySelectedFileDiff];
+	[sender setState: value];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (IBAction) setContextLines: (id) sender
+{
+	const int newValue = [sender tag],
+			  oldValue = [GetPreference(kPrefContextLines) intValue];
+	if (newValue != oldValue)
+	{
+		SetPreference(kPrefContextLines, [sender title]);
+		[self displaySelectedFileDiff];
+		ChangeMenuCheck([sender menu], newValue, oldValue);
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
 #pragma mark	-
 #pragma mark	Window delegate
 //----------------------------------------------------------------------------------------
@@ -1058,6 +1180,15 @@ enum {
 	[self setEditPane: kPaneMessage];
 	[window makeKeyAndOrderFront: self];
 	[window setDelegate: self];	// After makeKeyAndOrderFront to prevent [fDocument svnRefresh]
+
+	// Init check marks of diff prefs pop-up menu
+	NSMenu* const menu = [WGetView(window, vDiffSettingsPopUp) menu];
+	ChangeMenuCheck(menu, cmdDefaultTab + [GetPreference(kPrefDefaultTab) intValue], 0);
+	if (GetPreferenceBool(kPrefShowFunction))
+		ChangeMenuCheck(menu, cmdShowFunction, 0);
+	if (GetPreferenceBool(kPrefShowChars))
+		ChangeMenuCheck(menu, cmdShowChars, 0);
+	ChangeMenuCheck(menu, [GetPreference(kPrefContextLines) intValue], 0);
 }
 
 
@@ -1086,6 +1217,18 @@ enum {
 //	dprintf("refs=%d", [self retainCount]);
 	saveSplitViews(fWindow, kPrefKeySplits);
 	[self saveTemplates];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (BOOL) windowShouldClose: (id) sender
+{
+	#pragma unused(sender)
+	BOOL askUser = [self isDocumentEdited];
+	if (askUser)
+		[self performSelector: @selector(alertUserShouldClose) withObject: nil afterDelay: 0];
+	return !askUser;
 }
 
 
@@ -1180,9 +1323,9 @@ enum {
 
 	if ([[aTableColumn identifier] isEqualToString: @"file"])
 	{
-		NSDictionary* item = [[fFiles objectAtIndex: rowIndex] item];
-		[aCell setImage: [item objectForKey: @"icon"]];
-		[aCell setTitle: [item objectForKey: @"path"]];
+		ReviewFile* item = [fFiles objectAtIndex: rowIndex];
+		[aCell setIconRef: [item icon]];
+		[aCell setTitle: [[item item] objectForKey: @"path"]];
 	}
 }
 
@@ -1220,7 +1363,8 @@ enum {
 	if ([colID isEqualToString: @"commit"])
 	{
 		return [item commit] ? @"Commit changes to this item."
-							 : @"Don't commit changes to this item.";
+							 : UTF_8_16("Don\xE2\x80\x99t commit changes to this item.",
+										"Don\u2019t commit changes to this item.");
 	}
 	else if ([colID isEqualToString: @"file"])
 	{

@@ -36,6 +36,9 @@
 
 - (NSWindow*) window;
 - (void)      buildFileList;
+- (void)      buildRecentMessages: (id) taskObj;
+- (void)      svnCommit_Completed: (id) taskObj;
+- (BOOL)      isDocumentEdited;
 
 - (IBAction) checkAllFiles:    (id) sender;
 - (IBAction) checkNoFiles:     (id) sender;
@@ -43,6 +46,9 @@
 - (IBAction) openSelectedFile: (id) sender;
 - (IBAction) diffSelectedFile: (id) sender;
 - (IBAction) commitFiles:      (id) sender;
+- (IBAction) setDefaultTab:    (id) sender;
+- (IBAction) setOption:        (id) sender;
+- (IBAction) setContextLines:  (id) sender;
 
 @end	// ReviewController
 

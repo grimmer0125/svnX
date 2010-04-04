@@ -22,6 +22,7 @@
 		832B702E0DDA881000B0E95D /* svnReport.png in Resources */ = {isa = PBXBuildFile; fileRef = 832B702D0DDA881000B0E95D /* svnReport.png */; };
 		833B71E20D91ABB3006E242E /* SvnInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 833B71E00D91ABB3006E242E /* SvnInterface.m */; };
 		833ED6510FA558BE00B7C862 /* RepoItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 833ED64C0FA558B900B7C862 /* RepoItem.m */; };
+		8369D4A20FD074A6002905A0 /* IconUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 8369D4A00FD074A6002905A0 /* IconUtils.m */; };
 		836CEA220DD930E600DB72C8 /* Refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = 836CEA210DD930E600DB72C8 /* Refresh.png */; };
 		83909D4D0DA4C94C00C3DAE5 /* FileMerge.png in Resources */ = {isa = PBXBuildFile; fileRef = 83909D4C0DA4C94C00C3DAE5 /* FileMerge.png */; };
 		83909D510DA4CA0F00C3DAE5 /* Repository.png in Resources */ = {isa = PBXBuildFile; fileRef = 83909D500DA4CA0F00C3DAE5 /* Repository.png */; };
@@ -29,6 +30,8 @@
 		8394A96B0DA5E702007EDB92 /* PlusTopRight.png in Resources */ = {isa = PBXBuildFile; fileRef = 8394A96A0DA5E702007EDB92 /* PlusTopRight.png */; };
 		8397E3110FC6B0520077A66C /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8397E30F0FC6B0520077A66C /* Localizable.strings */; };
 		83BCF01E0FBCAD25007E9B6B /* Templates.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83BCF01D0FBCAD25007E9B6B /* Templates.plist */; };
+		83C5B26D116649CD00A667E9 /* IconTextCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 83C5B26C116649CD00A667E9 /* IconTextCell.m */; };
+		83CCC97011678AA5003F269B /* ActionPopup.png in Resources */ = {isa = PBXBuildFile; fileRef = 83CCC96F11678AA5003F269B /* ActionPopup.png */; };
 		83CCCE390D78D7E900237C1E /* EditListResponder.m in Sources */ = {isa = PBXBuildFile; fileRef = 83CCCE370D78D7E900237C1E /* EditListResponder.m */; };
 		83CD86CC0F54588E00512219 /* MyDragSupportWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F2E114B10830A7E20026EEBF /* MyDragSupportWindow.m */; };
 		83CFE69D0FAFE01200EDFC88 /* svnx in Resources */ = {isa = PBXBuildFile; fileRef = 83CFE69C0FAFE01200EDFC88 /* svnx */; };
@@ -39,6 +42,7 @@
 		83DBD3910DBF7F9500264348 /* ReviewCommit.m in Sources */ = {isa = PBXBuildFile; fileRef = 83DBD38F0DBF7F9500264348 /* ReviewCommit.m */; };
 		83E5B93C0D905C130024AA50 /* DbgUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 83E5B93A0D905C130024AA50 /* DbgUtils.m */; };
 		83E863AA0DB674E4004CE070 /* CommonUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 83E863A90DB674E4004CE070 /* CommonUtils.m */; };
+		83E8BF650FF648130011021A /* svnBadge.icns in Resources */ = {isa = PBXBuildFile; fileRef = 83E8BF640FF648130011021A /* svnBadge.icns */; };
 		83EA6AF70F9C2A150025F2BC /* import.png in Resources */ = {isa = PBXBuildFile; fileRef = 83EA6AF60F9C2A150025F2BC /* import.png */; };
 		83EDF4230F9E1E4200838E58 /* open.png in Resources */ = {isa = PBXBuildFile; fileRef = 83EDF4220F9E1E4200838E58 /* open.png */; };
 		83EE48880DD226C100542832 /* ViewUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 83EE48860DD226C100542832 /* ViewUtils.m */; };
@@ -165,6 +169,9 @@
 		833B71E00D91ABB3006E242E /* SvnInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SvnInterface.m; sourceTree = "<group>"; };
 		833ED64C0FA558B900B7C862 /* RepoItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RepoItem.m; sourceTree = "<group>"; };
 		833ED64D0FA558B900B7C862 /* RepoItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RepoItem.h; sourceTree = "<group>"; };
+		8352C4780FF49F9D00C978F5 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+		8369D49F0FD074A6002905A0 /* IconUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IconUtils.h; sourceTree = "<group>"; };
+		8369D4A00FD074A6002905A0 /* IconUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IconUtils.m; sourceTree = "<group>"; };
 		836CEA210DD930E600DB72C8 /* Refresh.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Refresh.png; sourceTree = "<group>"; };
 		83909D4C0DA4C94C00C3DAE5 /* FileMerge.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = FileMerge.png; sourceTree = "<group>"; };
 		83909D500DA4CA0F00C3DAE5 /* Repository.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Repository.png; sourceTree = "<group>"; };
@@ -173,6 +180,9 @@
 		8397E3100FC6B0520077A66C /* English */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/Localizable.strings; sourceTree = "<group>"; };
 		83BCF01D0FBCAD25007E9B6B /* Templates.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; fileEncoding = 4; path = Templates.plist; sourceTree = "<group>"; };
 		83C5137E0DA7B07F00A238DD /* CommonUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommonUtils.h; sourceTree = "<group>"; };
+		83C5B26B116649CD00A667E9 /* IconTextCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IconTextCell.h; sourceTree = "<group>"; };
+		83C5B26C116649CD00A667E9 /* IconTextCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IconTextCell.m; sourceTree = "<group>"; };
+		83CCC96F11678AA5003F269B /* ActionPopup.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ActionPopup.png; sourceTree = "<group>"; };
 		83CCCE370D78D7E900237C1E /* EditListResponder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EditListResponder.m; sourceTree = "<group>"; };
 		83CCCE380D78D7E900237C1E /* EditListResponder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EditListResponder.h; sourceTree = "<group>"; };
 		83CD86CE0F5458B800512219 /* MyDragSupportWindow.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyDragSupportWindow.h; sourceTree = "<group>"; };
@@ -187,6 +197,7 @@
 		83E5B9390D905C130024AA50 /* DbgUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DbgUtils.h; sourceTree = "<group>"; };
 		83E5B93A0D905C130024AA50 /* DbgUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DbgUtils.m; sourceTree = "<group>"; };
 		83E863A90DB674E4004CE070 /* CommonUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommonUtils.m; sourceTree = "<group>"; };
+		83E8BF640FF648130011021A /* svnBadge.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = svnBadge.icns; sourceTree = "<group>"; };
 		83EA6AF60F9C2A150025F2BC /* import.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = import.png; sourceTree = "<group>"; };
 		83EDF4220F9E1E4200838E58 /* open.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = open.png; sourceTree = "<group>"; };
 		83EE48860DD226C100542832 /* ViewUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewUtils.m; sourceTree = "<group>"; };
@@ -340,8 +351,10 @@
 				F205246A0A5D3D7E003F966A /* IOKit.framework */,
 				F20521BE0A5D2159003F966A /* Sparkle.framework */,
 				1058C7A7FEA54F5311CA2CBB /* Cocoa.framework */,
+				8352C4780FF49F9D00C978F5 /* Carbon.framework */,
 			);
 			name = "Linked Frameworks";
+			path = /System/Library/Frameworks;
 			sourceTree = "<group>";
 		};
 		1058C7A8FEA54F5311CA2CBB /* Other Frameworks */ = {
@@ -414,6 +427,10 @@
 				F20524020A5D3945003F966A /* SUUpdater.h */,
 				F2C205BF06012B59004C843B /* ImageAndTextCell.h */,
 				F2C205C706012B68004C843B /* ImageAndTextCell.m */,
+				83C5B26B116649CD00A667E9 /* IconTextCell.h */,
+				83C5B26C116649CD00A667E9 /* IconTextCell.m */,
+				8369D49F0FD074A6002905A0 /* IconUtils.h */,
+				8369D4A00FD074A6002905A0 /* IconUtils.m */,
 				32DBCF750370BD2300C91783 /* svnX_Prefix.pch */,
 				2A37F4B0FDCFA73011CA2CEA /* main.m */,
 			);
@@ -449,6 +466,7 @@
 				F2A4D4B406A3E09A00665FF7 /* tiny-find.png */,
 				F2A4D4B506A3E09A00665FF7 /* tiny-reload.png */,
 				F2A4D4B606A3E09A00665FF7 /* tiny-stop.png */,
+				83E8BF640FF648130011021A /* svnBadge.icns */,
 				8314B1A50DB9769900C6F545 /* svnBlame.png */,
 				F23B3C9D06A998DD0021E613 /* svnCopy.png */,
 				F233A39F06C3C32E00F77B90 /* svnMove.png */,
@@ -457,6 +475,7 @@
 				F26353FC06B17C98009C5ADF /* checkout.png */,
 				F22AFF1605F7440900D4ED0D /* Card.tiff */,
 				F22AFF1205F743F500D4ED0D /* Action.tiff */,
+				83CCC96F11678AA5003F269B /* ActionPopup.png */,
 				F22AFEEE05F6B7CC00D4ED0D /* defaultAction.png */,
 				F22AFEE405F6B5CB00D4ED0D /* PhoneMinus.tiff */,
 				F22AFEE605F6B5CB00D4ED0D /* PhonePlus.tiff */,
@@ -743,6 +762,8 @@
 				83CFE69D0FAFE01200EDFC88 /* svnx in Resources */,
 				83BCF01E0FBCAD25007E9B6B /* Templates.plist in Resources */,
 				8397E3110FC6B0520077A66C /* Localizable.strings in Resources */,
+				83E8BF650FF648130011021A /* svnBadge.icns in Resources */,
+				83CCC97011678AA5003F269B /* ActionPopup.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -859,6 +880,8 @@
 				83EE48880DD226C100542832 /* ViewUtils.m in Sources */,
 				83CD86CC0F54588E00512219 /* MyDragSupportWindow.m in Sources */,
 				833ED6510FA558BE00B7C862 /* RepoItem.m in Sources */,
+				8369D4A20FD074A6002905A0 /* IconUtils.m in Sources */,
+				83C5B26D116649CD00A667E9 /* IconTextCell.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -949,6 +972,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNKNOWN_PRAGMAS = YES;
 				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (

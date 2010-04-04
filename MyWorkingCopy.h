@@ -112,6 +112,7 @@ void InitWCPreferences (void);
 - (void) registerSubController:   (id) aController;
 - (void) unregisterSubController: (id) aController;
 - (id)   anySubController;
+- (int)  countUnsavedSubControllers;
 
 - (id) controller;
 - (NSURL*) repositoryUrl;

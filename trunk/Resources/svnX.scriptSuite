@@ -44,6 +44,11 @@
 			<key>AppleEventCode</key>		<string>Diff</string>
 			<key>CommandClass</key>			<string>Scripting</string>
 		</dict>
+		<key>resolveFiles</key>
+		<dict>
+			<key>AppleEventCode</key>		<string>Reso</string>
+			<key>CommandClass</key>			<string>Scripting</string>
+		</dict>
 	</dict>
 </dict>
 </plist>

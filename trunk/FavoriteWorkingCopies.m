@@ -346,10 +346,33 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 
 
 //----------------------------------------------------------------------------------------
+// Invoked from AppleScript.
 
-- (void) doNothing: (id) ignored
+- (void) resolveFiles: (id) fileOrFiles
 {
-	#pragma unused(ignored)
+	NSString* aPath;
+	if (ISA(fileOrFiles, NSArray))
+		aPath = [fileOrFiles objectAtIndex: 0];
+	else
+		fileOrFiles = [NSArray arrayWithObject: (aPath = fileOrFiles)];
+
+	const id wcObj = [self findWorkingCopy: aPath openIt: FALSE];
+	if (wcObj && ISA(wcObj, MyWorkingCopy))
+	{
+		[(MyWorkingCopy*) wcObj resolveFiles: fileOrFiles];
+	}
+	else	// Working Copy dict or unknown
+	{
+		[MySvn runScript: @"svnresolve"
+				 options: [NSArray arrayWithObjects: SvnCmdPath(), GetDiffAppName(), nil]
+					args: fileOrFiles
+					name: @"resolve"
+				callback: MakeCallbackInvocation(self, @selector(doNothing:))
+			callbackInfo: nil
+				taskInfo: [NSDictionary dictionaryWithObject:
+								[wcObj objectForKey: @"name"] forKey: @"documentName"]
+				dataOnly: NO];
+	}
 }
 
 

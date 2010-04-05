@@ -49,6 +49,7 @@
 
 	BOOL					isDisplayingErrorSheet;
 	BOOL					outlineInited;		// has initialised outline view
+	BOOL					fPrefsChanged;
 
 	NSArray*				savedSelection;		// used by save/restoreSelection
 }

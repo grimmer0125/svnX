@@ -66,8 +66,12 @@ void InitWCPreferences (void);
 		 callback:     (NSInvocation*) callback
 		 callbackInfo: (id)            callbackInfo;
 - (void) diffItems: (NSArray*) items;
+- (void) svnDiff:   (NSArray*) items
+		 options:   (id)       options;
 - (void) fetchSvnStatus: (BOOL) showUpdates;
 - (void) fetchSvnInfoReceiveDataFinished: (NSString*) result;
+- (void) svnResolve: (NSArray*) items;
+- (BOOL) resolveFiles: (NSString*) path;
 
 - (void) svnInfo: (const struct svn_info_t*) info
 		 forPath: (const char*)              path;

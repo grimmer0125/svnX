@@ -1412,13 +1412,16 @@ svnInfoReceiver (void*     baton,
 #pragma mark	svn diff
 //----------------------------------------------------------------------------------------
 
-- (void) diffItems:    (NSArray*)      items
+- (void) svnDiff:      (NSArray*)      items
+		 options:      (id)            options
 		 callback:     (NSInvocation*) callback
 		 callbackInfo: (id)            callbackInfo
 {
+	if (ISA(options, NSString))
+		options = [NSArray arrayWithObject: options];
 	[MySvn	diffItems: items
 	   generalOptions: [self svnOptionsInvocation]
-			  options: nil
+			  options: options
 			 callback: callback
 		 callbackInfo: callbackInfo
 			 taskInfo: [self documentNameDict]];
@@ -1427,9 +1430,34 @@ svnInfoReceiver (void*     baton,
 
 //----------------------------------------------------------------------------------------
 
+- (void) diffItems:    (NSArray*)      items
+		 callback:     (NSInvocation*) callback
+		 callbackInfo: (id)            callbackInfo
+{
+	[self svnDiff: items
+		  options: nil
+		 callback: callback
+	 callbackInfo: callbackInfo];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnDiff: (NSArray*) items
+		 options: (id)       options
+{
+	[self svnDiff: items
+		  options: options
+		 callback: MakeCallbackInvocation(self, @selector(diffCallback:))
+	 callbackInfo: nil];
+}
+
+
+//----------------------------------------------------------------------------------------
+
 - (void) diffItems: (NSArray*) items
 {
-	[self diffItems: items callback: MakeCallbackInvocation(self, @selector(diffCallback:)) callbackInfo: nil];
+	[self svnDiff: items options: nil];
 }
 
 
@@ -1441,6 +1469,43 @@ svnInfoReceiver (void*     baton,
 		;
 
 	[self svnError: taskObj];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	svn resolve
+//----------------------------------------------------------------------------------------
+// svnresolve.sh <svn-tool> <diff-app> <wc-file-path…>
+
+- (void) svnResolve: (NSArray*) items
+{
+	[MySvn runScript: @"svnresolve"
+			 options: [NSArray arrayWithObjects: SvnCmdPath(), GetDiffAppName(), nil]
+				args: items
+				name: @"resolve"
+			callback: MakeCallbackInvocation(self, @selector(diffCallback:))
+		callbackInfo: nil
+			taskInfo: [NSDictionary dictionaryWithObject:
+							windowTitle forKey: @"documentName"]
+			dataOnly: NO];
+}
+
+
+//----------------------------------------------------------------------------------------
+// AppleScript.  Interactively resolve conflicts in file <path> if it belongs to this WC.
+
+- (BOOL) resolveFiles: (NSString*) path
+{
+	for_each_obj(en, it, svnFiles)
+	{
+		if ([[it objectForKey: @"fullPath"] isEqualToString: path])
+		{
+		//	[fController fileHistoryOpenSheetForItem: it];
+			[self svnResolve: [NSArray arrayWithObject: path]];
+			return YES;
+		}
+	}
+	return NO;
 }
 
 

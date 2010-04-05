@@ -1,140 +1,316 @@
-{
-    IBClasses = (
-        {
-            CLASS = DrawerLogView; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {"_view" = id; }; 
-            SUPERCLASS = NSView; 
-        }, 
-        {
-            ACTIONS = {"" = id; }; 
-            CLASS = FirstResponder; 
-            LANGUAGE = ObjC; 
-            SUPERCLASS = NSObject; 
-        }, 
-        {CLASS = MyDragSupportWindow; LANGUAGE = ObjC; SUPERCLASS = NSWindow; }, 
-        {
-            ACTIONS = {compare = id; compareUrl = id; validate = id; }; 
-            CLASS = MyFileMergeController; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {
-                objectController = NSObjectController; 
-                svnLogView = MySvnLogView; 
-                svnLogView1 = MySvnLogView; 
-                svnLogView2 = MySvnLogView2; 
-                svnSheet = NSWindow; 
-            }; 
-            SUPERCLASS = NSObject; 
-        }, 
-        {CLASS = MyOutlineView; LANGUAGE = ObjC; SUPERCLASS = NSOutlineView; }, 
-        {CLASS = MySvn; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
-        {
-            ACTIONS = {search = id; }; 
-            CLASS = MySvnFilesArrayController; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {document = MyWorkingCopy; }; 
-            SUPERCLASS = NSArrayController; 
-        }, 
-        {
-            CLASS = MySvnOperationController; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {
-                arrayController = NSArrayController; 
-                commitMessage = NSTextView; 
-                objectController = NSObjectController; 
-                svnSheet = NSWindow; 
-                targetBrowser = MySvnRepositoryBrowserView; 
-                targetName = NSTextField; 
-            }; 
-            SUPERCLASS = NSObject; 
-        }, 
-        {CLASS = MyTableView; LANGUAGE = ObjC; SUPERCLASS = NSTableView; }, 
-        {
-            ACTIONS = {openWorkingCopy = id; }; 
-            CLASS = MyWorkingCopy; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {
-                controller = MyWorkingCopyController; 
-                svnFilesAC = MySvnFilesArrayController; 
-            }; 
-            SUPERCLASS = NSDocument; 
-        }, 
-        {
-            ACTIONS = {
-                changeFilter = id; 
-                changeMode = id; 
-                doubleClickInTableView = id; 
-                mergeSheetDoClick = id; 
-                mergeSheetURLChanged = id; 
-                openAWorkingCopy = id; 
-                openRepository = id; 
-                performAction = id; 
-                refresh = id; 
-                revealInFinder = id; 
-                svnDiff = id; 
-                svnUpdate = id; 
-                togglePropsView = id; 
-                toggleSidebar = id; 
-                updateSheetDoClick = id; 
-            }; 
-            CLASS = MyWorkingCopyController; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {
-                commitPanel = id; 
-                commitPanelText = id; 
-                document = MyWorkingCopy; 
-                drawerLogView = DrawerLogView; 
-                filterView = NSPopUpButton; 
-                mergeSheet = NSWindow; 
-                modeView = NSControl; 
-                outliner = id; 
-                progressIndicator = id; 
-                renamePanel = NSPanel; 
-                renamePanelTextField = NSTextField; 
-                sidebar = NSDrawer; 
-                splitView = id; 
-                statusView = NSControl; 
-                svnFilesAC = MySvnFilesArrayController; 
-                switchPanel = NSWindow; 
-                switchPanelDestinationTextField = NSTextField; 
-                switchPanelRelocateButton = NSButton; 
-                switchPanelSourceTextField = NSTextField; 
-                tableResult = id; 
-                toolbar = id; 
-                updateSheet = NSWindow; 
-                window = id; 
-            }; 
-            SUPERCLASS = NSResponder; 
-        }, 
-        {
-            CLASS = MyWorkingCopyToolbar; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {
-                controller = MyWorkingCopyController; 
-                filterView = id; 
-                modeView = id; 
-                refreshView = id; 
-                searchView = id; 
-                window = id; 
-                workingCopyPathView = id; 
-            }; 
-            SUPERCLASS = NSObject; 
-        }, 
-        {CLASS = NSDatePicker; LANGUAGE = ObjC; SUPERCLASS = NSControl; }, 
-        {CLASS = NSSegmentedControl; LANGUAGE = ObjC; SUPERCLASS = NSControl; }, 
-        {
-            CLASS = OutlinerDataSource; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {controller = id; document = id; }; 
-            SUPERCLASS = NSObject; 
-        }, 
-        {CLASS = RepoItemView; LANGUAGE = ObjC; SUPERCLASS = NSTextField; }, 
-        {
-            CLASS = SplitViewDelegate; 
-            LANGUAGE = ObjC; 
-            OUTLETS = {document = id; splitView = id; }; 
-            SUPERCLASS = NSObject; 
-        }
-    ); 
-    IBVersion = 1; 
-}
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IBClasses</key>
+	<array>
+		<dict>
+			<key>CLASS</key>
+			<string>TableViewDelegate</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>OUTLETS</key>
+			<dict>
+				<key>document</key>
+				<string>id</string>
+				<key>fPathColumn</key>
+				<string>NSTableColumn</string>
+				<key>svnFilesAC</key>
+				<string>id</string>
+			</dict>
+			<key>SUPERCLASS</key>
+			<string>NSObject</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSSegmentedControl</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSControl</string>
+		</dict>
+		<dict>
+			<key>ACTIONS</key>
+			<dict>
+				<key>search</key>
+				<string>id</string>
+			</dict>
+			<key>CLASS</key>
+			<string>MySvnFilesArrayController</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>OUTLETS</key>
+			<dict>
+				<key>document</key>
+				<string>MyWorkingCopy</string>
+			</dict>
+			<key>SUPERCLASS</key>
+			<string>NSArrayController</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>MyWorkingCopyToolbar</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>OUTLETS</key>
+			<dict>
+				<key>controller</key>
+				<string>MyWorkingCopyController</string>
+				<key>filterView</key>
+				<string>id</string>
+				<key>modeView</key>
+				<string>id</string>
+				<key>refreshView</key>
+				<string>id</string>
+				<key>searchView</key>
+				<string>id</string>
+				<key>window</key>
+				<string>id</string>
+				<key>workingCopyPathView</key>
+				<string>id</string>
+			</dict>
+			<key>SUPERCLASS</key>
+			<string>NSObject</string>
+		</dict>
+		<dict>
+			<key>ACTIONS</key>
+			<dict>
+				<key>openWorkingCopy</key>
+				<string>id</string>
+			</dict>
+			<key>CLASS</key>
+			<string>MyWorkingCopy</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>OUTLETS</key>
+			<dict>
+				<key>controller</key>
+				<string>MyWorkingCopyController</string>
+				<key>svnFilesAC</key>
+				<string>MySvnFilesArrayController</string>
+			</dict>
+			<key>SUPERCLASS</key>
+			<string>NSDocument</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>IconTextCell</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSTextFieldCell</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>MyTableView</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSTableView</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSTextView</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSText</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>MyDragSupportWindow</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSWindow</string>
+		</dict>
+		<dict>
+			<key>ACTIONS</key>
+			<dict>
+				<key></key>
+				<string>id</string>
+			</dict>
+			<key>CLASS</key>
+			<string>FirstResponder</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSObject</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSObject</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>MyOutlineView</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSOutlineView</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>DrawerLogView</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>OUTLETS</key>
+			<dict>
+				<key>_view</key>
+				<string>id</string>
+				<key>currentTaskObj</key>
+				<string>id</string>
+				<key>document</key>
+				<string>id</string>
+				<key>documentProxy</key>
+				<string>NSObjectController</string>
+				<key>logTextView</key>
+				<string>NSTextView</string>
+			</dict>
+			<key>SUPERCLASS</key>
+			<string>NSView</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSDatePicker</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSControl</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>RepoItemView</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSTextField</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSWindow</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSResponder</string>
+		</dict>
+		<dict>
+			<key>ACTIONS</key>
+			<dict>
+				<key>changeFilter</key>
+				<string>id</string>
+				<key>changeMode</key>
+				<string>id</string>
+				<key>commitPanelCancel</key>
+				<string>id</string>
+				<key>commitPanelValidate</key>
+				<string>id</string>
+				<key>doubleClickInTableView</key>
+				<string>id</string>
+				<key>mergeSheetDoClick</key>
+				<string>id</string>
+				<key>mergeSheetURLChanged</key>
+				<string>id</string>
+				<key>openAWorkingCopy</key>
+				<string>id</string>
+				<key>openRepository</key>
+				<string>id</string>
+				<key>performAction</key>
+				<string>id</string>
+				<key>refresh</key>
+				<string>id</string>
+				<key>renamePanelValidate</key>
+				<string>id</string>
+				<key>revealInFinder</key>
+				<string>id</string>
+				<key>svnDiff</key>
+				<string>id</string>
+				<key>svnUpdate</key>
+				<string>id</string>
+				<key>switchPanelValidate</key>
+				<string>id</string>
+				<key>togglePropsView</key>
+				<string>id</string>
+				<key>toggleSidebar</key>
+				<string>id</string>
+				<key>updateSheetDoClick</key>
+				<string>id</string>
+			</dict>
+			<key>CLASS</key>
+			<string>MyWorkingCopyController</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>OUTLETS</key>
+			<dict>
+				<key>commitPanel</key>
+				<string>id</string>
+				<key>commitPanelText</key>
+				<string>id</string>
+				<key>document</key>
+				<string>MyWorkingCopy</string>
+				<key>drawerLogView</key>
+				<string>DrawerLogView</string>
+				<key>filterView</key>
+				<string>NSPopUpButton</string>
+				<key>mergeSheet</key>
+				<string>NSWindow</string>
+				<key>modeView</key>
+				<string>NSControl</string>
+				<key>outliner</key>
+				<string>id</string>
+				<key>progressIndicator</key>
+				<string>id</string>
+				<key>renamePanel</key>
+				<string>NSPanel</string>
+				<key>renamePanelTextField</key>
+				<string>NSTextField</string>
+				<key>sidebar</key>
+				<string>NSDrawer</string>
+				<key>splitView</key>
+				<string>id</string>
+				<key>statusView</key>
+				<string>NSControl</string>
+				<key>svnFilesAC</key>
+				<string>MySvnFilesArrayController</string>
+				<key>switchPanel</key>
+				<string>NSWindow</string>
+				<key>switchPanelDestinationTextField</key>
+				<string>NSTextField</string>
+				<key>switchPanelRelocateButton</key>
+				<string>NSButton</string>
+				<key>switchPanelSourceTextField</key>
+				<string>NSTextField</string>
+				<key>tableResult</key>
+				<string>id</string>
+				<key>toolbar</key>
+				<string>id</string>
+				<key>updateSheet</key>
+				<string>NSWindow</string>
+				<key>window</key>
+				<string>id</string>
+			</dict>
+			<key>SUPERCLASS</key>
+			<string>NSResponder</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>OutlinerDataSource</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>OUTLETS</key>
+			<dict>
+				<key>controller</key>
+				<string>id</string>
+				<key>document</key>
+				<string>id</string>
+			</dict>
+			<key>SUPERCLASS</key>
+			<string>NSObject</string>
+		</dict>
+	</array>
+	<key>IBVersion</key>
+	<string>1</string>
+</dict>
+</plist>

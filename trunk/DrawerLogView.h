@@ -1,10 +1,10 @@
-//
-//  DrawerLogView.h
-//  svnX
+//----------------------------------------------------------------------------------------
+//  DrawerLogView.h - svnX
 //
 //  Created by Dominique PERETTI on 06/05/05.
 //  Copyright 2005 __MyCompanyName__. All rights reserved.
-//
+//	Copyright © Chris, 2007 - 2010.  All rights reserved.
+//----------------------------------------------------------------------------------------
 
 #import <Cocoa/Cocoa.h>
 
@@ -15,14 +15,12 @@
 	IBOutlet NSTextView *logTextView;
 	IBOutlet NSObjectController *documentProxy;
 
-	id document;
-
+	id fDocument;
 	id currentTaskObj;
 }
 
-- (void) setUp;
-- (void) unload;
-- (void) setDocument: (id) aDocument;
+- (void) setup:     (NSDocument*) document
+		 forWindow: (NSWindow*)   window;
 
 @end
 

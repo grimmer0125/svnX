@@ -258,6 +258,15 @@ addTransform (Class itsClass, NSString* itsName)
 
 
 //----------------------------------------------------------------------------------------
+// Interactively resolve one or more conflicted files.
+
+- (void) resolveFiles: (id) fileOrFiles
+{
+	[favoriteWorkingCopies resolveFiles: fileOrFiles];
+}
+
+
+//----------------------------------------------------------------------------------------
 #pragma mark	-
 //----------------------------------------------------------------------------------------
 

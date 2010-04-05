@@ -1,47 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>IBDocumentLocation</key>
-	<string>893 422 579 729 0 0 1920 1178 </string>
-	<key>IBEditorPositions</key>
-	<dict>
-		<key>468</key>
-		<string>403 467 350 60 0 0 1152 746 </string>
-		<key>476</key>
-		<string>928 756 94 57 0 0 1920 1178 </string>
-		<key>527</key>
-		<string>900 754 149 61 0 0 1920 1178 </string>
-		<key>701</key>
-		<string>483 479 478 212 0 0 1440 878 </string>
-		<key>868</key>
-		<string>934 754 82 62 0 0 1920 1178 </string>
-		<key>919</key>
-		<string>582 871 113 99 0 0 1920 1178 </string>
-	</dict>
 	<key>IBFramework Version</key>
-	<string>489.0</string>
-	<key>IBLockedObjects</key>
-	<array>
-		<integer>5</integer>
-		<integer>947</integer>
-	</array>
+	<string>680</string>
+	<key>IBLastKnownRelativeProjectPath</key>
+	<string>../../svnX.xcodeproj</string>
 	<key>IBOldestOS</key>
 	<integer>4</integer>
 	<key>IBOpenObjects</key>
 	<array>
+		<integer>527</integer>
 		<integer>868</integer>
-		<integer>5</integer>
-		<integer>742</integer>
 		<integer>244</integer>
 		<integer>1003</integer>
-		<integer>676</integer>
 		<integer>947</integer>
-		<integer>527</integer>
+		<integer>742</integer>
+		<integer>5</integer>
+		<integer>676</integer>
 	</array>
 	<key>IBSystem Version</key>
-	<string>8S165</string>
-	<key>IBUsesTextArchiving</key>
-	<true/>
+	<string>9L31a</string>
+	<key>targetFramework</key>
+	<string>IBCocoaFramework</string>
 </dict>
 </plist>

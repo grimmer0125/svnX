@@ -4,7 +4,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class MyDragSupportArrayController;
 typedef struct EditListPrefKeys
 	{ NSString* data, *editShown, *panelFrame, *dragType; } EditListPrefKeys;
 
@@ -12,12 +11,12 @@ typedef struct EditListPrefKeys
 
 @interface EditListResponder : NSResponder
 {
-	IBOutlet NSWindow*						fWindow;
-	IBOutlet NSTableView*					fTableView;
-	IBOutlet NSBox*							fEditBox;
-	IBOutlet MyDragSupportArrayController*	fAC;
-	NSMutableArray*							fDataArray;
-	const EditListPrefKeys*					fPrefKeys;
+	IBOutlet NSWindow*			fWindow;
+	IBOutlet NSTableView*		fTableView;
+	IBOutlet NSBox*				fEditBox;
+	IBOutlet NSArrayController*	fAC;
+	NSMutableArray*				fDataArray;
+	const EditListPrefKeys*		fPrefKeys;
 }
 
 - (id)        init:          (const EditListPrefKeys*) prefsKeys;

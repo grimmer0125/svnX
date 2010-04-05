@@ -175,8 +175,6 @@ compareRevisions (id obj1, id obj2, void* context)
 
 	[svnLogView removeObserver: self forKeyPath: @"currentRevision"];
 
-	[drawerLogView unload];
-
 	[super close];
 }
 
@@ -216,10 +214,9 @@ compareRevisions (id obj1, id obj2, void* context)
 	[urlTextView setBackgroundColor: [NSColor windowBackgroundColor]];
 	[urlTextView setString: [fURL absoluteString]];
 
-	[drawerLogView setDocument: self];
-	[drawerLogView setUp];
-
 	NSWindow* window = [self window];
+	[drawerLogView setup: self forWindow: window];
+
 	NSString* widowFrameKey = [self preferenceName];
 	[window setFrameUsingName: widowFrameKey];
 	[window setFrameAutosaveName: widowFrameKey];

@@ -8,19 +8,19 @@
 
 #import "Scripting.h"
 #import "MyApp.h"
+#import "CommonUtils.h"
 
 
 @implementation Scripting
 
 - (id) performDefaultImplementation
 {
-	NSString* const commandName = [[self commandDescription] commandName];
-	const id directParam = [self directParameter];
-	const id directParam0 = [directParam isKindOfClass: [NSArray class]]
+	ConstString commandName = [[self commandDescription] commandName];
+	const id directParam = [self directParameter],
+			 directParam0 = ISA(directParam, NSArray)
 									? [directParam lastObject] : directParam;
-	NSString* const string0 = [directParam0 isKindOfClass: [NSString class]]
-							? directParam0
-							: nil;
+	ConstString string0 = ISA(directParam0, NSString) ? directParam0
+													  : nil;
 	MyApp* const target = [NSApp delegate];
 //	dprintf("%@", self);
 
@@ -52,9 +52,14 @@
 		if (string0)
 			[target diffFiles: directParam];
 	}
+	else if ([commandName isEqualToString: @"resolveFiles"])
+	{
+		if (string0)
+			[target resolveFiles: directParam];
+	}
 
 	return nil;
 }
 
-@end
+@end	// Scripting
 

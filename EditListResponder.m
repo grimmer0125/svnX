@@ -3,7 +3,6 @@
 //
 
 #import "EditListResponder.h"
-#import "MyDragSupportArrayController.h"
 #import "CommonUtils.h"
 #import "ViewUtils.h"
 
@@ -11,6 +10,62 @@
 static ConstString kCopyType = @"svnX_COPIED_ROWS",
 				   kMoveType = @"svnX_MOVED_ROWS";
 
+
+//----------------------------------------------------------------------------------------
+
+static void
+moveObjectsFromIndexes (NSArrayController* ac, NSIndexSet* indexSet, unsigned toIndex)
+{
+	unsigned off1 = 0, off2 = 0;
+
+	for (unsigned currentIndex = [indexSet firstIndex]; currentIndex != NSNotFound;
+		 currentIndex = [indexSet indexGreaterThanIndex: currentIndex])
+	{
+		unsigned i = currentIndex, i1 = i, i2 = toIndex;
+
+		if (i < toIndex)
+			i1 = i -= off1++;
+		else
+			i1 = i + 1, i2 += off2++;
+		[ac insertObject: [[ac arrangedObjects] objectAtIndex: i] atArrangedObjectIndex: i2];
+		[ac removeObjectAtArrangedObjectIndex: i1];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSIndexSet*
+indexSetFromRows (NSArray* rows)
+{
+	NSMutableIndexSet* indexSet = [NSMutableIndexSet indexSet];
+	for_each_obj(en, idx, rows)
+	{
+		[indexSet addIndex: [idx intValue]];
+	}
+	return indexSet;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static int
+rowsAboveRow (NSIndexSet* indexSet, int row)
+{
+	unsigned currentIndex = [indexSet firstIndex];
+	int i = 0;
+	while (currentIndex != NSNotFound)
+	{
+		if (currentIndex < row) ++i;
+		currentIndex = [indexSet indexGreaterThanIndex: currentIndex];
+	}
+	return i;
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+//----------------------------------------------------------------------------------------
 
 @implementation EditListResponder
 
@@ -74,6 +129,8 @@ static ConstString kCopyType = @"svnX_COPIED_ROWS",
 	Assert(fTableView != nil);
 	if (fTableView)
 	{
+		[fTableView setDraggingSourceOperationMask: NSDragOperationCopy | NSDragOperationMove
+										  forLocal: YES];
 		[fTableView registerForDraggedTypes:
 				[NSArray arrayWithObjects: kCopyType, kMoveType, fPrefKeys->dragType, nil]];
 
@@ -258,7 +315,16 @@ static ConstString kCopyType = @"svnX_COPIED_ROWS",
 
 //----------------------------------------------------------------------------------------
 #pragma mark	-
-#pragma mark	Drag & Drop
+#pragma mark	TableView Delegate/Drag & Drop
+//----------------------------------------------------------------------------------------
+
+- (int) numberOfRowsInTableView: (NSTableView*) tableView
+{
+	#pragma unused(tableView)
+	return [[fAC arrangedObjects] count];
+}
+
+
 //----------------------------------------------------------------------------------------
 // If the number of rows is not 1, then we only support our own types.  If there is just one
 // row, then try to create an NSURL from the url value in that row.  If that's possible,
@@ -348,14 +414,13 @@ static ConstString kCopyType = @"svnX_COPIED_ROWS",
 	// if drag source is self, it's a move
 	if ((sourceMask & NSDragOperationMove) && [info draggingSource] == fTableView)
 	{
-		NSArray* rows = [pboard propertyListForType: kMoveType];
-		NSIndexSet* indexSet = [fAC indexSetFromRows: rows];
+		NSIndexSet* indexSet = indexSetFromRows([pboard propertyListForType: kMoveType]);
 
-		[fAC moveObjectsInArrangedObjectsFromIndexes: indexSet toIndex: row];
+		moveObjectsFromIndexes(fAC, indexSet, row);
 
 		// set selected rows to those that were just moved
 		// Need to work out what moved where to determine proper selection...
-		int rowsAbove = [fAC rowsAboveRow: row inIndexSet: indexSet];
+		int rowsAbove = rowsAboveRow(indexSet, row);
 
 		NSRange range = NSMakeRange(row - rowsAbove, [indexSet count]);
 		indexSet = [NSIndexSet indexSetWithIndexesInRange: range];

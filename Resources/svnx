@@ -7,7 +7,7 @@ function fullPath ()
 {
 	local d="${1:-.}"
 	if [ -e "$d" ]; then
-		echo `cd $(dirname "$d") && pwd`/"${d##*/}"
+		echo `cd -L $(dirname -- "$d") && pwd`/"${d##*/}"
 	else
 		echo "$d"
 	fi
@@ -63,6 +63,13 @@ function openFiles ()	# files...
 	}
 }
 
+function resolveFiles ()	# files...
+{
+	for f; {
+		osascript -e 'on run args' -e 'tell app "svnX" to resolveFiles args' -e 'end' "`fullPath \"$f\"`"
+	}
+}
+
 function usage ()
 {
 	echo 'svnx <command> [path-or-URL]   - the svnX command line tool.'
@@ -72,6 +79,7 @@ function usage ()
 	echo '     rep|-r [wc-path-or-URL]   - open repository window for wc-path-or-URL (defaults to ".").'
 	echo '     diff|-d <file-path...>    - compare the files with their base revisions.'
 	echo '     open|-o <file-path...>    - open the files and/or folders in appropriate applications.'
+	echo '     resolve|-v <file-path...> - interactively resolve conflicted files.'
 }
 
 
@@ -83,6 +91,7 @@ case "$1" in
 	rep|-r)			openRepoWindow "$2";;
 	diff|-d)		shift; diffFiles "$@";;
 	open|-o)		shift; openFiles "$@";;
+	resolve|-v)		shift; resolveFiles "$@";;
 	help|*)			usage;;
 esac
 

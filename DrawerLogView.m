@@ -1,3 +1,8 @@
+//----------------------------------------------------------------------------------------
+//	DrawerLogView.m - 
+//
+//	Copyright © Chris, 2007 - 2010.  All rights reserved.
+//----------------------------------------------------------------------------------------
 
 #import "DrawerLogView.h"
 #import "MySvn.h"
@@ -6,6 +11,7 @@
 
 
 @implementation DrawerLogView
+
 
 - (id) initWithFrame: (NSRect) frame
 {
@@ -22,22 +28,32 @@
 
 
 //----------------------------------------------------------------------------------------
+// - document : A MyRepository or a MyWorkingCopy instance
 
-- (void) dealloc
+- (id) document { return fDocument; }
+
+
+- (void) setDocument: (id) aDocument
 {
-	[self setDocument: nil];
-	[super dealloc];
+	Assert(fDocument == nil);
+	fDocument = [aDocument retain];
 }
 
 
 //----------------------------------------------------------------------------------------
 
-- (void) setUp
+- (void) setup:     (NSDocument*) document
+		 forWindow: (NSWindow*)   window
 {
-	[document addObserver: self forKeyPath: @"displayedTaskObj.newStdout"
-			  options: (NSKeyValueObservingOptionNew) context: nil];
-	[document addObserver: self forKeyPath: @"displayedTaskObj.newStderr"
-			  options: (NSKeyValueObservingOptionNew) context: nil];
+	[self setDocument: document];
+	[fDocument addObserver: self forKeyPath: @"displayedTaskObj.newStdout"
+			  options: NSKeyValueObservingOptionNew context: NULL];
+	[fDocument addObserver: self forKeyPath: @"displayedTaskObj.newStderr"
+			  options: NSKeyValueObservingOptionNew context: NULL];
+
+	[[NSNotificationCenter defaultCenter]
+		addObserver: self selector: @selector(unload)
+			   name: NSWindowWillCloseNotification object: window];
 }
 
 
@@ -45,8 +61,9 @@
 
 - (void) unload
 {
-	[document removeObserver: self forKeyPath: @"displayedTaskObj.newStdout"];
-	[document removeObserver: self forKeyPath: @"displayedTaskObj.newStderr"];
+	[fDocument removeObserver: self forKeyPath: @"displayedTaskObj.newStdout"];
+	[fDocument removeObserver: self forKeyPath: @"displayedTaskObj.newStderr"];
+	[[NSNotificationCenter defaultCenter] removeObserver: self];
 
 	const id docProxy = documentProxy;
 	documentProxy = nil;
@@ -60,6 +77,9 @@
 	// the owner has to release its top level nib objects
 	[docProxy release];
 	[view release];
+
+	[fDocument release];
+	fDocument = nil;
 }
 
 
@@ -71,7 +91,7 @@
 		 context:                (void*)         context
 {
 	#pragma unused(object, change, context)
-	NSDictionary *taskObj = [document valueForKey: @"displayedTaskObj"];
+	NSDictionary *taskObj = [fDocument valueForKey: @"displayedTaskObj"];
 
 	if ( taskObj != nil )
 	{
@@ -100,7 +120,7 @@
 - (IBAction) stopDisplayedTask: (id) sender
 {
 	#pragma unused(sender)
-	id taskObj = [document valueForKey: @"displayedTaskObj"];
+	id taskObj = [fDocument valueForKey: @"displayedTaskObj"];
 
 	if (taskObj)
 		[MySvn killTask: taskObj force: AltOrShiftPressed()];
@@ -108,21 +128,6 @@
 
 
 //----------------------------------------------------------------------------------------
-#pragma mark	-
-#pragma mark	Accessors
-//----------------------------------------------------------------------------------------
-// - document : A MyRepository or a MyWorkingCopy instance
 
-- (id) document { return document; }
-
-
-- (void) setDocument: (id) aDocument
-{
-	id old = document;
-	document = [aDocument retain];
-	[old release];
-}
-
-
-@end
+@end	// DrawerLogView
 

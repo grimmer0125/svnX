@@ -49,16 +49,21 @@ static NSString* gInitName = nil;
 //----------------------------------------------------------------------------------------
 // Add, Delete, Update, Revert, Resolved, Lock, Unlock, Commit, Review
 
-static NSString* const gCommands[] = {
+static ConstString gCommands[] = {
 	@"add", @"remove", @"update", @"revert", @"resolved", @"lock", @"unlock", @"commit", @"review"
 };
 
-static NSString* const gVerbs[] = {
+static ConstString gVerbs[] = {
 	@"add", @"remove", @"update", @"revert", @"resolve", @"lock", @"unlock", @"commit", @"review"
 };
 
+// 0.add  1.remove  2.update  102.update-alt  3.revert  4.resolved  5.lock  6.unlock
+// 7.commit  8.review  9.resolve  10.cleanup  11.rename  12.copy  13.move
 enum SvnCommand {
-	cAdd = 0, cRemove, cUpdate, cRevert, cResolved	//, cLock, cUnlock, cCopy, cMove, cRename
+	cmdAdd = 0, cmdRemove, cmdUpdate, cmdRevert, cmdResolved, cmdLock, cmdUnlock,
+	cmdCommit, cmdReview, cmdResolve, cmdCleanup, cmdRename, cmdCopy, cmdMove,
+	cmdUpdateAlt = 100 + cmdUpdate,
+	cmdReviewAlt = 100 + cmdReview
 };
 
 
@@ -157,6 +162,8 @@ InitWCPreferences (void)
 
 @interface MyWorkingCopyController (Private)
 
+	- (void) prefsChanged;
+
 	- (IBAction) commitPanelValidate: (id) sender;
 	- (IBAction) commitPanelCancel:   (id) sender;
 	- (IBAction) renamePanelValidate: (id) sender;
@@ -182,7 +189,7 @@ InitWCPreferences (void)
 
 	- (NSArray*) selectedFilePaths;
 
-@end
+@end	// WorkingCopyCon (Private)
 
 
 //----------------------------------------------------------------------------------------
@@ -190,7 +197,6 @@ InitWCPreferences (void)
 //----------------------------------------------------------------------------------------
 
 @implementation MyWorkingCopyController
-
 
 //----------------------------------------------------------------------------------------
 
@@ -207,11 +213,10 @@ InitWCPreferences (void)
 	isDisplayingErrorSheet = NO;
 	[self setStatusMessage: @""];
 
-	[document   addObserver: self forKeyPath: @"flatMode"
-				options: (NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context: nil];
+	[document addObserver: self forKeyPath: @"flatMode"
+				  options: (NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context: NULL];
 
-	[drawerLogView setDocument: document];
-	[drawerLogView setUp];
+	[drawerLogView setup: document forWindow: window];
 
 	NSTableView* const tableView = tableResult;
 	[[[tableView tableColumnWithIdentifier: @"path"] dataCell] setDrawsBackground: NO];
@@ -221,15 +226,15 @@ InitWCPreferences (void)
 
 	if (GetPreferenceBool(@"compactWCColumns"))
 	{
-		NSFont* const font = [NSFont boldSystemFontOfSize: 8];
+		NSFont* const font = [NSFont labelFontOfSize: 9];
 		for (int i = 1; i <= 8; ++i)
 		{
 			const unichar ch = '0' + i;
 			NSTableColumn* col = [tableView tableColumnWithIdentifier: [NSString stringWithCharacters: &ch length: 1]];
 			if (!col) continue;
 			NSCell* cell = [col dataCell];
+			[cell setAlignment: NSLeftTextAlignment];
 			[cell setFont: font];
-			[cell setAlignment: NSRightTextAlignment];
 			[col setMinWidth: 9];
 			[col setWidth:    9];
 			[col setMaxWidth: 9];
@@ -239,7 +244,7 @@ InitWCPreferences (void)
 	[self setNextResponder: [tableView nextResponder]];
 	[tableView setNextResponder: self];
 
-	NSUserDefaults* const prefs = [NSUserDefaults standardUserDefaults];
+	NSUserDefaults* const prefs = Preferences();
 	NSDictionary* wcWindows = [prefs dictionaryForKey: keyWCWidows];
 	if (wcWindows != nil)
 	{
@@ -276,7 +281,7 @@ InitWCPreferences (void)
 	int viewMode   = kModeSmart;
 	int filterMode = kFilterAll;
 
-	NSUserDefaults* const prefs = [NSUserDefaults standardUserDefaults];
+	NSUserDefaults* const prefs = Preferences();
 	NSDictionary* wcWindows = [prefs dictionaryForKey: keyWCWidows];
 	if (wcWindows != nil)
 	{
@@ -298,7 +303,7 @@ InitWCPreferences (void)
 	[document setFilterMode: filterMode];
 
 	[window makeKeyAndOrderFront: self];
-	[self savePrefs];
+	[self prefsChanged];
 
 	[window setDelegate: self];		// for windowDidMove & windowDidResize messages
 }
@@ -315,7 +320,7 @@ InitWCPreferences (void)
 	}
 	else if (!svnStatusPending && GetPreferenceBool(@"autoRefreshWC"))
 	{
-		[document svnRefresh];
+		[document performSelector: @selector(svnRefresh) withObject: nil afterDelay: 0];
 	}
 }
 
@@ -325,7 +330,7 @@ InitWCPreferences (void)
 - (void) windowDidMove: (NSNotification*) notification
 {
 	#pragma unused(notification)
-	[self savePrefs];
+	[self prefsChanged];
 }
 
 
@@ -334,7 +339,7 @@ InitWCPreferences (void)
 - (void) windowDidResize: (NSNotification*) notification
 {
 	#pragma unused(notification)
-	[self savePrefs];
+	[self prefsChanged];
 }
 
 
@@ -354,7 +359,23 @@ InitWCPreferences (void)
 		return FALSE;
 	}
 
+	// As window will close then save prefs now.
+	if (fPrefsChanged)
+		[self savePrefs];
 	return TRUE;
+}
+
+
+//----------------------------------------------------------------------------------------
+// Mark prefs as changed but defer saving for 5 secs.
+
+- (void) prefsChanged
+{
+	if (!fPrefsChanged)
+	{
+		fPrefsChanged = TRUE;
+		[self performSelector: @selector(savePrefs) withObject: nil afterDelay: 5];
+	}
 }
 
 
@@ -362,8 +383,10 @@ InitWCPreferences (void)
 
 - (void) savePrefs
 {
-	NSUserDefaults* const prefs = [NSUserDefaults standardUserDefaults];
+	if (!fPrefsChanged || document == nil || ![window isVisible])
+		return;
 
+	fPrefsChanged = FALSE;
 	BOOL showToolbar = [[window toolbar] isVisible];
 	NSDictionary* settings = [NSDictionary dictionaryWithObjectsAndKeys:
 								[window stringWithSavedFrame],                   keyWidowFrame,
@@ -372,6 +395,7 @@ InitWCPreferences (void)
 								NSBool(showToolbar),                             keyShowToolbar,
 								nil];
 
+	NSUserDefaults* const prefs = Preferences();
 	ConstString nameKey = [document windowTitle];
 	NSDictionary* wcWindows = [prefs dictionaryForKey: keyWCWidows];
 	if (wcWindows == nil)
@@ -386,7 +410,6 @@ InitWCPreferences (void)
 	}
 
 	[prefs setObject: wcWindows forKey: keyWCWidows];
-//	[prefs synchronize];
 }
 
 
@@ -398,7 +421,7 @@ InitWCPreferences (void)
 		 context:                (void*)         context
 {
 	#pragma unused(object, change, context)
-	if ( [keyPath isEqualToString: @"flatMode"] )
+	if ([keyPath isEqualToString: @"flatMode"])
 	{
 		[self adjustOutlineView];
 	}
@@ -411,9 +434,7 @@ InitWCPreferences (void)
 {
 	[document removeObserver: self forKeyPath: @"flatMode"];
 
-	DrawerLogView* obj = drawerLogView;
 	drawerLogView = nil;
-	[obj unload];
 	window = nil;
 }
 
@@ -422,16 +443,18 @@ InitWCPreferences (void)
 
 - (void) keyDown: (NSEvent*) theEvent
 {
-	NSString* const chars = [theEvent charactersIgnoringModifiers];
+	ConstString chars = [theEvent charactersIgnoringModifiers];
 	const unichar ch = [chars characterAtIndex: 0];
 
 	if (ch == '\r' || ch == 3)
+	{
 		[self doubleClickInTableView: nil];
+	}
 	else if (([theEvent modifierFlags] & NSControlKeyMask) != 0)	// ctrl+<letter> => command button
 	{
-		for_each_obj(enumerator, cell, [[[window contentView] viewWithTag: vCmdButtons] cells])
+		for_each_obj(enumerator, cell, [WGetView(window, vCmdButtons) cells])
 		{
-			NSString* const keys = [cell keyEquivalent];
+			ConstString keys = [cell keyEquivalent];
 			if (keys != nil && [keys length] == 1 && ch == ([keys characterAtIndex: 0] | 0x20))
 			{
 				[cell performClick: self];
@@ -444,18 +467,18 @@ InitWCPreferences (void)
 		NSTableView* const tableView = tableResult;
 		NSArray* const dataArray = [svnFilesAC arrangedObjects];
 		const int rows = [dataArray count];
-		int i, selRow = [svnFilesAC selectionIndex];
+		int selRow = [svnFilesAC selectionIndex];
 		if (selRow == NSNotFound)
 			selRow = rows - 1;
 		const unichar ch0 = (ch >= 'a' && ch <= 'z') ? (ch - 32) : ch;
-		for (i = 1; i <= rows; ++i)
+		for (int i = 1; i <= rows; ++i)
 		{
 			int index = (selRow + i) % rows;
 			id wc = [dataArray objectAtIndex: index];
 			NSString* name = [wc objectForKey: @"displayPath"];
 			if ([name length] && ([name characterAtIndex: 0] & ~0x20) == ch0)
 			{
-				[tableView selectRow: index byExtendingSelection: false];
+				[tableView selectRow: index byExtendingSelection: FALSE];
 				[tableView scrollRowToVisible: index];
 				break;
 			}
@@ -480,7 +503,7 @@ InitWCPreferences (void)
 
 		savedSelection = [[self selectedFilePaths] retain];
 	}
-//	NSLog(@"savedSelection=%@", savedSelection);
+//	dprintf("savedSelection=%@", savedSelection);
 }
 
 
@@ -488,22 +511,18 @@ InitWCPreferences (void)
 
 - (void) restoreSelection
 {
-//	NSLog(@"restoreSelection=%@ tree='%@'", savedSelection, [document outlineSelectedPath]);
+//	dprintf("savedSelection=%@ tree='%@'", savedSelection, [document outlineSelectedPath]);
 	if (savedSelection != nil)
 	{
 		NSArray* const wcFiles = [svnFilesAC arrangedObjects];
 		NSMutableIndexSet* sel = [NSMutableIndexSet indexSet];
 
-		NSEnumerator* it = [savedSelection objectEnumerator];
-		NSString* fullPath;
-		while (fullPath = [it nextObject])
+		for_each_obj(en, fullPath, savedSelection)
 		{
-			NSEnumerator* wcIt = [wcFiles objectEnumerator];
-			NSDictionary* dict;
 			int index = 0;
-			while (dict = [wcIt nextObject])
+			for_each_obj(wcEn, wcIt, wcFiles)
 			{
-				if ([fullPath isEqualToString: [dict objectForKey: @"fullPath"]])
+				if ([fullPath isEqualToString: [wcIt objectForKey: @"fullPath"]])
 				{
 					[sel addIndex: index];
 					break;
@@ -518,6 +537,20 @@ InitWCPreferences (void)
 		[savedSelection release];
 		savedSelection = nil;
 	}
+}
+
+
+//----------------------------------------------------------------------------------------
+// Return TRUE if there is no sheet blocking this window, otherwise beep & return FALSE.
+
+- (BOOL) noSheet
+{
+	if ([window attachedSheet])
+	{
+		NSBeep();
+		return FALSE;
+	}
+	return TRUE;
 }
 
 
@@ -561,7 +594,7 @@ InitWCPreferences (void)
 - (IBAction) refresh: (id) sender
 {
 	#pragma unused(sender)
-	if (!svnStatusPending)
+	if (!svnStatusPending && [self noSheet])
 		[document svnRefresh];
 }
 
@@ -579,19 +612,24 @@ InitWCPreferences (void)
 
 - (IBAction) performAction: (id) sender
 {
-	const unsigned int action = SelectedTag(sender);
-	enum { kUpdate = 2, kReview = 8 };
-	if (action == kReview)
+	const BOOL isButton = ISA(sender, NSMatrix);
+	const unsigned int action = isButton ? SelectedTag(sender) : [sender tag];
+
+	if (action == cmdReview || action == cmdReviewAlt)
 	{
 		const id subController = [document anySubController];
-		if (subController == nil || AltOrShiftPressed())
+		if (subController == nil || action == cmdReviewAlt || AltOrShiftPressed())
 			[ReviewController performSelector: @selector(openForDocument:) withObject: document afterDelay: 0];
-		else if (subController)
+		else
 			[[subController window] makeKeyAndOrderFront: self];
 	}
-	else if (action == kUpdate && AltOrShiftPressed())
+	else if (action == cmdUpdateAlt || (isButton && action == cmdUpdate && AltOrShiftPressed()))
 	{
 		[self requestSvnUpdate: TRUE];
+	}
+	else if (action == cmdResolve)
+	{
+		[document svnResolve: [self selectedFilePaths]];
 	}
 	else if (action < sizeof(gCommands) / sizeof(gCommands[0]))
 	{
@@ -599,6 +637,8 @@ InitWCPreferences (void)
 			  withObject: makeCommand(gCommands[action], gVerbs[action], nil)
 			  afterDelay: 0];
 	}
+	else
+		dprintf("(%@): ERROR: action=%d", sender, action);
 }
 
 
@@ -699,15 +739,6 @@ InitWCPreferences (void)
 }
 
 
-//- (void) fetchSvnStatusReceiveDataFinished
-//{
-//	[self stopProgressIndicator];
-//	[textResult setString: [[self document] resultString]];
-//
-//	svnStatusPending = NO;
-//}
-
-
 //----------------------------------------------------------------------------------------
 
 - (void) fetchSvnStatusVerboseReceiveDataFinished
@@ -794,15 +825,16 @@ InitWCPreferences (void)
 - (void) setFilterMode: (int) mode
 {
 	[document setFilterMode: mode];
-	[self savePrefs];
+	[self prefsChanged];
 }
 
 
 - (IBAction) changeFilter: (id) sender
 {
-	int tag = [[sender selectedItem] tag];
-
-	[self setFilterMode: tag];
+	if ([self noSheet])
+		[self setFilterMode: [[sender selectedItem] tag]];
+	else
+		[sender selectItemWithTag: [document filterMode]];
 }
 
 
@@ -811,14 +843,20 @@ InitWCPreferences (void)
 - (IBAction) openRepository: (id) sender
 {
 	#pragma unused(sender)
-	[[NSApp delegate] openRepository: [document repositoryUrl] user: [document user] pass: [document pass]];
+	if ([self noSheet])
+	{
+		[[NSApp delegate] openRepository: [document repositoryUrl] user: [document user] pass: [document pass]];
+	}
 }
 
 
 - (IBAction) toggleSidebar: (id) sender
 {
-	#pragma unused(sender)
-	[sidebar toggle: sender];
+	if ([self noSheet])
+	{
+		[sidebar toggle: sender];
+		[self prefsChanged];
+	}
 }
 
 
@@ -827,8 +865,9 @@ InitWCPreferences (void)
 
 - (IBAction) changeMode: (id) sender
 {
-//	NSLog(@"changeMode: %@ tag=%d", sender, [sender tag]);
-	[self setCurrentMode: [sender tag] % 10];	// kModeTree, kModeFlat or kModeSmart
+//	dprintf("%@ tag=%d", sender, [sender tag]);
+	if ([self noSheet])
+		[self setCurrentMode: [sender tag] % 10];	// kModeTree, kModeFlat or kModeSmart
 }
 
 
@@ -846,7 +885,7 @@ InitWCPreferences (void)
 
 - (void) setCurrentMode: (int) mode
 {
-//	NSLog(@"setCurrentMode: %d", mode);
+//	dprintf("%d", mode);
 	if ([self currentMode] != mode)
 	{
 		[self saveSelection];
@@ -854,22 +893,22 @@ InitWCPreferences (void)
 		{
 			case kModeTree:
 				if ([document flatMode])
-					[document setFlatMode: false];
+					[document setFlatMode: FALSE];
 				break;
 
 			case kModeFlat:
 				if ([document smartMode])
-					[document setSmartMode: false];
+					[document setSmartMode: FALSE];
 				else if (![document flatMode])
-					[document setFlatMode: true];
+					[document setFlatMode: TRUE];
 				break;
 
 			case kModeSmart:
 				if (![document smartMode])
-					[document setSmartMode: true];
+					[document setSmartMode: TRUE];
 				break;
 		}
-		[self savePrefs];
+		[self prefsChanged];
 	}
 }
 
@@ -1093,7 +1132,7 @@ enum {
 				NSBeep();
 				break;
 			}
-			suppressAutoRefresh = true;
+			suppressAutoRefresh = TRUE;
 			// Fall through
 		case NSCancelButton:
 			[NSApp endSheet: updateSheet returnCode: tag];
@@ -1180,7 +1219,9 @@ enum {
 - (void) svnUpdate: (id) sender
 {
 	#pragma unused(sender)
-	if (AltOrShiftPressed())
+	if (![self noSheet])
+		;
+	else if (AltOrShiftPressed())
 	{
 		[self requestSvnUpdate: FALSE];
 	}
@@ -1209,7 +1250,7 @@ enum {
 	#pragma unused(alert, contextInfo)
 	if (returnCode == NSOKButton)
 	{
-		suppressAutoRefresh = true;
+		suppressAutoRefresh = TRUE;
 		[document performSelector: @selector(svnUpdate) withObject: nil afterDelay: 0.1];
 	}
 }
@@ -1217,6 +1258,7 @@ enum {
 
 //----------------------------------------------------------------------------------------
 #pragma mark	svn diff
+//----------------------------------------------------------------------------------------
 
 - (void) fileHistoryOpenSheetForItem: (id) item
 {
@@ -1232,7 +1274,9 @@ enum {
 - (void) svnDiff: (id) sender
 {
 	#pragma unused(sender)
-	if (AltOrShiftPressed())
+	if (![self noSheet])
+		;
+	else if (AltOrShiftPressed())
 	{
 		NSDictionary* selection;
 		if (selection = [self selectedItemOrNil])
@@ -1798,7 +1842,7 @@ enum {
 
 - (void) runAlertBeforePerformingAction: (NSDictionary*) command
 {
-	NSString* const cmd = [command objectForKey: @"command"];
+	ConstString cmd = [command objectForKey: @"command"];
 	if ([cmd isEqualToString: @"commit"])
 	{
 		[self startCommitMessage: @"selected"];
@@ -1835,8 +1879,8 @@ enum {
 
 - (void) svnCommand: (id) action
 {
-	NSString* const command = [action objectForKey: @"command"];
-	NSArray* itemPaths = [action objectForKey: @"itemPaths"];
+	ConstString command = [action objectForKey: @"command"];
+	NSArray* const itemPaths = [action objectForKey: @"itemPaths"];
 	id recursive = [action objectForKey: @"recursive"];
 	if (recursive != nil)
 		recursive = getRecursiveOption(command, [recursive boolValue]);
@@ -1861,7 +1905,7 @@ enum {
 	else // Add, Update, Revert, Resolved, Lock, Unlock
 	{
 		[document svnCommand: command options: (recursive ? [NSArray arrayWithObject: recursive] : nil)
-									  info: nil itemPaths: itemPaths];
+					    info: nil itemPaths: itemPaths];
 	}
 
 	[action release];
@@ -1874,7 +1918,7 @@ enum {
 		 returnCode:         (int)      returnCode
 		 contextInfo:        (void*)    contextInfo
 {
-	id action = contextInfo;
+	const id action = (id) contextInfo;
 
 	if (returnCode == NSOKButton)
 	{
@@ -1882,7 +1926,7 @@ enum {
 		if ([buttons count] >= 3)	// Has Recursive checkbox
 		{
 			[action setObject: NSBool([[buttons objectAtIndex: 2] state] == NSOnState)
-					forKey: @"recursive"];
+					   forKey: @"recursive"];
 		}
 
 		[self performSelector: @selector(svnCommand:) withObject: action afterDelay: 0.1];
@@ -1914,7 +1958,10 @@ enum {
 		 contextInfo:       (void*)     contextInfo
 {
 	if (returnCode == NSOKButton)
+	{
+		suppressAutoRefresh = TRUE;
 		[document svnCommit: [commitPanelText string]];
+	}
 
 	[(id) contextInfo release];
 	[sheet close];
@@ -1950,7 +1997,7 @@ enum {
 		[NSApp endSheet: [window attachedSheet]];
 
 	svnStatusPending = NO;
- 	[self stopProgressIndicator];
+	[self stopProgressIndicator];
 
 	if (!isDisplayingErrorSheet)
 	{
@@ -1996,7 +2043,7 @@ enum {
 	*(UTCTime*) contextInfo = CFAbsoluteTimeGetCurrent();
 	if (returnCode == NSAlertAlternateReturn)
 	{
-		suppressAutoRefresh = true;
+		suppressAutoRefresh = TRUE;
 		[window performSelector: @selector(performClose:) withObject: self afterDelay: 0];
 	}
 }
@@ -2015,21 +2062,6 @@ enum {
 {
 	[progressIndicator stopAnimation: self];
 }
-
-
-#if 0
-- (NSDictionary*) performActionMenusDict
-{
-	if ( performActionMenusDict == nil )
-	{
-		performActionMenusDict = [[NSDictionary dictionaryWithContentsOfFile:
-						[[[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent: @"/Contents/Resources/"]
-								stringByAppendingPathComponent: @"performMenus.plist"]] retain];
-	}
-
-	return performActionMenusDict;
-}
-#endif
 
 
 //----------------------------------------------------------------------------------------
@@ -2078,5 +2110,8 @@ enum {
 	}
 }
 
-@end
+@end	// MyWorkingCopyController
 
+
+//----------------------------------------------------------------------------------------
+// End of MyWorkingCopyController.m

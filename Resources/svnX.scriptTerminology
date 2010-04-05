@@ -71,6 +71,13 @@
 			<key>Description</key>
 				<string>compare files with their base revisions</string>
 		</dict>
+
+		<key>resolveFiles</key>
+		<dict>
+			<key>Name</key>			<string>resolveFiles</string>
+			<key>Description</key>
+				<string>interactively resolve conflicted files</string>
+		</dict>
 	</dict>
 	<key>Name</key>
 	<string>svnX</string>

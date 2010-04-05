@@ -19,7 +19,6 @@
 	[[self tableColumnWithIdentifier: @"folders"] setDataCell: cell];
 	[cell release];
 
-	[self setIndentationPerLevel: 10];
 	[self setAutoresizesOutlineColumn: NO];
 	[self setBackgroundColor: [[NSColor controlAlternatingRowBackgroundColors] lastObject]];
 

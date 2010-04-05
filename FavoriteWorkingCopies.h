@@ -20,5 +20,8 @@
 // Compare one or more files with their base revisions.
 - (void) diffFiles: (id) fileOrFiles;
 
+// Interactively merge one or more conflicted files.
+- (void) resolveFiles: (id) fileOrFiles;
+
 @end
 

@@ -28,6 +28,7 @@
 - (void) openRepository:  (NSString*) url;	// Open a repository window.
 - (void) openFiles:       (id) fileOrFiles;	// Open files in appropriate applications.
 - (void) diffFiles:       (id) fileOrFiles;	// Compare files against BASE.
+- (void) resolveFiles:    (id) fileOrFiles;	// Interactively resolve conflicted files.
 
 - (IBAction)  openPreferences:  (id) sender;
 - (IBAction)  closePreferences: (id) sender;

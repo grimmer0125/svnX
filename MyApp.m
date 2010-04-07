@@ -69,11 +69,14 @@ addTransform (Class itsClass, NSString* itsName)
 	NSMutableDictionary* const dictionary = [NSMutableDictionary dictionary];
 	[SvnFileStatusToColourTransformer initialize: dictionary];
 
-	SInt32 response;
-	if (Gestalt(gestaltSystemVersion, &response) != noErr)
-		response = 0;
-	[dictionary setObject: (response >= 0x1050) ? @"/usr/bin" : @"/usr/local/bin"
-													  forKey: @"svnBinariesFolder"];
+	NSFileManager* const fm = [NSFileManager defaultManager];
+	NSString* svnBin = @"/usr/local/bin";
+	if ([fm isExecutableFileAtPath: @"/opt/subversion/bin/svn"])
+		svnBin = @"/opt/subversion/bin";
+	else if ([fm isExecutableFileAtPath: @"/usr/bin/svn"])
+		svnBin = @"/usr/bin";
+
+	[dictionary setObject: svnBin                     forKey: @"svnBinariesFolder"];
 	[dictionary setObject: kNSTrue                    forKey: @"cacheSvnQueries"];
 	[dictionary setObject: [NSNumber numberWithInt:0] forKey: @"defaultDiffApplication"];
 	[dictionary setObject: @"%y-%d-%m %H:%M:%S"       forKey: @"dateformat"];
@@ -89,6 +92,7 @@ addTransform (Class itsClass, NSString* itsName)
 	[dictionary setObject: kNSTrue  forKey: @"expandWCTree"];
 	[dictionary setObject: kNSFalse forKey: @"autoRefreshWC"];
 	[dictionary setObject: kNSFalse forKey: @"compactWCColumns"];
+	[dictionary setObject: kNSFalse forKey: @"showWCExternals"];
 
 	// Review & Commit
 	[dictionary setObject: [NSArray arrayWithContentsOfFile:
@@ -381,6 +385,8 @@ addTransform (Class itsClass, NSString* itsName)
 		}
 	}
 
+	extern UInt32 gSvnVersion;
+	gSvnVersion =
 	fSvnVersion = version;
 //	dprintf("version=%u => '%@' %@", version, [self svnVersion], data);
 	[self setSvnHasLibs: nil];		// Force bindings to update

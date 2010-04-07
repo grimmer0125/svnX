@@ -18,6 +18,11 @@
 
 
 ConstString	kUseOldParsingMethod = @"useOldParsingMethod";
+ConstString	keyShowExternals     = @"showWCExternals",
+			keySmartMode         = @"smartMode",
+			keyFlatMode          = @"flatMode";
+static ConstString kCurrentDir = @".";
+static BOOL gShowExternals = FALSE;
 
 
 //----------------------------------------------------------------------------------------
@@ -95,10 +100,10 @@ useOldParsingMethod ()
 		svnDirectories = [WCTreeEntry alloc];
 
 		// register self as an observer for bound variables
-		const NSKeyValueObservingOptions kOptions = NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld;
-		[self addObserver: self forKeyPath: @"smartMode"  options: kOptions context: NULL];
-		[self addObserver: self forKeyPath: @"flatMode"   options: kOptions context: NULL];
-		[self addObserver: self forKeyPath: @"filterMode" options: kOptions context: NULL];
+		[self addObserver: self forKeyPath: keySmartMode options: 0 context: NULL];
+		[self addObserver: self forKeyPath: keyFlatMode  options: 0 context: NULL];
+		gShowExternals = GetPreferenceBool(keyShowExternals);
+		[Preferences() addObserver: self forKeyPath: keyShowExternals options: 0 context: NULL];
 	}
 
 	return self;
@@ -117,7 +122,6 @@ useOldParsingMethod ()
 	[self setUser:            username];
 	[self setPass:            password];
 	[self setWorkingCopyPath: fullPath];
-	[controller setup];
 }
 
 
@@ -148,23 +152,6 @@ useOldParsingMethod ()
 - (NSString*) windowNibName
 {
 	return @"MyWorkingCopy";
-}
-
-
-//----------------------------------------------------------------------------------------
-
-- (void) windowControllerDidLoadNib: (NSWindowController*) aController
-{
-	[aController setShouldCascadeWindows: NO];
-
-	// set table view's default sorting to status type column
-	id desc1 = [[NSSortDescriptor alloc] initWithKey: @"col1" ascending: NO],
-	   desc2 = [[AlphaNumSortDesc alloc] initWithKey: @"path" ascending: YES];
-	[svnFilesAC setSortDescriptors: [NSArray arrayWithObjects: desc1, desc2, nil]];
-	[desc1 release];
-	[desc2 release];
-
-	[super windowControllerDidLoadNib: aController];
 }
 
 
@@ -226,14 +213,10 @@ useOldParsingMethod ()
 	// tell the task center to cancel pending callbacks to prevent crash
 	[Tasks cancelCallbacksOnTarget: self];
 
-	[self removeObserver: self forKeyPath: @"smartMode"];
-	[self removeObserver: self forKeyPath: @"flatMode"];
-	[self removeObserver: self forKeyPath: @"filterMode"];
+	[self removeObserver: self forKeyPath: keySmartMode];
+	[self removeObserver: self forKeyPath: keyFlatMode];
 
-	MyWorkingCopyController* con = controller;
 	controller = nil;
-	[con cleanup];
-
 	[super close];
 }
 
@@ -311,7 +294,7 @@ typedef struct SvnStatusEnv SvnStatusEnv;
 //----------------------------------------------------------------------------------------
 
 static NSMutableArray*
-addDirToTree (const SvnStatusEnv* env, NSString* const fullPath)
+addDirToTree (const SvnStatusEnv* env, ConstString fullPath)
 {
 //	dprintf("('%@')", fullPath);
 	NSMutableArray* children = [env->fTree objectForKey: fullPath];
@@ -344,7 +327,6 @@ svnStatusReceiver (void*     baton,
 	const SvnStatusEnv* const env = (const SvnStatusEnv*) baton;
 	const svn_wc_entry_t* const entry = status->entry;
 
-	ConstString kCurrentDir = @".";
 	ConstString itemFullPath = UTF8(path);
 	ConstString itemPath = (env->wcPathLength < [itemFullPath length])
 								? [itemFullPath substringFromIndex: env->wcPathLength + 1] : kCurrentDir;
@@ -492,6 +474,7 @@ svnStatusReceiver (void*     baton,
 									itemPath,            @"path",
 									itemFullPath,        @"fullPath",
 									dirPath,             @"dirPath",
+									NSBool(isDirectory), @"isDir",
 
 									NSBool(text_status == svn_wc_status_modified   ), @"modified",
 									NSBool(text_status == svn_wc_status_unversioned), @"new",
@@ -1068,6 +1051,7 @@ svnInfoReceiver (void*     baton,
 									itemPath, @"path",
 									itemFullPath, @"fullPath",
 									dirPath, @"dirPath",
+									NSBool(isDir), @"isDir",	// NOTE: Only valid if !kFlatMode
 
 									NSBool(col1 == 'M'), @"modified",
 									NSBool(col1 == '?'), @"new",
@@ -1113,6 +1097,28 @@ svnInfoReceiver (void*     baton,
 					callback: MakeCallbackInvocation(self, @selector(svnInfoCompletedCallback:))
 				callbackInfo: nil
 					taskInfo: [self documentNameDict]];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnInfo: (id) pathOrPaths
+		 options: (id) options
+{
+	if (pathOrPaths == nil)
+		pathOrPaths = workingCopyPath;
+	if (!ISA(pathOrPaths, NSArray))
+		pathOrPaths = [NSArray arrayWithObject: pathOrPaths];
+	if (options && !ISA(options, NSArray))
+		options = [NSArray arrayWithObject: options];
+	[self setDisplayedTaskObj:
+		[MySvn genericCommand: @"info"
+					arguments: pathOrPaths
+			   generalOptions: [self svnOptionsInvocation]
+					  options: options
+					 callback: MakeCallbackInvocation(self, @selector(emptyCallback:))
+				 callbackInfo: nil
+					 taskInfo: [self documentNameDict]]];
 }
 
 
@@ -1242,6 +1248,23 @@ svnInfoReceiver (void*     baton,
 
 
 //----------------------------------------------------------------------------------------
+#pragma mark	svn cleanup
+//----------------------------------------------------------------------------------------
+
+- (void) svnCleanup: (id) paths
+{
+	[self setDisplayedTaskObj:
+		[MySvn genericCommand: @"cleanup"
+					arguments: paths ? paths : workingCopyPath
+			   generalOptions: [self svnOptionsInvocation]
+					  options: nil
+					 callback: MakeCallbackInvocation(self, @selector(emptyCallback:))
+				 callbackInfo: nil
+					 taskInfo: [self documentNameDict]]];
+}
+
+
+//----------------------------------------------------------------------------------------
 #pragma mark	svn merge
 //----------------------------------------------------------------------------------------
 
@@ -1294,12 +1317,14 @@ svnInfoReceiver (void*     baton,
 	[controller startProgressIndicator];
 	NSInvocation* const callback = [self genericCompletedCallback];
 	NSDictionary* const taskInfo = [self documentNameDict];
+	TaskObj* taskObj = nil;
 
 	if ([command isEqualToString: @"rename"])
 	{
 		NSMutableArray* srcAndDst = [NSMutableArray arrayWithArray: itemPaths];
 		[srcAndDst addObject: [info objectForKey: @"destination"]];
 
+		taskObj =
 		[MySvn   genericCommand: @"move"
 					  arguments: srcAndDst
 				 generalOptions: [self svnOptionsInvocation]
@@ -1310,6 +1335,7 @@ svnInfoReceiver (void*     baton,
 	}
 	else if ([command isEqualToString: @"move"])
 	{
+		taskObj =
 		[MySvn     moveMultiple: itemPaths
 					destination: [info objectForKey: @"destination"]
 				 generalOptions: [self svnOptionsInvocation]
@@ -1320,6 +1346,7 @@ svnInfoReceiver (void*     baton,
 	}
 	else if ([command isEqualToString: @"copy"])
 	{
+		taskObj =
 		[MySvn     copyMultiple: itemPaths
 					destination: [info objectForKey: @"destination"]
 				 generalOptions: [self svnOptionsInvocation]
@@ -1332,6 +1359,7 @@ svnInfoReceiver (void*     baton,
 	{
 		Assert(![command isEqualToString: @"switch"]);
 		Assert(![command isEqualToString: @"commit"]);
+		taskObj =
 		[MySvn   genericCommand: command
 					  arguments: itemPaths
 				 generalOptions: [self svnOptionsInvocation]
@@ -1340,6 +1368,7 @@ svnInfoReceiver (void*     baton,
 				   callbackInfo: nil
 					   taskInfo: taskInfo];
 	}
+	[self setDisplayedTaskObj: taskObj];
 }
 
 
@@ -1410,6 +1439,17 @@ svnInfoReceiver (void*     baton,
 
 //----------------------------------------------------------------------------------------
 #pragma mark	svn diff
+//----------------------------------------------------------------------------------------
+
+- (NSDictionary*) findRootItem
+{
+	for_each_obj(en, it, svnFiles)
+		if ([it objectForKey: @"path"] == kCurrentDir)
+			return it;
+	return nil;
+}
+
+
 //----------------------------------------------------------------------------------------
 
 - (void) svnDiff:      (NSArray*)      items
@@ -1485,8 +1525,7 @@ svnInfoReceiver (void*     baton,
 				name: @"resolve"
 			callback: MakeCallbackInvocation(self, @selector(diffCallback:))
 		callbackInfo: nil
-			taskInfo: [NSDictionary dictionaryWithObject:
-							windowTitle forKey: @"documentName"]
+			taskInfo: [self documentNameDict]
 			dataOnly: NO];
 }
 
@@ -1500,7 +1539,6 @@ svnInfoReceiver (void*     baton,
 	{
 		if ([[it objectForKey: @"fullPath"] isEqualToString: path])
 		{
-		//	[fController fileHistoryOpenSheetForItem: it];
 			[self svnResolve: [NSArray arrayWithObject: path]];
 			return YES;
 		}
@@ -1522,40 +1560,42 @@ svnInfoReceiver (void*     baton,
 
 //----------------------------------------------------------------------------------------
 
+- (void) emptyCallback: (TaskObj*) taskObj
+{
+	#pragma unused(taskObj)
+}
+
+
+//----------------------------------------------------------------------------------------
+
 - (void) observeValueForKeyPath: (NSString*)     keyPath
 		 ofObject:               (id)            object
 		 change:                 (NSDictionary*) change
 		 context:                (void*)         context
 {
 	#pragma unused(object, change, context)
-//	NSLog(@"WC:observe: '%@'", keyPath);
-	BOOL doRefresh = false,
-		 doRearrange = false;
+//	dprintf("keyPath='%@'", keyPath);
 
-	if ([keyPath isEqualToString: @"smartMode"])
+	if ([keyPath isEqualToString: keySmartMode])
 	{
-		doRefresh = YES;
 		if (smartMode)
 			flatMode = YES;
 		[controller adjustOutlineView];
+		[self svnRefresh];
 	}
-	else if ([keyPath isEqualToString: @"flatMode"])
+	else if ([keyPath isEqualToString: keyFlatMode])
 	{
-		doRefresh = YES;
 		if (!flatMode)
 			smartMode = NO;
-	//	[controller adjustOutlineView];
+		[self svnRefresh];
 	}
-	else if ([keyPath isEqualToString: @"filterMode"])
+	else if ([keyPath isEqualToString: keyShowExternals])
 	{
-		doRearrange = YES;
+		gShowExternals = GetPreferenceBool(keyShowExternals);
+		[self svnRefresh];
 	}
 
-	if (doRefresh)
-		[self svnRefresh];
-	else if (doRearrange)
-		[svnFilesAC rearrangeObjects];
-//	NSLog(@"WC:observe ---", (doRefresh ? @"doRefresh" : @""), (doRearrange ? @"doRearrange" : @""));
+//	dprintf("---");
 }
 
 

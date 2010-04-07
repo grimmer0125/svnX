@@ -4,6 +4,7 @@
 #import "TableViewDelegate.h"
 #import "IconTextCell.h"
 #import "IconUtils.h"
+#import "ViewUtils.h"
 
 
 @implementation MyTableView
@@ -20,14 +21,12 @@
 - (void) awakeFromNib
 {
 #if 1
-	NSTableColumn* const col = [self tableColumnWithIdentifier: @"path"];
 	IconTextCell* const cell = [IconTextCell new];
 	[cell setFont: [NSFont labelFontOfSize: 11]];
 	[cell setIconRef: GenericFileIcon()];
-	[col setDataCell: cell];
+	[[self tableColumnWithIdentifier: @"path"] setDataCell: cell];
 	[cell release];
 	[self removeTableColumn: [self tableColumnWithIdentifier: @"icon"]];
-	[col unbind: NSValueBinding];
 #endif
 	[self setDoubleAction: @selector(onDoubleClick:)];
 }
@@ -65,6 +64,20 @@
 			break;
 	}
 }
+
+
+//----------------------------------------------------------------------------------------
+// Select row under mouse before showing contextual menu.
+
+- (void) rightMouseDown: (NSEvent*) theEvent
+{
+	const int row = [self rowAtPoint: locationInView(theEvent, self)];
+	if (row >= 0 && ![self isRowSelected: row])
+		[self selectRowIndexes: [NSIndexSet indexSetWithIndex: row]
+		  byExtendingSelection: ([theEvent modifierFlags] & NSShiftKeyMask) != 0];
+	[super rightMouseDown: theEvent];
+}
+
 
 @end	// MyTableView
 

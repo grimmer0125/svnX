@@ -59,6 +59,8 @@ void InitWCPreferences (void);
 - (void) svnRefresh;
 
 - (void) fetchSvnInfo;
+- (void) svnInfo: (id) pathOrPaths
+		 options: (id) options;
 - (void) svnUpdateSelectedItems: (NSArray*) options;
 - (void) svnUpdate: (NSArray*) options;
 - (void) svnUpdate;
@@ -82,6 +84,7 @@ void InitWCPreferences (void);
 		 callbackInfo: (id)            callbackInfo;
 
 - (void) svnCommit: (NSString*) message;
+- (void) svnCleanup: (id) paths;
 - (void) svnMerge:  (NSArray*) options;
 - (void) svnSwitch: (NSArray*) options;
 
@@ -93,6 +96,7 @@ void InitWCPreferences (void);
 - (NSInvocation*) svnOptionsInvocation;
 - (WCTreeEntry*)  svnDirectories;
 
+- (NSDictionary*) findRootItem;
 - (NSString*) workingCopyPath;
 - (void)      setWorkingCopyPath: (NSString*) str;
 - (NSString*) user;

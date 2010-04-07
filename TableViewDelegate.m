@@ -10,6 +10,7 @@
 #import "NSString+MyAdditions.h"
 #import "IconTextCell.h"
 #import "CommonUtils.h"
+#import "IconUtils.h"
 
 
 enum { kFirstColumn = 1, kNumColumns = 8 };
@@ -238,9 +239,21 @@ HelpTagForWCItem (NSDictionary* wcFileInfo)
 	if (tableColumn == fPathColumn)
 	{
 		NSDictionary* item = [[svnFilesAC arrangedObjects] objectAtIndex: row];
-		[cell setIconRef: [(MyWorkingCopy*) document iconForFile: [item objectForKey: @"path"]]];
-		[cell setTitle: [item objectForKey: @"displayPath"]];
+		ConstString fullPath = [item objectForKey: @"fullPath"];
+		Boolean isDirectory = [[item objectForKey: @"isDir"] boolValue];
+		char path[2048];
+		if (ToUTF8(fullPath, path, sizeof(path)))
+			[cell setIconRef: GetFileOrTypeIcon(path, fullPath, &isDirectory)];
 	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) tableViewSelectionDidChange: (NSNotification*) notification
+{
+	#pragma unused(notification)
+	[[document controller] selectionChanged];
 }
 
 

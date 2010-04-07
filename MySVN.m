@@ -9,6 +9,8 @@
 #import <unistd.h>
 
 
+UInt32 gSvnVersion = 0;
+
 //----------------------------------------------------------------------------------------
 
 static id
@@ -174,9 +176,11 @@ GetDiffAppName ()
 
 	[arguments addObjectsFromArray: args];
 
-	if (![command isEqualToString: @"info"] && ![command isEqualToString: @"revert"] &&
-		![command isEqualToString: @"add"] && ![command isEqualToString: @"move"] &&
-		![command isEqualToString: @"resolved"] )
+//	dprintf("cmd='%@' gSvnVersion=%d", command, gSvnVersion);
+	if (gSvnVersion >= 1006000 && [command isEqualToString: @"cleanup"])
+		[arguments addObject: @"--non-interactive"];
+	else if (![command isEqualToString: @"revert"] && ![command isEqualToString: @"add"] &&
+			 ![command isEqualToString: @"move"] && ![command isEqualToString: @"resolved"])
 		addGeneralOptions(arguments, generalOptions);
 	[arguments addObjectsFromArray: options];
 

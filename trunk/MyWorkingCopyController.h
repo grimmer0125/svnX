@@ -51,22 +51,24 @@
 	BOOL					outlineInited;		// has initialised outline view
 	BOOL					fPrefsChanged;
 
+	float					fTreeWidth;
+	NSMutableArray*			fTreeExpanded;		// expanded paths in tree view
 	NSArray*				savedSelection;		// used by save/restoreSelection
 }
 
 + (void) presetDocumentName: name;
 
-- (IBAction) openAWorkingCopy: (id) sender;
-- (IBAction) changeFilter:     (id) sender;
-- (IBAction) performAction:    (id) sender;
-
-- (IBAction) revealInFinder: (id) sender;
-- (IBAction) refresh:        (id) sender;
-- (IBAction) svnUpdate:      (id) sender;
-- (IBAction) svnDiff:        (id) sender;
-- (IBAction) openRepository: (id) sender;
-- (IBAction) toggleSidebar:  (id) sender;
-- (IBAction) changeMode:     (id) sender;
+- (IBAction) changeFilter:         (id) sender;
+- (IBAction) performAction:        (id) sender;
+- (IBAction) revealInFinder:       (id) sender;
+- (IBAction) refresh:              (id) sender;
+- (IBAction) svnUpdate:            (id) sender;
+- (IBAction) diffBase:             (id) sender;
+- (IBAction) diffPrev:             (id) sender;
+- (IBAction) diffSheet:            (id) sender;
+- (IBAction) openRepository:       (id) sender;
+- (IBAction) toggleSidebar:        (id) sender;
+- (IBAction) changeMode:           (id) sender;
 - (IBAction) updateSheetDoClick:   (id) sender;
 - (IBAction) renamePanelValidate:  (id) sender;
 - (IBAction) mergeSheetDoClick:    (id) sender;
@@ -78,12 +80,12 @@
 - (void)     setCurrentMode: (int) mode;
 - (void)     setStatusMessage: (NSString*) message;
 
-- (void) setup;
-- (void) savePrefs;
-- (void) cleanup;
 - (void) keyDown: (NSEvent*) theEvent;
 - (void) saveSelection;
 - (void) restoreSelection;
+- (void) selectionChanged;
+- (void) calcTreeExpanded;
+- (void) selectTreePath: (NSString*) treePath;
 
 - (void) doubleClickInTableView: (id) sender;
 - (void) adjustOutlineView;

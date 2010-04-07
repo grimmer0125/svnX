@@ -18,6 +18,8 @@
 #import "ViewUtils.h"
 
 
+//----------------------------------------------------------------------------------------
+
 enum {
 	vFlatTable	=	2000,
 	vTreeTable	=	2002,
@@ -30,41 +32,79 @@ enum {
 	kModeSmart	=	2
 };
 
-static ConstString keyWCWidows    = @"wcWindows",
+static ConstString keyWCWidows    = @"wcWindows",		// Deprecated
 				   keyWidowFrame  = @"winFrame",
 				   keyViewMode    = @"viewMode",
 				   keyFilterMode  = @"filterMode",
-				   keyShowToolbar = @"showToolbar";
+				   keyShowToolbar = @"showToolbar",
+				   keyShowSidebar = @"showSidebar",
+				   keySortDescs   = @"sortDescs",
+				   keyTreeWidth   = @"treeWidth",
+				   keyTreeSelPath = @"treeSelPath",
+				   keyTreeExpanded = @"treeExpanded";
+
+static const GCoord kMinFilesHeight    = 96,
+					kMinTreeWidth      = 140,
+					kMaxTreeWidthFract = 0.5,
+					kDefaultTreeWidth  = 200;
+
 static NSString* gInitName = nil;
 
 
 //----------------------------------------------------------------------------------------
 // Subversion 1.4.6 commands that support recursive flags
-//			Add, Remove, Update, Revert, Resolved, Lock, Unlock, Copy, Move, Rename
-// Default:  Y     -        Y      N         N      -      -      -      -      -
-// Allow -R: N     -        N      Y         Y      -      -      -      -      -
-// Allow -N: Y     -        Y      N         N      -      -      -      -      -
+//			Add, Remove, Update, Revert, Resolved, Lock, Unlock, Copy, Move, Rename, Info
+// Default:  Y     -        Y      N         N      -      -      -      -      -      N
+// Allow -R: N     -        N      Y         Y      -      -      -      -      -      Y
+// Allow -N: Y     -        Y      N         N      -      -      -      -      -      N
 
 
 //----------------------------------------------------------------------------------------
 // Add, Delete, Update, Revert, Resolved, Lock, Unlock, Commit, Review
 
 static ConstString gCommands[] = {
-	@"add", @"remove", @"update", @"revert", @"resolved", @"lock", @"unlock", @"commit", @"review"
+	@"add", @"remove", @"update", @"revert", @"resolved", @"lock", @"unlock",
+	@"commit", @"review", @"resolve", @"cleanup", @"rename", @"copy", @"move", @"info"
 };
 
 static ConstString gVerbs[] = {
-	@"add", @"remove", @"update", @"revert", @"resolve", @"lock", @"unlock", @"commit", @"review"
+	@"add", @"remove", @"update", @"revert", @"resolve", @"lock", @"unlock",
+	@"commit", @"review", @"resolve", @"cleanup", @"rename", @"copy", @"move", @"info"
 };
 
 // 0.add  1.remove  2.update  102.update-alt  3.revert  4.resolved  5.lock  6.unlock
-// 7.commit  8.review  9.resolve  10.cleanup  11.rename  12.copy  13.move
+// 7.commit  8.review  9.resolve  10.cleanup  11.rename  12.copy  13.move  14.info
 enum SvnCommand {
 	cmdAdd = 0, cmdRemove, cmdUpdate, cmdRevert, cmdResolved, cmdLock, cmdUnlock,
-	cmdCommit, cmdReview, cmdResolve, cmdCleanup, cmdRename, cmdCopy, cmdMove,
+	cmdCommit, cmdReview, cmdResolve, cmdCleanup, cmdRename, cmdCopy, cmdMove, cmdInfo,
 	cmdUpdateAlt = 100 + cmdUpdate,
-	cmdReviewAlt = 100 + cmdReview
+	cmdReviewAlt = 100 + cmdReview,
+	cmdInfoRecursive = 100 + cmdInfo
 };
+typedef enum SvnCommand SvnCommand;
+
+
+//----------------------------------------------------------------------------------------
+// Return true if the drawer is open (or opening).
+
+static bool
+IsOpen (NSDrawer* drawer)
+{
+	const int state = [drawer state];
+	return (state == NSDrawerOpeningState || state == NSDrawerOpenState);
+}
+
+
+//----------------------------------------------------------------------------------------
+// Return the n'th sub-view of this view.
+
+static NSView*
+SubView (NSView* aView, int index)
+{
+	Assert(aView != nil);
+	Assert(index >= 0 && index < 999);
+	return [[aView subviews] objectAtIndex: index];
+}
 
 
 //----------------------------------------------------------------------------------------
@@ -149,11 +189,120 @@ WCItemDesc (NSDictionary* item, BOOL isDir)
 
 
 //----------------------------------------------------------------------------------------
+// Also returns the displayPath of the first match in firstName.
+
+static NSArray*
+getDirFullPaths (NSArray* wcItems, NSString** firstName)
+{
+	NSString* displayPath = nil;
+	NSMutableArray* const paths = [NSMutableArray array];
+	for_each_obj(en, it, wcItems)
+	{
+		if ([[it objectForKey: @"isDir"] boolValue])
+		{
+			[paths addObject: [it objectForKey: @"fullPath"]];
+			if (displayPath == nil)
+				displayPath = [it objectForKey: @"displayPath"];
+		}
+	}
+	*firstName = displayPath;
+	return paths;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static NSTableColumn*
+setColumnSort (NSTableView* tableView, NSString* colId, Class sort)
+{
+	NSTableColumn* col = [tableView tableColumnWithIdentifier: colId];
+	Assert(col != nil);
+	id desc = [[sort alloc] initWithKey: colId ascending: YES];
+	[col setSortDescriptorPrototype: desc];
+	[desc release];
+	return col;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static inline NSString*
+PrefKey (NSString* nameKey)
+{
+	return [@"WC:" stringByAppendingString: nameKey];
+}
+
+
+//----------------------------------------------------------------------------------------
 
 void
 InitWCPreferences (void)
 {
+	// Split svnX 1.1 array of dicts into separate dict prefs
+	NSDictionary* const wcWindows = GetPreference(keyWCWidows);
+	if (wcWindows)
+	{
+		for_each_key(en, key, wcWindows)
+		{
+			ConstString prefKey = PrefKey(key);
+			if (!GetPreference(prefKey))
+				SetPreference(prefKey, [wcWindows objectForKey: key]);
+		}
+	}
 }
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	-
+//----------------------------------------------------------------------------------------
+
+@interface SortPath : AlphaNumSortDesc @end
+
+@implementation SortPath
+
+- (NSComparisonResult) compareObject: (id) obj1 toObject: (id) obj2
+{
+	NSComparisonResult result = [[obj1 objectForKey: @"path"]
+									compare: [obj2 objectForKey: @"path"]
+									options: NSCaseInsensitiveSearch | NSNumericSearch];
+	return fAscending ? result : -result;
+}
+
+@end	// SortPath
+
+
+//----------------------------------------------------------------------------------------
+
+@interface SortRevision : AlphaNumSortDesc @end
+
+@implementation SortRevision
+
+- (NSComparisonResult) compareObject: (id) obj1 toObject: (id) obj2
+{
+	NSComparisonResult result = [[obj1 objectForKey: @"revisionCurrent"]
+									compare: [obj2 objectForKey: @"revisionCurrent"]
+									options: NSNumericSearch];
+	return fAscending ? result : -result;
+}
+
+@end	// SortRevision
+
+
+//----------------------------------------------------------------------------------------
+
+@interface SortLast : AlphaNumSortDesc @end
+
+@implementation SortLast
+
+- (NSComparisonResult) compareObject: (id) obj1 toObject: (id) obj2
+{
+	NSComparisonResult result = [[obj1 objectForKey: @"revisionLastChanged"]
+									compare: [obj2 objectForKey: @"revisionLastChanged"]
+									options: NSNumericSearch];
+	return fAscending ? result : -result;
+}
+
+@end	// SortLast
 
 
 //----------------------------------------------------------------------------------------
@@ -163,6 +312,7 @@ InitWCPreferences (void)
 @interface MyWorkingCopyController (Private)
 
 	- (void) prefsChanged;
+	- (void) savePrefs;
 
 	- (IBAction) commitPanelValidate: (id) sender;
 	- (IBAction) commitPanelCancel:   (id) sender;
@@ -170,11 +320,13 @@ InitWCPreferences (void)
 	- (IBAction) switchPanelValidate: (id) sender;
 	- (IBAction) mergeSheetDoClick:   (id) sender;
 
-	- (void) resetStatusMessage;
 	- (void) runAlertBeforePerformingAction: (NSDictionary*) command;
 	- (void) startCommitMessage: (NSString*) selectedOrAll;
 	- (void) renamePanelForCopy: (BOOL)      isCopy
 			 destination:        (NSString*) destination;
+	- (void) requestNameSheet:   (SvnCommand) cmd;
+	- (void) openSidebar;
+	- (void) svnCleanup_Request;
 
 	- (void) requestSvnUpdate:   (BOOL)      forSelection;
 	- (void) updateSheetSetKind: (id)        updateKindView;
@@ -210,7 +362,51 @@ InitWCPreferences (void)
 
 - (void) awakeFromNib
 {
+	fTreeExpanded = [NSMutableArray new];
 	isDisplayingErrorSheet = NO;
+	suppressAutoRefresh = TRUE;
+	Assert(document != nil);
+	[window setDelegate: self];		// for windowDidMove, windowDidResize & windowWillClose messages
+
+	int viewMode   = kModeSmart,
+		filterMode = kFilterAll;
+	GCoord treeWidth = 0;
+	id sortDescsPref = nil;
+	ConstString prefKey = PrefKey(gInitName);
+	NSDictionary* const settings = GetPreference(prefKey);
+	if (settings != nil)
+	{
+		viewMode   = [[settings objectForKey: keyViewMode] intValue];
+		filterMode = [[settings objectForKey: keyFilterMode] intValue];
+	//	searchStr  = [settings objectForKey: keySearchStr];
+
+		if (![[settings objectForKey: keyShowToolbar] boolValue])
+			[[window toolbar] setVisible: NO];
+
+		[window setFrameFromString: [settings objectForKey: keyWidowFrame]];
+
+		if ([[settings objectForKey: keyShowSidebar] boolValue])
+			[sidebar performSelector: @selector(open) withObject: nil afterDelay: 0.125];
+
+		ConstString treeSelPath = [settings objectForKey: keyTreeSelPath];
+		if (treeSelPath != nil)
+			[document setOutlineSelectedPath: treeSelPath];
+
+		id treeExpanded = [settings objectForKey: keyTreeExpanded];
+		if (treeExpanded)
+			[fTreeExpanded addObjectsFromArray: treeExpanded];
+		else
+			[fTreeExpanded addObject: @""];
+
+		treeWidth = [[settings objectForKey: keyTreeWidth] floatValue];
+		sortDescsPref = [settings objectForKey: keySortDescs];
+	}
+
+	[modeView setIntValue: viewMode];
+	[self performSelector: @selector(initMode:) withObject: [NSNumber numberWithInt: viewMode] afterDelay: 0];
+	[filterView selectItemWithTag: filterMode];
+	[document setFilterMode: filterMode];
+
 	[self setStatusMessage: @""];
 
 	[document addObserver: self forKeyPath: @"flatMode"
@@ -218,11 +414,31 @@ InitWCPreferences (void)
 
 	[drawerLogView setup: document forWindow: window];
 
+	// This also loads the table view's sorting so do it first (so we can overwrite it)
+	[tableResult setAutosaveName: prefKey];
+
+	// Try to load the table view's sorting from our pref
+	NSArray* sortDescs = nil;
+	if (sortDescsPref && ISA(sortDescsPref, NSData))
+	{
+		sortDescs = [NSUnarchiver unarchiveObjectWithData: sortDescsPref];
+		if (!ISA(sortDescs, NSArray))
+			sortDescs = nil;
+	}
+
+	// Otherwise set the table view's default sorting to status type & path columns
+	if (!sortDescs)
+	{
+		sortDescs = [NSArray arrayWithObjects:
+						[[[NSSortDescriptor alloc] initWithKey: @"col1" ascending: NO]  autorelease], 
+						[[[SortPath         alloc] initWithKey: @"path" ascending: YES] autorelease], nil];
+	}
+	[svnFilesAC setSortDescriptors: sortDescs];
+
 	NSTableView* const tableView = tableResult;
-	[[[tableView tableColumnWithIdentifier: @"path"] dataCell] setDrawsBackground: NO];
-	SetColumnSort(tableView, @"path",   @"path");
-	SetColumnSort(tableView, @"rev",    @"revisionCurrent");
-	SetColumnSort(tableView, @"change", @"revisionLastChanged");
+	setColumnSort(tableView, @"path",   [SortPath     class]);
+	setColumnSort(tableView, @"rev",    [SortRevision class]);
+	setColumnSort(tableView, @"change", [SortLast     class]);
 
 	if (GetPreferenceBool(@"compactWCColumns"))
 	{
@@ -244,23 +460,14 @@ InitWCPreferences (void)
 	[self setNextResponder: [tableView nextResponder]];
 	[tableView setNextResponder: self];
 
-	NSUserDefaults* const prefs = Preferences();
-	NSDictionary* wcWindows = [prefs dictionaryForKey: keyWCWidows];
-	if (wcWindows != nil)
-	{
-		NSDictionary* settings = [wcWindows objectForKey: gInitName];
-		if (settings != nil)
-		{
-			if (![[settings objectForKey: keyShowToolbar] boolValue])
-				[[window toolbar] setVisible: NO];
-
-			ConstString widowFrame = [settings objectForKey: keyWidowFrame];
-			if (widowFrame != nil)
-				[window setFrameFromString: widowFrame];
-		}
-	}
-
+	if (treeWidth <= 0)
+		treeWidth = kDefaultTreeWidth;
+	fTreeWidth = treeWidth;
 	[self adjustOutlineView];
+	fTreeWidth = treeWidth;		// adjustTreeView may have overwritten this if it called closeTreeView
+
+	[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(quitting:)
+												 name: NSApplicationWillTerminateNotification object: nil];
 }
 
 
@@ -268,50 +475,32 @@ InitWCPreferences (void)
 
 - (void) dealloc
 {
+//	dprintf("%@", self);
+	[[NSNotificationCenter defaultCenter] removeObserver: self];
 	[savedSelection release];
+	[fTreeExpanded  release];
 	[super dealloc];
 }
 
 
 //----------------------------------------------------------------------------------------
-// Called after 'document' is setup
 
-- (void) setup
+- (void) initMode: (NSNumber*) number
 {
-	int viewMode   = kModeSmart;
-	int filterMode = kFilterAll;
-
-	NSUserDefaults* const prefs = Preferences();
-	NSDictionary* wcWindows = [prefs dictionaryForKey: keyWCWidows];
-	if (wcWindows != nil)
+	const int viewMode = [number intValue];
+	if (viewMode == [self currentMode])		// Force refresh if mode hasn't changed so won't auto-refresh
 	{
-		ConstString nameKey = [document windowTitle];
-		NSDictionary* settings = [wcWindows objectForKey: nameKey];
-		if (settings != nil)
-		{
-			viewMode    = [[settings objectForKey: keyViewMode] intValue];
-			filterMode  = [[settings objectForKey: keyFilterMode] intValue];
-		//	searchStr   = [settings objectForKey: keySearchStr];
-		}
-	}
-
-	[modeView setIntValue: viewMode];
-	[self setCurrentMode: viewMode];
-	if (viewMode == kModeSmart)		// Force refresh as mode is default & thus hasn't changed so won't auto-refresh
 		[document svnRefresh];
-	[filterView selectItemWithTag: filterMode];
-	[document setFilterMode: filterMode];
-
-	[window makeKeyAndOrderFront: self];
-	[self prefsChanged];
-
-	[window setDelegate: self];		// for windowDidMove & windowDidResize messages
+		[self prefsChanged];
+	}
+	else
+		[self setCurrentMode: viewMode];
 }
 
 
 //----------------------------------------------------------------------------------------
 
-- (void) windowDidBecomeKey: (NSNotification*) notification
+- (void) windowDidBecomeMain: (NSNotification*) notification
 {
 	#pragma unused(notification)
 	if (suppressAutoRefresh)
@@ -359,10 +548,21 @@ InitWCPreferences (void)
 		return FALSE;
 	}
 
-	// As window will close then save prefs now.
-	if (fPrefsChanged)
-		[self savePrefs];
 	return TRUE;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) windowWillClose: (NSNotification*) notification
+{
+	#pragma unused(notification)
+	[document removeObserver: self forKeyPath: @"flatMode"];
+	fPrefsChanged = TRUE;
+	[self savePrefs];
+
+	document = nil;
+	drawerLogView = nil;
 }
 
 
@@ -387,29 +587,32 @@ InitWCPreferences (void)
 		return;
 
 	fPrefsChanged = FALSE;
-	BOOL showToolbar = [[window toolbar] isVisible];
-	NSDictionary* settings = [NSDictionary dictionaryWithObjectsAndKeys:
+	const GCoord treeWidth = [SubView(splitView, 0) frame].size.width;
+	if (treeWidth > 0)
+		fTreeWidth = treeWidth;
+	const id sortDescs = [NSArchiver archivedDataWithRootObject: [svnFilesAC sortDescriptors]];
+	SetPreference(PrefKey([document windowTitle]),
+				  [NSDictionary dictionaryWithObjectsAndKeys:
 								[window stringWithSavedFrame],                   keyWidowFrame,
 								[NSNumber numberWithInt: [self currentMode]],    keyViewMode,
 								[NSNumber numberWithInt: [document filterMode]], keyFilterMode,
-								NSBool(showToolbar),                             keyShowToolbar,
-								nil];
+								NSBool([[window toolbar] isVisible]),            keyShowToolbar,
+								NSBool(IsOpen(sidebar)),                         keyShowSidebar,
+								[NSNumber numberWithFloat: fTreeWidth],          keyTreeWidth,
+								[document outlineSelectedPath],                  keyTreeSelPath,
+								fTreeExpanded,                                   keyTreeExpanded,
+								sortDescs,                                       keySortDescs,
+								nil]);
+}
 
-	NSUserDefaults* const prefs = Preferences();
-	ConstString nameKey = [document windowTitle];
-	NSDictionary* wcWindows = [prefs dictionaryForKey: keyWCWidows];
-	if (wcWindows == nil)
-	{
-		wcWindows = [NSDictionary dictionaryWithObject: settings forKey: nameKey];
-	}
-	else
-	{
-		NSMutableDictionary* dict = [NSMutableDictionary dictionaryWithDictionary: wcWindows];
-		[dict setObject: settings forKey: nameKey];
-		wcWindows = dict;
-	}
 
-	[prefs setObject: wcWindows forKey: keyWCWidows];
+//----------------------------------------------------------------------------------------
+
+- (void) quitting: (NSNotification*) notification
+{
+	#pragma unused(notification)
+	fPrefsChanged = TRUE;
+	[self savePrefs];
 }
 
 
@@ -430,27 +633,17 @@ InitWCPreferences (void)
 
 //----------------------------------------------------------------------------------------
 
-- (void) cleanup
-{
-	[document removeObserver: self forKeyPath: @"flatMode"];
-
-	drawerLogView = nil;
-	window = nil;
-}
-
-
-//----------------------------------------------------------------------------------------
-
 - (void) keyDown: (NSEvent*) theEvent
 {
 	ConstString chars = [theEvent charactersIgnoringModifiers];
 	const unichar ch = [chars characterAtIndex: 0];
+	const UInt32 modifiers = [theEvent modifierFlags];
 
 	if (ch == '\r' || ch == 3)
 	{
 		[self doubleClickInTableView: nil];
 	}
-	else if (([theEvent modifierFlags] & NSControlKeyMask) != 0)	// ctrl+<letter> => command button
+	else if ((modifiers & (NSControlKeyMask | NSCommandKeyMask)) == NSControlKeyMask) // ctrl+<letter> => command button
 	{
 		for_each_obj(enumerator, cell, [WGetView(window, vCmdButtons) cells])
 		{
@@ -462,7 +655,7 @@ InitWCPreferences (void)
 			}
 		}
 	}
-	else if (ch >= ' ' && ch < 0xF700)
+	else if (ch >= ' ' && ch < 0xF700 && (modifiers & NSCommandKeyMask) == 0)
 	{
 		NSTableView* const tableView = tableResult;
 		NSArray* const dataArray = [svnFilesAC arrangedObjects];
@@ -473,9 +666,8 @@ InitWCPreferences (void)
 		const unichar ch0 = (ch >= 'a' && ch <= 'z') ? (ch - 32) : ch;
 		for (int i = 1; i <= rows; ++i)
 		{
-			int index = (selRow + i) % rows;
-			id wc = [dataArray objectAtIndex: index];
-			NSString* name = [wc objectForKey: @"displayPath"];
+			const int index = (selRow + i) % rows;
+			NSString* name = [[dataArray objectAtIndex: index] objectForKey: @"displayPath"];
 			if ([name length] && ([name characterAtIndex: 0] & ~0x20) == ch0)
 			{
 				[tableView selectRow: index byExtendingSelection: FALSE];
@@ -495,13 +687,7 @@ InitWCPreferences (void)
 {
 	if ([[svnFilesAC arrangedObjects] count] > 0)
 	{
-		if (savedSelection != nil)
-		{
-			[savedSelection release];
-			savedSelection = nil;
-		}
-
-		savedSelection = [[self selectedFilePaths] retain];
+		SetVar(savedSelection, [self selectedFilePaths]);
 	}
 //	dprintf("savedSelection=%@", savedSelection);
 }
@@ -555,41 +741,16 @@ InitWCPreferences (void)
 
 
 //----------------------------------------------------------------------------------------
+
+- (void) selectionChanged
+{
+}
+
+
+//----------------------------------------------------------------------------------------
 #pragma mark -
 #pragma mark IBActions
 //----------------------------------------------------------------------------------------
-
-- (IBAction) openAWorkingCopy: (id) sender
-{
-	#pragma unused(sender)
-	NSOpenPanel* oPanel = [NSOpenPanel openPanel];
-
-	[oPanel setAllowsMultipleSelection: NO];
-	[oPanel setCanChooseDirectories: YES];
-	[oPanel setCanChooseFiles: NO];
-
-	[oPanel beginSheetForDirectory: NSHomeDirectory() file: nil types: nil
-					modalForWindow: [self window]
-					modalDelegate:  self
-					didEndSelector: @selector(openPanelDidEnd:returnCode:contextInfo:)
-					contextInfo:    NULL];
-}
-
-
-- (void) openPanelDidEnd: (NSOpenPanel*) sheet
-		 returnCode:      (int)          returnCode
-		 contextInfo:     (void*)        contextInfo
-{
-	#pragma unused(contextInfo)
-	if (returnCode == NSOKButton)
-	{
-		NSString* pathToFile = [[[sheet filenames] objectAtIndex: 0] copy];
-
-		[document setWorkingCopyPath: pathToFile];
-		[document svnRefresh];
-	}
-}
-
 
 - (IBAction) refresh: (id) sender
 {
@@ -613,7 +774,7 @@ InitWCPreferences (void)
 - (IBAction) performAction: (id) sender
 {
 	const BOOL isButton = ISA(sender, NSMatrix);
-	const unsigned int action = isButton ? SelectedTag(sender) : [sender tag];
+	const SvnCommand action = isButton ? SelectedTag(sender) : [sender tag];
 
 	if (action == cmdReview || action == cmdReviewAlt)
 	{
@@ -627,9 +788,29 @@ InitWCPreferences (void)
 	{
 		[self requestSvnUpdate: TRUE];
 	}
+	else if (action == cmdCommit)
+	{
+		[self startCommitMessage: @"selected"];
+	}
 	else if (action == cmdResolve)
 	{
 		[document svnResolve: [self selectedFilePaths]];
+	}
+	else if (action == cmdCleanup)
+	{
+		[self svnCleanup_Request];
+	}
+	else if (action == cmdRename || action == cmdCopy)
+	{
+		[self requestNameSheet: action];
+	}
+	else if (action == cmdInfo || action == cmdInfoRecursive)
+	{
+		id paths = [self selectedFilePaths];
+		if ([paths count] == 0)		// Use selected tree folder or nil => WC
+			paths = [document flatMode] ? nil : [document treeSelectedFullPath];
+		[self openSidebar];
+		[document svnInfo: paths options: (action == cmdInfoRecursive) ? @"--recursive" : nil];
 	}
 	else if (action < sizeof(gCommands) / sizeof(gCommands[0]))
 	{
@@ -658,54 +839,55 @@ InitWCPreferences (void)
 - (void) doubleClickInTableView: (id) sender
 {
 	#pragma unused(sender)
-	NSArray* const selection = [svnFilesAC selectedObjects];
-	if ([selection count] > 0)
-	{
-		OpenFiles([selection valueForKey: @"fullPath"]);
-	}
+	NSArray* const filePaths = [self selectedFilePaths];
+	if ([filePaths count] != 0)
+		OpenFiles(filePaths);
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) adjustOutlineView
 {
 	[document setSvnFiles: nil];
-	int tag;
+	NSView* view;
 	if ([document flatMode])
 	{
 		[self closeOutlineView];
-		tag = vFlatTable;
+		view = tableResult;
 	}
 	else
 	{
 		[self openOutlineView];
-		tag = vTreeTable;
+		view = outliner;
 	}
-	[window makeFirstResponder: WGetView(window, tag)];
+	[window makeFirstResponder: view];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) openOutlineView
 {
-	NSView* leftView = [[splitView subviews] objectAtIndex: 0];
-
 	NSRect frame = [splitView frame];
+	GCoord width = [[splitView superview] frame].size.width;
 	frame.origin.x = 0;
-	frame.size.width = [[splitView superview] frame].size.width;
+	frame.size.width = width;
 	[splitView setFrame: frame];
+	[SubView(splitView, 0) setHidden: NO];
 
-	frame = [leftView frame];
-	frame.size.width = 200;
-	[leftView setFrame: frame];
-	[leftView setHidden: NO];
-
-	[splitView adjustSubviews];
-	[splitView setNeedsDisplay: YES];
+	width = [self splitView: splitView constrainMaxCoordinate: width - [splitView dividerThickness] ofSubviewAt: 0];
+	if (fTreeWidth > width)
+		fTreeWidth = width;
+	initSplitView(splitView, fTreeWidth, nil);
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (void) closeOutlineView
 {
-	NSView* leftView = [[splitView subviews] objectAtIndex: 0];
+	NSView* const leftView = SubView(splitView, 0);
 
 	const GCoord kDivGap = [splitView dividerThickness];
 	NSRect frame = [splitView frame];
@@ -714,14 +896,17 @@ InitWCPreferences (void)
 	[splitView setFrame: frame];
 
 	frame = [leftView frame];
+	if (frame.size.width > 0)
+		fTreeWidth = frame.size.width;
 	frame.size.width = 0;
 	[leftView setFrame: frame];
 	[leftView setHidden: YES];
 
 	[splitView adjustSubviews];
-	[splitView setNeedsDisplay: YES];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) fetchSvnStatus
 {
@@ -730,6 +915,8 @@ InitWCPreferences (void)
 	[document fetchSvnStatus: AltOrShiftPressed()];
 }
 
+
+//----------------------------------------------------------------------------------------
 
 - (void) fetchSvnInfo
 {
@@ -747,74 +934,32 @@ InitWCPreferences (void)
 		return;
 	[self stopProgressIndicator];
 
-//	NSOutlineView* const view = outliner;
-	NSIndexSet* selectedRows = [outliner selectedRowIndexes];
-	unsigned int index,
-				 selectedRow = [selectedRows firstIndex],
-				 rowCount    = [outliner numberOfRows];
-	if (selectedRow == NSNotFound)
+	NSOutlineView* const tree = outliner;
+	if ([tree numberOfRows] != 0)
 	{
-		selectedRow = 0;
-		selectedRows = [NSIndexSet indexSetWithIndex: 0];
-	}
+		// Save the path of the selected tree item
+		ConstString selPath = [document outlineSelectedPath];
 
-	// Save the paths of the selected item
-	NSString* selPath = outlineInited ? [[outliner itemAtRow: selectedRow] path] : nil;
+		[tree reloadData];
+		Assert([tree numberOfRows] > 0);
 
-	NSMutableArray* expanded = nil;
-	if (outlineInited && selPath != nil)	// Save the paths of the expanded items
-	{
-		[selPath retain];
-		expanded = [NSMutableArray array];
-		for (index = 0; index < rowCount; ++index)
-		{
-			id item = [outliner itemAtRow: index];
-			if ([outliner isItemExpanded: item])
-			{
-				[expanded addObject: [item path]];
-			}
-		}
-	}
-
-	[outliner reloadData];
-
-	if (!outlineInited)
-	{
-		if (![document flatMode])			// First time through - expand top level
-		{									// If preference is set then expand children too
-			outlineInited = YES;
-			[outliner expandItem: [outliner itemAtRow: 0] expandChildren: GetPreferenceBool(@"expandWCTree")];
-		}
-	}
-	else if (selPath != nil)				// Restore the expanded items
-	{
-		unsigned int xIndex = 0, xCount = [expanded count];
+		// Restore the expanded tree items
+		UInt32 xIndex = 0, xCount = [fTreeExpanded count];
 		id xPath = nil, item;
-		for (index = 0; (item = [outliner itemAtRow: index]) != nil; ++index)
+		for (int index = 0; (item = [tree itemAtRow: index]) != nil; ++index)
 		{
 			NSString* path = [item path];
 			if (xPath == nil && xIndex < xCount)
-				xPath = [expanded objectAtIndex: xIndex++];
+				xPath = [fTreeExpanded objectAtIndex: xIndex++];
 			if (xPath != nil && [xPath isEqualToString: path])
 			{
-				[outliner expandItem: item];
+				[tree expandItem: item];
 				xPath = nil;
 			}
-											// Restore the selected item
-			if (selPath != nil && [selPath isEqualToString: path])
-			{
-				selectedRows = [NSIndexSet indexSetWithIndex: index];
-				[selPath release];
-				selPath = nil;
-			}
 		}
-		[selPath release];
+
+		[self selectTreePath: selPath];
 	}
-
-	[outliner selectRowIndexes: selectedRows byExtendingSelection: NO];
-	if ([selectedRows count])
-		[outliner scrollRowToVisible: [selectedRows firstIndex]];
-
 	svnStatusPending = NO;
 }
 
@@ -825,9 +970,13 @@ InitWCPreferences (void)
 - (void) setFilterMode: (int) mode
 {
 	[document setFilterMode: mode];
+	[svnFilesAC rearrangeObjects];
 	[self prefsChanged];
 }
 
+
+//----------------------------------------------------------------------------------------
+// The Filter toolbar pop-up menu has changed
 
 - (IBAction) changeFilter: (id) sender
 {
@@ -850,6 +999,8 @@ InitWCPreferences (void)
 }
 
 
+//----------------------------------------------------------------------------------------
+
 - (IBAction) toggleSidebar: (id) sender
 {
 	if ([self noSheet])
@@ -861,7 +1012,19 @@ InitWCPreferences (void)
 
 
 //----------------------------------------------------------------------------------------
-// View mode
+
+- (void) openSidebar
+{
+	if (!IsOpen(sidebar))
+	{
+		[sidebar open: nil];
+		[self prefsChanged];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+// View mode: Sent by command key menu
 
 - (IBAction) changeMode: (id) sender
 {
@@ -915,20 +1078,6 @@ InitWCPreferences (void)
 
 //----------------------------------------------------------------------------------------
 
-- (void) setStatusMessage: (NSString*) message
-{
-	if (message)
-		[statusView setStringValue: message];
-	else
-	{
-		[window retain];
-		[self resetStatusMessage];
-	}
-}
-
-
-//----------------------------------------------------------------------------------------
-
 - (void) resetStatusMessage
 {
 	if ([window isVisible])
@@ -947,24 +1096,30 @@ InitWCPreferences (void)
 
 
 //----------------------------------------------------------------------------------------
+
+- (void) setStatusMessage: (NSString*) message
+{
+	if (message)
+		[statusView setStringValue: message];
+	else
+	{
+		[window retain];
+		[self resetStatusMessage];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
 #pragma mark -
 #pragma mark Split View delegate
-//----------------------------------------------------------------------------------------
-
-static const GCoord kMinFilesHeight    = 96,
-					kMinTreeWidth      = 140,
-					kMaxTreeWidthFract = 0.5;
-
-
 //----------------------------------------------------------------------------------------
 
 - (BOOL) splitView:          (NSSplitView*) sender
 		 canCollapseSubview: (NSView*)      subview
 {
 	#pragma unused(sender, subview)
-
 #if 0
-	NSView* leftView = [[splitView subviews] objectAtIndex: 0];
+	NSView* leftView = SubView(splitView, 0);
 
 	if (subview == leftView)
 	{
@@ -986,7 +1141,6 @@ static const GCoord kMinFilesHeight    = 96,
 		   ofSubviewAt:            (int)          offset
 {
 	#pragma unused(sender, offset)
-
 	return proposedMax * kMaxTreeWidthFract;	// max tree width = proposedMax * kMaxTreeWidthFract
 }
 
@@ -998,7 +1152,6 @@ static const GCoord kMinFilesHeight    = 96,
 		   ofSubviewAt:            (int)          offset
 {
 	#pragma unused(sender, proposedMin, offset)
-
 	return kMinTreeWidth;						// min tree width = kMinTreeWidth
 }
 
@@ -1066,17 +1219,15 @@ enum {
 - (void) requestSvnUpdate: (BOOL) forSelection
 {
 	NSView* const root = [updateSheet contentView];
-	NSString* msg;
+	NSString* msg = @"Update entire working copy to:";
 	if (forSelection)
 	{
 		NSArray* const selObjs = [svnFilesAC selectedObjects];
 		const int count = [selObjs count];
 		msg = (count == 1) ? [NSString stringWithFormat: @"Update item %C%@%C to:",
-									0x201C, [[selObjs objectAtIndex: 0] objectForKey: @"displayPath"], 0x201D]
+									0x201C, [[selObjs lastObject] objectForKey: @"displayPath"], 0x201D]
 						   : [NSString stringWithFormat: @"Update %d items to:", count];
 	}
-	else
-		msg = @"Update entire working copy to:";
 	SetViewString(root, vUpdateDesc, msg);
 
 	const SvnRevNum revNum = [[document revision] intValue];
@@ -1262,6 +1413,11 @@ enum {
 
 - (void) fileHistoryOpenSheetForItem: (id) item
 {
+	if (item == nil)
+		item = [document findRootItem];
+
+	if (item == nil)
+		return;
 	// close the sheet if it is already open
 	if ([window attachedSheet])
 		[NSApp endSheet: [window attachedSheet]];
@@ -1271,26 +1427,114 @@ enum {
 }
 
 
+//----------------------------------------------------------------------------------------
+// Ask user to confirm diff of entire WC.
+
+- (void) svnDiff_Request: (id) options
+{
+	NSAlert* alert =
+		[NSAlert alertWithMessageText: options ? @"Diff this entire working copy with its PREV revision?"
+											   : @"Diff this entire working copy with its BASE revision?"
+						defaultButton: nil		// OK
+					  alternateButton: @"Cancel"
+						  otherButton: nil
+			informativeTextWithFormat: @"Select one or more items first to show only their diffs."];
+	[alert beginSheetModalForWindow: window
+					  modalDelegate: self
+					 didEndSelector: @selector(svnDiff_SheetEnded:returnCode:contextInfo:)
+						contextInfo: [options retain]];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnDiff_SheetEnded: (NSAlert*) alert
+		 returnCode:         (int)      returnCode
+		 contextInfo:        (void*)    contextInfo
+{
+	#pragma unused(alert)
+
+	if (returnCode == NSOKButton)
+	{
+		[document svnDiff: nil options: (id) contextInfo];	// Diff entire WC
+	}
+	[(id) contextInfo autorelease];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnDiffWithOption: (NSString*) option
+{
+	if ([self noSheet])
+	{
+		NSArray* paths = [self selectedFilePaths];
+		if ([paths count] == 0)
+			[self svnDiff_Request: option];
+		else
+			[document svnDiff: paths options: option];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+// Diff each selected item with its BASE revision.  If no selection ask user.
+
+- (IBAction) diffBase: (id) sender
+{
+	#pragma unused(sender)
+	[self svnDiffWithOption: nil];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Diff each selected item with its PREV revision.  If no selection ask user.
+
+- (IBAction) diffPrev: (id) sender
+{
+	#pragma unused(sender)
+	[self svnDiffWithOption: @"-rPREV"];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Open diff/log sheet for first selected item or entire WC if no selection.
+
+- (IBAction) diffSheet: (id) sender
+{
+	#pragma unused(sender)
+	if ([self noSheet])
+	{
+		NSArray* const selection = [svnFilesAC selectedObjects];
+		[self fileHistoryOpenSheetForItem: [selection count] ? [selection objectAtIndex: 0] : nil];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+// Called by Diff toolbar item.
+// diff with BASE:   click Diff        |  cmd-D        ->  diffBase:
+// diff with PREV:   shift-click Diff  |  cmd-shift-D  ->  diffPrev: 
+// open diff sheet:  alt-click Diff    |  cmd-L        ->  diffSheet:
+
 - (void) svnDiff: (id) sender
 {
 	#pragma unused(sender)
-	if (![self noSheet])
-		;
-	else if (AltOrShiftPressed())
+	if ([self noSheet])
 	{
-		NSDictionary* selection;
-		if (selection = [self selectedItemOrNil])
+		const UInt32 modifiers = [[NSApp currentEvent] modifierFlags];
+		if ((modifiers & NSShiftKeyMask) != 0)				// shift-click
 		{
-			[self fileHistoryOpenSheetForItem: selection];
+			[self diffPrev: nil];
 		}
-		else
+		else if ((modifiers & NSAlternateKeyMask) != 0)		// alt-click
 		{
-			[self svnError: @"Please select exactly one item."];
+			[self diffSheet: nil];
 		}
-	}
-	else
-	{
-		[document diffItems: [self selectedFilePaths]];
+		else												// click
+		{
+			[self diffBase: nil];
+		}
 	}
 }
 
@@ -1311,6 +1555,8 @@ enum {
 
 //----------------------------------------------------------------------------------------
 #pragma mark	svn rename
+//----------------------------------------------------------------------------------------
+// In-line edit of WC item name.
 
 - (void) requestSvnRenameSelectedItemTo: (NSString*) destination
 {
@@ -1339,19 +1585,26 @@ enum {
 //----------------------------------------------------------------------------------------
 #pragma mark	svn copy & svn move common
 
-- (void) renamePanelForCopy: (BOOL)      isCopy
-		 destination:        (NSString*) destination
+- (void) renameSheet: (SvnCommand) cmd
+		 filePaths:   (NSArray*)   filePaths
+		 destination: (NSString*)  destination
 {
-	NSMutableDictionary* action = makeCommandDict(isCopy ? @"copy" : @"move", destination);
-	[action setObject: [self selectedFilePaths] forKey: @"itemPaths"];
+	Assert(cmd == cmdRename || cmd == cmdCopy || cmd == cmdMove);
+	NSMutableDictionary* action = makeCommandDict(gCommands[cmd], destination);
+	if (filePaths == nil)
+		filePaths = [self selectedFilePaths];
+	[action setObject: filePaths forKey: @"itemPaths"];
 
-	NSDictionary* selection;
-	if (selection = [self selectedItemOrNil])
+	if ([filePaths count] == 1)
 	{
-		suppressAutoRefresh = true;		// Otherwise selection gets reset before it's used
-		[[[renamePanel contentView] viewWithTag: 100]
-				setStringValue: isCopy ? @"Copy and Rename" : @"Move and Rename"];
-		[renamePanelTextField setStringValue: [[selection valueForKey: @"path"] lastPathComponent]];
+		suppressAutoRefresh = TRUE;
+		ConstString fullPath = [filePaths lastObject];
+		NSString* title = (cmd == cmdCopy) ? @"Copy and Rename" : @"Move and Rename";
+		// If dest dir == source dir then use the following titles instead
+		if ([destination isEqualToString: [fullPath stringByDeletingLastPathComponent]])
+			title = (cmd == cmdCopy) ? @"Copy" : @"Rename";
+		[[[renamePanel contentView] viewWithTag: 100] setStringValue: title];
+		[renamePanelTextField setStringValue: [fullPath lastPathComponent]];
 		[renamePanelTextField selectText: self];
 		[NSApp beginSheet:     renamePanel
 			   modalForWindow: [self window]
@@ -1361,6 +1614,15 @@ enum {
 	}
 	else
 		[self runAlertBeforePerformingAction: action];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) renamePanelForCopy: (BOOL)      isCopy
+		 destination:        (NSString*) destination
+{
+	[self renameSheet: isCopy ? cmdCopy : cmdMove filePaths: nil destination: destination];
 }
 
 
@@ -1379,16 +1641,93 @@ enum {
 
 	if (returnCode == NSOKButton)
 	{
-		[self runAlertBeforePerformingAction: action];
+		[self performSelector: @selector(svnCommand:) withObject: action afterDelay: 0];
 	}
-
-	[action release];
+	else
+		[action release];
 }
 
 
 - (IBAction) renamePanelValidate: (id) sender
 {
 	[NSApp endSheet: renamePanel returnCode: [sender tag]];
+}
+
+
+//----------------------------------------------------------------------------------------
+// User requested to rename or copy the selected item.
+
+- (void) requestNameSheet: (SvnCommand) cmd
+{
+	NSDictionary* const item = [self selectedItemOrNil];
+	if (item)
+	{
+		ConstString fullPath = [item objectForKey: @"fullPath"];
+		[self renameSheet: cmd
+				filePaths: [NSArray arrayWithObject: fullPath]
+			  destination: [fullPath stringByDeletingLastPathComponent]];
+	}
+	else
+		[self svnError: @"Please select exactly one item."];
+}
+
+
+//----------------------------------------------------------------------------------------
+#pragma mark	svn cleanup
+//----------------------------------------------------------------------------------------
+// Ask user to confirm cleanup of entire working copy, current folder or selected folders.
+
+- (void) svnCleanup_Request
+{
+	NSString* firstName = nil;
+	NSArray* paths = getDirFullPaths([svnFilesAC selectedObjects], &firstName);
+
+	int count = [paths count];
+	if (count == 0 && ![document flatMode])	// Selected tree folder
+	{
+		count = 1;
+		firstName = [document outlineSelectedPath];
+		[(NSMutableArray*) paths addObject: [document treeSelectedFullPath]];
+	}
+
+	NSString* msg;
+	if (count == 0 || [paths containsObject: [document workingCopyPath]])
+	{
+		msg = @"Recursively clean up this entire working copy.";
+		paths = nil;	// => [fDocument workingCopyPath]
+	}
+	else if (count == 1)
+		msg = [NSString stringWithFormat: @"Recursively clean up folder \u201C%@\u201D.", firstName];
+	else
+		msg = [NSString stringWithFormat: @"Recursively clean up the %u selected folders.", count];
+
+	NSAlert* alert = [NSAlert alertWithMessageText: msg
+									 defaultButton: nil		// OK
+								   alternateButton: @"Cancel"
+									   otherButton: nil
+						 informativeTextWithFormat: @""];
+	[alert beginSheetModalForWindow: window
+					  modalDelegate: self
+					 didEndSelector: @selector(svnCleanup:returnCode:contextInfo:)
+						contextInfo: [paths retain]];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnCleanup:  (NSAlert*) alert
+		 returnCode:  (int)      returnCode
+		 contextInfo: (void*)    contextInfo
+{
+	#pragma unused(alert)
+	NSArray* const paths = [(NSArray*) contextInfo autorelease];
+
+	if (returnCode == NSOKButton)
+	{
+		suppressAutoRefresh = TRUE;
+		[[alert window] orderOut: nil];
+		[document svnCleanup: paths];
+	}
 }
 
 
@@ -1991,10 +2330,6 @@ enum {
 	Assert(errorString != nil);
 	if (![window isVisible])
 		return;
-	// close any existing sheet that is not an svnError sheet (workaround a "double sheet" effect
-	// that can occur because svn info and svn status are launched simultaneously)
-	if (!isDisplayingErrorSheet && [window attachedSheet] != nil)
-		[NSApp endSheet: [window attachedSheet]];
 
 	svnStatusPending = NO;
 	[self stopProgressIndicator];
@@ -2002,12 +2337,15 @@ enum {
 	if (!isDisplayingErrorSheet)
 	{
 		static UTCTime prevTime = 0;
+		NSWindow* const sheet = [window attachedSheet];
 		// Allow user to prevent repeated alerts.
-		BOOL canClose = ((CFAbsoluteTimeGetCurrent() - prevTime) < 5.0 ||
+		BOOL canClose = !sheet &&
+						((CFAbsoluteTimeGetCurrent() - prevTime) < 5.0 ||
 						 containsLocalizedString(errorString, @" is not a working copy") ||
 						 containsLocalizedString(errorString, @" client is too old"));
 		isDisplayingErrorSheet = YES;
 
+		NSBeep();
 		NSAlert* alert = [NSAlert alertWithMessageText: @"Error"
 										 defaultButton: @"OK"
 									   alternateButton: canClose ? @"Close Working Copy" : nil
@@ -2015,8 +2353,7 @@ enum {
 							 informativeTextWithFormat: @"%@", errorString];
 
 		[alert setAlertStyle: NSCriticalAlertStyle];
-
-		[alert	beginSheetModalForWindow: window
+		[alert	beginSheetModalForWindow: sheet ? sheet : window
 						   modalDelegate: self
 						  didEndSelector: @selector(svnErrorSheetEnded:returnCode:contextInfo:)
 							 contextInfo: &prevTime];
@@ -2084,6 +2421,53 @@ enum {
 - (NSArray*) selectedFilePaths
 {
 	return [[svnFilesAC selectedObjects] valueForKey: @"fullPath"];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Set fTreeExpanded to the list of expanded tree paths.
+
+- (void) calcTreeExpanded
+{
+	[fTreeExpanded removeAllObjects];
+	NSOutlineView* const tree = outliner;
+	const int rowCount = [tree numberOfRows];
+	for (int index = 0; index < rowCount; ++index)
+	{
+		id item = [tree itemAtRow: index];
+		if ([tree isItemExpanded: item])
+		{
+			[fTreeExpanded addObject: [item path]];
+		}
+	}
+	[self prefsChanged];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Select <treePath> in fTreeView or its deepest ancestor if it doesn't exist.
+
+- (void) selectTreePath: (NSString*) treePath
+{
+	int selectedRow = 0;
+	NSOutlineView* const tree = outliner;
+	const int rowCount = [tree numberOfRows];
+	while (selectedRow == 0 && [treePath length] > 0)
+	{
+		for (int index = 0; index < rowCount; ++index)
+		{
+			ConstString path = [[tree itemAtRow: index] path];
+			if ([treePath isEqualToString: path])
+			{
+				selectedRow = index;
+				break;
+			}
+		}
+		if (selectedRow == 0)
+			treePath = [treePath stringByDeletingLastPathComponent];
+	}
+	[tree selectRowIndexes: [NSIndexSet indexSetWithIndex: selectedRow] byExtendingSelection: NO];
+	[tree scrollRowToVisible: selectedRow];
 }
 
 

@@ -1,3 +1,7 @@
+//
+//	MyWorkingCopyToolbar.m
+//
+
 #import "MyWorkingCopyToolbar.h"
 #import "NSString+MyAdditions.h"
 #import "CommonUtils.h"
@@ -56,8 +60,6 @@
 {
 	items = [[NSMutableDictionary alloc] init];
 
-	[self createItem: @"Working Copy Path" view: workingCopyPathView, 150, 18, 340, 32];
-
 	[self createItem: @"Filter" view: filterView, 74, 15, 74, 32];
 
 	[self createItem: @"Search" view: searchView, 60, 19, 130, 32];
@@ -69,21 +71,22 @@
 					   "Alt-click to also show repository updates."];
 
 	[self createItem: @"svnDiff" label: @"Diff" image: @"FileMerge"
-		  help:       @"Compare selected files with its base revision.\n"
+		  help:       @"Compare each selected file with its BASE revision.\n"
+					   "Shift-click to compare with PREV revision.\n"
 					   "Alt-click to compare other revisions."];
 
 	[self createItem: @"revealInFinder" label: @"Reveal" image: @"Finder"
 		  help:       @"Show the selected file in the Finder."];
 
 	[self createItem: @"svnUpdate" label: @"Update" image: @"checkout2"
-		  help:       UTF8("Update this working copy to HEAD.\n"
-						   "Alt-click to specify a different revision.")];
+		  help:       @"Update this working copy to HEAD.\n"
+					   "Alt-click to specify a different revision."];
 
 	[self createItem: @"openRepository" label: @"Repository" image: @"Repository"
 		  help:       @"Open repository window for this working copy."];
 
 	[self createItem: @"toggleSidebar" label: @"Output" image: @"sidebar"
-		  help:       @"Show/Hide output of updates and commits."];
+		  help:       @"Show/Hide output of updates, commits, merges, etc."];
 
 	NSToolbar* toolbar = [[NSToolbar alloc] initWithIdentifier: @"WorkingCopyToolBar2"];
 	[toolbar setDelegate: self];
@@ -145,7 +148,6 @@
 	return [NSArray arrayWithObjects:
 				@"View",
 				@"Filter",
-				@"Working Copy Path",
 				@"Search",
 				@"revealInFinder",
 				@"svnDiff",
@@ -162,5 +164,5 @@
 
 //----------------------------------------------------------------------------------------
 
-@end
+@end	// MyWorkingCopyToolbar
 

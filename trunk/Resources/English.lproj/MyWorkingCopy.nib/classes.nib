@@ -102,19 +102,19 @@
 		</dict>
 		<dict>
 			<key>CLASS</key>
-			<string>MyTableView</string>
-			<key>LANGUAGE</key>
-			<string>ObjC</string>
-			<key>SUPERCLASS</key>
-			<string>NSTableView</string>
-		</dict>
-		<dict>
-			<key>CLASS</key>
 			<string>NSTextView</string>
 			<key>LANGUAGE</key>
 			<string>ObjC</string>
 			<key>SUPERCLASS</key>
 			<string>NSText</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>MyTableView</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSTableView</string>
 		</dict>
 		<dict>
 			<key>CLASS</key>
@@ -166,6 +166,8 @@
 				<string>id</string>
 				<key>documentProxy</key>
 				<string>NSObjectController</string>
+				<key>fDocument</key>
+				<string>id</string>
 				<key>logTextView</key>
 				<string>NSTextView</string>
 			</dict>
@@ -207,13 +209,17 @@
 				<string>id</string>
 				<key>commitPanelValidate</key>
 				<string>id</string>
+				<key>diffBase</key>
+				<string>id</string>
+				<key>diffPrev</key>
+				<string>id</string>
+				<key>diffSheet</key>
+				<string>id</string>
 				<key>doubleClickInTableView</key>
 				<string>id</string>
 				<key>mergeSheetDoClick</key>
 				<string>id</string>
 				<key>mergeSheetURLChanged</key>
-				<string>id</string>
-				<key>openAWorkingCopy</key>
 				<string>id</string>
 				<key>openRepository</key>
 				<string>id</string>
@@ -224,8 +230,6 @@
 				<key>renamePanelValidate</key>
 				<string>id</string>
 				<key>revealInFinder</key>
-				<string>id</string>
-				<key>svnDiff</key>
 				<string>id</string>
 				<key>svnUpdate</key>
 				<string>id</string>

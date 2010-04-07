@@ -64,6 +64,9 @@
 	NSString* treePath = [[ov itemAtRow: [ov selectedRow]] path];
 	if (treePath)
 		[document setOutlineSelectedPath: treePath];
+	else
+		[controller selectTreePath: [document outlineSelectedPath]];
+	[controller performSelector: @selector(prefsChanged) withObject: nil afterDelay: 0];
 }
 
 
@@ -77,6 +80,24 @@
 	#pragma unused(outlineView, tableColumn)
 
 	[cell setIconRef: [item icon: document]];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) outlineViewItemDidCollapse: (NSNotification*) notification
+{
+	#pragma unused(notification)
+	[controller performSelector: @selector(calcTreeExpanded) withObject: nil afterDelay: 0];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) outlineViewItemDidExpand: (NSNotification*) notification
+{
+	#pragma unused(notification)
+	[controller performSelector: @selector(calcTreeExpanded) withObject: nil afterDelay: 0];
 }
 
 

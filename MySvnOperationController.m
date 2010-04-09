@@ -55,12 +55,24 @@
 
 
 //----------------------------------------------------------------------------------------
+
+- (void) setupUrl: (NSURL*)        url
+		 options:  (NSInvocation*) options
+		 revision: (NSString*)     revision
+{
+	#pragma unused(url, options, revision)
+	dprintf("UNIMPLEMENTED: (url=<%@> revision=%@)", url, revision);
+}
+
+
+//----------------------------------------------------------------------------------------
 // Private:
 
 - (id) initSheet:  (SvnOperation)  operation
 	   repository: (MyRepository*) repository
 	   url:        (NSURL*)        url
 	   sourceItem: (RepoItem*)     sourceItem
+	   revision:   (NSString*)     revision
 {
 	Assert(operation >= kSvnCopy && operation <= kSvnDiff);
 
@@ -79,8 +91,12 @@
 			// TO_DO: retain sourceItem for use by copy or move
 			if (targetBrowser != nil)
 				[targetBrowser setRepository: repository];
-			[self setupUrl: url options: [repository svnOptionsInvocation]
-				  sourceItem: sourceItem];
+			if (revision)
+				[self setupUrl: url options: [repository svnOptionsInvocation]
+					  revision: revision];
+			else
+				[self setupUrl: url options: [repository svnOptionsInvocation]
+					  sourceItem: sourceItem];
 
 			[NSApp beginSheet:     svnSheet
 				   modalForWindow: [repository windowForSheet]
@@ -103,7 +119,20 @@
 		 url:        (NSURL*)        url
 		 sourceItem: (RepoItem*)     sourceItem
 {
-	[[self alloc] initSheet: operation repository: repository url: url sourceItem: sourceItem];
+	[[self alloc] initSheet: operation repository: repository url: url
+				   sourceItem: sourceItem revision: nil];
+}
+
+
+//----------------------------------------------------------------------------------------
+
++ (void) runSheet:   (SvnOperation)  operation
+		 repository: (MyRepository*) repository
+		 url:        (NSURL*)        url
+		 revision:   (NSString*)     revision
+{
+	[[self alloc] initSheet: operation repository: repository url: url
+				 sourceItem: nil revision: revision];
 }
 
 

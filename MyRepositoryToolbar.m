@@ -24,6 +24,7 @@
 	[item setTarget: document];
 	[item setAction: NSSelectorFromString([itsID stringByAppendingString: @":"])];
 	[item setImage: [NSImage imageNamed: imageName]];
+	[item setTag: 0];	// Important for svnDiff, svnBlame & svnOpen
 	[items setObject: item forKey: itsID];
 	[item release];
 	return item;
@@ -45,7 +46,7 @@
 
 - (void) awakeFromNib
 {
-	items = [[NSMutableDictionary alloc] init];
+	items = [NSMutableDictionary new];
 
 	[self createItem: @"svnCopy"       label: @"Copy"
 				help: @"Copy selected item within the repository."];
@@ -62,11 +63,13 @@
 	[self createItem: @"svnExport"     label: @"Export"   image: @"export"
 				help: @"Export items from the repository."];
 	[self createItem: @"svnFileMerge"  label: @"Diff"     image: @"FileMerge"
-				help: @"Compare revisions of an item in the repository."];
+				help: @"Compare files in selected revision, path or repository item to PREV.\n"
+					   "Alt-click to choose custom revisions."];
 	[self createItem: @"svnOpen"       label: @"Open"     image: @"open"
 				help: @"Open the selected repository items."];
 	[self createItem: @"svnBlame"      label: @"Blame"
-				help: @"Show the content of files with revision and author information in-line."];
+				help: @"Show the content of files with revision and author information in-line.\n"
+					   "Alt-click to include dates."];
 	[self createItem: @"svnReport"     label: @"Report"
 				help: UTF8("Generate a printable report of the selected item\xE2\x80\x99s log.")];
 	[self createItem: @"toggleSidebar" label: @"Output"   image: @"sidebar"
@@ -155,5 +158,5 @@
 
 //----------------------------------------------------------------------------------------
 
-@end
+@end	// MyRepositoryToolbar
 

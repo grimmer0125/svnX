@@ -9,6 +9,8 @@
 
 extern ConstString kTypeRepoItem;
 
+@class MyRepository;
+
 @interface RepoItem : NSObject
 {
 	NSString*	fName;
@@ -20,8 +22,8 @@ extern ConstString kTypeRepoItem;
 	SInt64		fSize;
 	SvnRevNum	fRevision,
 				fModRev;
-	BOOL		fIsRoot,
-				fIsDir;
+	BOOL		fIsRoot, fIsDir,
+				fIsLog, fGettingInfo;
 }
 
 + (id)			repoItem:		(NSDictionary*) dict
@@ -38,8 +40,13 @@ extern ConstString kTypeRepoItem;
 				name:			(NSString*) name
 				revision:		(SvnRevNum) revision
 				url:			(NSURL*)    url;
++ (id)          repoPath:		(NSString*) path
+				revision:		(SvnRevNum) revision
+				url:			(NSURL*)    url;
+- (void)        svnInfo:        (MyRepository*) document;
 - (BOOL)		isRoot;
 - (BOOL)		isDir;
+- (BOOL)		isLog;
 - (void)		setName:		(NSString*) name;
 - (NSString*)	name;
 - (void)		setAuthor:		(NSString*) author;

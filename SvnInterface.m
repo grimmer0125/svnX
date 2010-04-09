@@ -5,6 +5,8 @@
 //----------------------------------------------------------------------------------------
 
 #import "MyApp.h"
+#import "MySVN.h"
+#import "Tasks.h"
 #import "SvnInterface.h"
 #import "svn_config.h"
 #import "svn_fs.h"
@@ -488,6 +490,80 @@ SvnEndClient (SvnEnv* env)
 {
 	if (env && env->pool)
 		SvnDeletePool(env->pool);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+SvnPool
+SvnGetPool (SvnEnv* env)
+{
+	Assert(env && env->pool);
+	return env ? env->pool : NULL;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static const NSTimeInterval kDefaultMaxRunTime = 30;
+
+static inline NSTimeInterval RunTime (NSTimeInterval t) { return t ? t : kDefaultMaxRunTime; }
+
+static inline NSString* NewString_	(NSData* data)
+{ return [[[NSString alloc] initWithData: data encoding: NSUTF8StringEncoding] autorelease]; }
+
+
+//----------------------------------------------------------------------------------------
+
+int
+SvnRun (NSArray* args, NSData** stdOut, NSData** stdErr, NSTimeInterval maxTime)
+{
+	int status = -1;
+	*stdOut = *stdErr = nil;
+	@try
+	{
+		NSTask* const task = [[NSTask new] autorelease];
+		[task setEnvironment: [Task createEnvironment: NO]];	
+		[task setLaunchPath: SvnCmdPath()];
+		[task setArguments: args];
+		NSPipe* pipe;
+		[task setStandardOutput: pipe = [NSPipe pipe]];
+		NSFileHandle* const outf = [pipe fileHandleForReading];
+		[task setStandardError:  pipe = [NSPipe pipe]];
+		NSFileHandle* const errf = [pipe fileHandleForReading];
+		[task launch];
+
+		NSMutableData* const outData = [NSMutableData data],
+						   * errData = [NSMutableData data];
+		*stdOut = outData;
+		*stdErr = errData;
+		const UTCTime endTime = CFAbsoluteTimeGetCurrent() + RunTime(maxTime);
+
+		while ([task isRunning])
+		{
+			if (CFAbsoluteTimeGetCurrent() > endTime)
+			{
+				[task terminate];
+				dprintf("TIMED-OUT: `svn %@` after %g secs", args, RunTime(maxTime));
+				break;
+			}
+			[outData appendData: [outf availableData]];
+			[errData appendData: [errf availableData]];
+		//	dprintf("outData=%@\n    errData=%@", outData, errData);
+		}
+		[outData appendData: [outf readDataToEndOfFile]];
+		[errData appendData: [errf readDataToEndOfFile]];
+		status = [task terminationStatus];
+		if (qDebug && 0)
+			dprintf_("    status=%d stderr=\"%@\" stdout=\"%@\"", status,
+					 NewString_(errData), NewString_(outData));
+	}
+	@catch (id ex)
+	{
+		dprintf("CAUGHT EXCEPTION: %@", ex);
+	}
+
+	return status;
 }
 
 

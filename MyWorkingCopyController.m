@@ -85,29 +85,6 @@ typedef enum SvnCommand SvnCommand;
 
 
 //----------------------------------------------------------------------------------------
-// Return true if the drawer is open (or opening).
-
-static bool
-IsOpen (NSDrawer* drawer)
-{
-	const int state = [drawer state];
-	return (state == NSDrawerOpeningState || state == NSDrawerOpenState);
-}
-
-
-//----------------------------------------------------------------------------------------
-// Return the n'th sub-view of this view.
-
-static NSView*
-SubView (NSView* aView, int index)
-{
-	Assert(aView != nil);
-	Assert(index >= 0 && index < 999);
-	return [[aView subviews] objectAtIndex: index];
-}
-
-
-//----------------------------------------------------------------------------------------
 
 static NSMutableDictionary*
 makeCommand (NSString* command, NSString* verb, NSString* destination)
@@ -366,7 +343,7 @@ InitWCPreferences (void)
 	isDisplayingErrorSheet = NO;
 	suppressAutoRefresh = TRUE;
 	Assert(document != nil);
-	[window setDelegate: self];		// for windowDidMove, windowDidResize & windowWillClose messages
+	[window setDelegate: self];		// for windowDid*, windowShould* & windowWill* messages
 
 	int viewMode   = kModeSmart,
 		filterMode = kFilterAll;
@@ -511,24 +488,6 @@ InitWCPreferences (void)
 	{
 		[document performSelector: @selector(svnRefresh) withObject: nil afterDelay: 0];
 	}
-}
-
-
-//----------------------------------------------------------------------------------------
-
-- (void) windowDidMove: (NSNotification*) notification
-{
-	#pragma unused(notification)
-	[self prefsChanged];
-}
-
-
-//----------------------------------------------------------------------------------------
-
-- (void) windowDidResize: (NSNotification*) notification
-{
-	#pragma unused(notification)
-	[self prefsChanged];
 }
 
 
@@ -1422,8 +1381,7 @@ enum {
 	if ([window attachedSheet])
 		[NSApp endSheet: [window attachedSheet]];
 
-	[MyFileMergeController runDiffSheet: document path: [item objectForKey: @"fullPath"]
-						   sourceItem: item];
+	[MyFileMergeController runSheet: document path: [item objectForKey: @"fullPath"] sourceItem: item];
 }
 
 

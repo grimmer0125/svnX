@@ -37,17 +37,17 @@
 
 //----------------------------------------------------------------------------------------
 
-- (void) setupUrl:   (NSURL*)        url
-		 options:    (NSInvocation*) options
-		 sourceItem: (RepoItem*)     sourceItem
+- (void) setupUrl: (NSURL*)        url
+		 options:  (NSInvocation*) options
+		 revision: (NSString*)     revision
 {
-//	dprintf("(url=<%@> sourceItem=%@) revision=%@ modRev=%@", url, sourceItem, [sourceItem revision], [sourceItem modRev]);
+//	dprintf("(url=<%@> revision=%@)", url, revision);
 	[svnLogView setPath: [url absoluteString]];
 	[objectController setValue: url forKeyPath: @"content.itemUrl"];
 	[self setupWithOptions: options
 		  sourceItem:       [NSDictionary dictionaryWithObject: url forKey: @"url"]		// content.sourceItem.url
 		  descPath:         url
-		  descRev:          [sourceItem revision]];
+		  descRev:          revision];
 }
 
 
@@ -84,9 +84,19 @@
 
 //----------------------------------------------------------------------------------------
 
-+ (void) runDiffSheet: (MyWorkingCopy*) workingCopy
-		 path:         (NSString*)      path
-		 sourceItem:   (NSDictionary*)  sourceItem
++ (void) runSheet: (MyRepository*) repository
+		 url:      (NSURL*)        url
+		 revision: (NSString*)     revision
+{
+	[self runSheet: kSvnDiff repository: repository url: url revision: revision];
+}
+
+
+//----------------------------------------------------------------------------------------
+
++ (void) runSheet:   (MyWorkingCopy*) workingCopy
+		 path:       (NSString*)      path
+		 sourceItem: (NSDictionary*)  sourceItem
 {
 	[[self alloc] initDiffSheet: workingCopy path: path sourceItem: sourceItem];
 }

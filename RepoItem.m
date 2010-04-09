@@ -6,8 +6,24 @@
 
 #import "NSString+MyAdditions.h"
 #import "RepoItem.h"
+#import "MyRepository.h"
 #import "CommonUtils.h"
 #import "IconUtils.h"
+
+
+//----------------------------------------------------------------------------------------
+
+@interface NSThread (OSX_10_4)
+
+	+ (void) sleepForTimeInterval: (NSTimeInterval) ti;
+
+@end	// NSThread (OSX_10_4)
+
+
+//----------------------------------------------------------------------------------------
+
+static inline NSString* NewString_	(NSData* data)
+{ return [[[NSString alloc] initWithData: data encoding: NSUTF8StringEncoding] autorelease]; }
 
 
 //----------------------------------------------------------------------------------------
@@ -125,6 +141,27 @@ ConstString kTypeRepoItem = @"svnX_REPO_ITEM";
 
 
 //----------------------------------------------------------------------------------------
+// Create a pseudo-RepoItem for a log item or a log item's path.
+
++ (id) repoPath: (NSString*) path
+	   revision: (SvnRevNum) revision
+	   url:      (NSURL*)    url
+{
+	const BOOL isRoot = (path == nil);
+	RepoItem* obj = [self repoRoot: isRoot name: nil revision: revision url: url];
+	obj->fIsRoot = isRoot;
+	obj->fIsLog  = TRUE;
+	if (!isRoot)
+	{
+		obj->fName = [[path lastPathComponent] retain];
+		obj->fPath = [[path stringByDeletingLastPathComponent] retain];
+	}
+
+	return [obj autorelease];
+}
+
+
+//----------------------------------------------------------------------------------------
 
 - (void) dealloc
 {
@@ -134,6 +171,116 @@ ConstString kTypeRepoItem = @"svnX_REPO_ITEM";
 	[fFileType release];
 	[fURL      release];
 	[super dealloc];
+}
+
+
+//----------------------------------------------------------------------------------------
+// 'svn info' callback
+
+static SvnError
+svnInfoReceiver (void*     baton,
+				 ConstCStr path,
+				 SvnInfo   info,
+				 SvnPool   pool)
+{
+	#pragma unused(path, pool)
+	*(SvnNodeKind*) baton = info->kind;
+
+	return SVN_NO_ERROR;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) doSvnInfo: (MyRepository*) document
+{
+	NSAutoreleasePool* autoPool = [NSAutoreleasePool new];
+	SvnEnv* svnEnv = NULL;
+	@try
+	{
+		NSURL* const url = [self url];
+		if (SvnWantAndHave())
+		{
+			SvnClient ctx = SvnSetupClient(&svnEnv, document);
+
+			char path[PATH_MAX * 2];
+			NSIndex len = CFURLGetBytes((CFURLRef) url, (BytePtr) path, sizeof(path));
+			if (len > 0)
+			{
+				if (path[len - 1] == '/')
+					--len;
+				path[len] = 0;
+				SvnNodeKind kind = svn_node_unknown;
+				const SvnOptRevision rev_opt = { svn_opt_revision_number, fRevision };
+				SvnThrowIf(svn_client_info(path, &rev_opt, &rev_opt,
+										   svnInfoReceiver, &kind, !kSvnRecurse,
+										   ctx, SvnGetPool(svnEnv)));
+				if (kind == svn_node_file)
+					fIsDir = false;
+				else if (kind == svn_node_dir)
+					fIsDir = true;
+				else
+					dprintf("kind=%d", kind);
+			}
+		}
+		else
+		{
+			id objs[12]; int count = 0;
+			objs[count++] = @"info";
+			count += [document svnStdOptions: objs + count];
+			objs[count++] = PathPegRevNum(url, fRevision);
+			Assert(count <= 12);
+			NSData* outData = nil, *errData = nil;
+			int status = SvnRun([NSArray arrayWithObjects: objs count: count],
+								&outData, &errData, 0);
+
+			if (status == 0 && [errData length] == 0)
+			{
+				for (ConstBytePtr p = [outData bytes],
+								end = p + [outData length] - 12; p != end; ++p)
+				{
+					if (p[0] == '\n' && p[1] == 'N' &&
+						memcmp(p + 2, "ode Kind: ", 10) == 0)
+					{
+						if (memcmp(p + 12, "file", 4) == 0)
+							fIsDir = false;
+						else if (memcmp(p + 12, "directory", 9) == 0)
+							fIsDir = true;
+						else
+							dprintf("UNEXPECTED: \"%.*s\"\nstdout=\"%@\"",
+									21, p, NewString_(outData));
+						break;
+					}
+					if (p == end - 1)
+						dprintf("WARNING: MISSING Node Kind\nstdout=\"%@\"",
+								NewString_(outData));
+				}
+			}
+			else
+				dprintf("status=%d stderr=\"%@\"", status, NewString_(errData));
+		}
+	}
+	@catch (...)
+	{
+	}
+	@finally
+	{
+		fGettingInfo = false;
+		SvnEndClient(svnEnv);
+		[autoPool release];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnInfo: (MyRepository*) document
+{
+	fGettingInfo = true;
+//	dprintf("path='%@/%@' fRevision=%d fURL=<%@>", fPath, fName, fRevision, [fURL absoluteString]);
+	[NSThread detachNewThreadSelector: @selector(doSvnInfo:)
+							 toTarget: self
+						   withObject: document];
 }
 
 
@@ -149,7 +296,26 @@ ConstString kTypeRepoItem = @"svnX_REPO_ITEM";
 
 - (BOOL) isDir
 {
+	if (fGettingInfo)
+	{
+		for (int i = 16 * 20; i > 0; --i)
+		{
+			[NSThread sleepForTimeInterval: 1.0 / 16];
+			if (!*(volatile BOOL*) &fGettingInfo)
+				break;
+			if (i == 1)
+				dprintf("TIME-OUT: svn info '%@@%d'", [[self url] absoluteString], fRevision);
+		}
+	}
 	return fIsDir;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (BOOL) isLog
+{
+	return fIsLog;
 }
 
 
@@ -287,12 +453,10 @@ ConstString kTypeRepoItem = @"svnX_REPO_ITEM";
 
 - (NSURL*) url
 {
-	if (fIsRoot)
-		return fURL;
-
-	ConstString path = [[self path] escapeURL];
-	return [NSURL URLWithString: fIsDir ? [path stringByAppendingString: @"/"] : path
-				  relativeToURL: fURL];
+	return fIsRoot ? fURL
+				   : [(id) CFURLCreateCopyAppendingPathComponent(NULL, (CFURLRef) fURL,
+																 (CFStringRef) [self path], fIsDir)
+						autorelease];
 }
 
 
@@ -341,8 +505,7 @@ ConstString kTypeRepoItem = @"svnX_REPO_ITEM";
 
 - (NSString*) pathWithRevision
 {
-	return self ? PathWithRevision([self url], [self revision])
-				: @"";
+	return PathWithRevision([self url], [self revision]);
 }
 
 

@@ -19,6 +19,13 @@
 #import "ViewUtils.h"
 
 
+static ConstString keyWidowFrame  = @"winFrame",
+				   keyViewMode    = @"viewMode",
+				   keyShowToolbar = @"showToolbar",
+				   keyShowSidebar = @"showSidebar",
+				   keySplitViews  = @"splitViews";
+
+
 //----------------------------------------------------------------------------------------
 
 static NSString*
@@ -29,12 +36,46 @@ TrimSlashes (RepoItem* obj)
 
 
 //----------------------------------------------------------------------------------------
+
+static inline NSString*
+PrefKey (NSString* nameKey)
+{
+	return [@"Repo:" stringByAppendingString: nameKey];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Return true if the command sent from sender wants its option enabled.
+
+static bool
+wantsOption (id sender)
+{
+	enum { kAltOrShift = 0, kOptionOff = 1, kOptionOn = 2 };
+	const int tag = [sender tag];
+	Assert(tag >= kAltOrShift && tag <= kOptionOn);
+	return (tag == kAltOrShift && AltOrShiftPressed()) || tag == kOptionOn;
+}
+
+
+//----------------------------------------------------------------------------------------
 // Path items in log items
 
 static NSString*
 getPath (NSDictionary* obj)
 {
 	return [obj objectForKey: @"path"];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static int
+getAction (NSDictionary* obj)
+{
+	ConstString action = [obj objectForKey: @"action"];
+	if (action && [action length])
+		return [action characterAtIndex: 0];
+	return 0;
 }
 
 
@@ -63,9 +104,10 @@ compareRevisions (id obj1, id obj2, void* context)
 
 @interface MyRepository (Private)
 
+	- (void) savePrefs;
+
 	- (void) changeRepositoryUrl: (NSURL*) anUrl;
 	- (BOOL) svnErrorIf: (id) taskObj;
-	- (void) svnError: (NSString*) errorString;
 
 	- (void) svnInfoCompletedCallback: (id) taskObj;
 	- (void) fetchSvnInfo: (SEL) selector;
@@ -119,6 +161,7 @@ compareRevisions (id obj1, id obj2, void* context)
 
 - (void) dealloc
 {
+	[[NSNotificationCenter defaultCenter] removeObserver: self];
 	[svnLogView unload];
 	[svnBrowserView unload];
 
@@ -149,14 +192,6 @@ compareRevisions (id obj1, id obj2, void* context)
 
 //----------------------------------------------------------------------------------------
 
-- (NSString*) preferenceName
-{
-	return [@"repoWinFrame:" stringByAppendingString: windowTitle];
-}
-
-
-//----------------------------------------------------------------------------------------
-
 - (void) showWindows
 {
 	[super showWindows];
@@ -164,18 +199,6 @@ compareRevisions (id obj1, id obj2, void* context)
 	[[self window] setTitle: [NSString stringWithFormat: (showURL ? @"Repository: %@ - %@"
 																  : @"Repository: %@"),
 														 windowTitle, fRootURL]];
-}
-
-
-//----------------------------------------------------------------------------------------
-
-- (void) close
-{
-	[[self window] saveFrameUsingName: [self preferenceName]];
-
-	[svnLogView removeObserver: self forKeyPath: @"currentRevision"];
-
-	[super close];
 }
 
 
@@ -192,6 +215,60 @@ compareRevisions (id obj1, id obj2, void* context)
 - (void) windowControllerDidLoadNib: (NSWindowController*) aController
 {
 	[aController setShouldCascadeWindows: NO];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) windowWillClose: (NSNotification*) notification
+{
+	#pragma unused(notification)
+	fPrefsChanged = TRUE;
+	[self savePrefs];
+	[svnLogView removeObserver: self forKeyPath: @"currentRevision"];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Mark prefs as changed but defer saving for 5 secs.
+
+- (void) prefsChanged
+{
+	if (!fPrefsChanged)
+	{
+		fPrefsChanged = TRUE;
+		[self performSelector: @selector(savePrefs) withObject: nil afterDelay: 5];
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) savePrefs
+{
+	NSWindow* const window = [self window];
+	if (!fPrefsChanged || ![window isVisible])
+		return;
+
+	fPrefsChanged = FALSE;
+	SetPreference(PrefKey(windowTitle),
+				  [NSDictionary dictionaryWithObjectsAndKeys:
+						[window stringWithSavedFrame],        keyWidowFrame,
+						NSBool([svnLogView advanced]),        keyViewMode,
+						NSBool([[window toolbar] isVisible]), keyShowToolbar,
+						NSBool(IsOpen(sidebar)),              keyShowSidebar,
+						getValuesForSplitViews(window),       keySplitViews,
+						nil]);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) quitting: (NSNotification*) notification
+{
+	#pragma unused(notification)
+	fPrefsChanged = TRUE;
+	[self savePrefs];
 }
 
 
@@ -214,15 +291,39 @@ compareRevisions (id obj1, id obj2, void* context)
 	[urlTextView setBackgroundColor: [NSColor windowBackgroundColor]];
 	[urlTextView setString: [fURL absoluteString]];
 
-	NSWindow* window = [self window];
+	NSWindow* const window = [self window];
+	[window setDelegate: self];		// for windowWillClose messages
 	[drawerLogView setup: self forWindow: window];
 
-	NSString* widowFrameKey = [self preferenceName];
-	[window setFrameUsingName: widowFrameKey];
-	[window setFrameAutosaveName: widowFrameKey];
+	Assert(windowTitle);
+	ConstString prefKey = PrefKey(windowTitle);
+	NSDictionary* const settings = GetPreference(prefKey);
+	if (settings)
+	{
+		if (![[settings objectForKey: keyShowToolbar] boolValue])
+			[[window toolbar] setVisible: NO];
+
+		[window setFrameFromString: [settings objectForKey: keyWidowFrame]];
+
+		if ([[settings objectForKey: keyShowSidebar] boolValue])
+			[sidebar performSelector: @selector(open) withObject: nil afterDelay: 0.125];
+
+		[svnLogView setAdvanced: [[settings objectForKey: keyViewMode] boolValue]];
+
+		setupSplitViews(window, [settings objectForKey: keySplitViews], nil);
+	}
+	else
+	{
+		ConstString widowFrameKey = [@"repoWinFrame:" stringByAppendingString: windowTitle];
+		[window setFrameUsingName: widowFrameKey];
+	}
+
+	[svnLogView setAutosaveName: prefKey];
 
 	// fetch svn info in order to know the repository's root URL & HEAD revision
-	[self updateLog];
+	[self performSelector: @selector(updateLog) withObject: nil afterDelay: 0];
+	[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(quitting:)
+												 name: NSApplicationWillTerminateNotification object: nil];
 }
 
 
@@ -257,6 +358,16 @@ compareRevisions (id obj1, id obj2, void* context)
 	Assert(fRootURL == nil);
 	fRootURL = [repoURL retain];
 	[self setUrl: repoURL];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Private:
+
+- (NSString*) pathToURL: (NSString*) path
+{
+	Assert(path);
+	return [[fRootURL absoluteString] stringByAppendingString: [path escapeURL]];
 }
 
 
@@ -535,7 +646,8 @@ compareRevisions (id obj1, id obj2, void* context)
 		 revision:    (NSString*)     pegRevision
 {
 	NSString* relativePath = getPath(pathInfo);
-	NSURL* aURL = [NSURL URLWithString: [[fRootURL absoluteString] stringByAppendingString: [relativePath escapeURL]]];
+	NSURL* aURL = [NSURL URLWithString: [[fRootURL absoluteString]
+											stringByAppendingString: [relativePath escapeURL]]];
 //	dprintf("path='%@' revision=%@\n    aURL=<%@>", [relativePath escapeURL], pegRevision, aURL);
 	NSString* rev = [self latestRevision: aURL pegRev: pegRevision];
 	[self browseURL: aURL revision: rev];
@@ -609,8 +721,7 @@ svnInfoReceiver (void*       baton,
 - (void) svnDoInfo: (Message*) completedMsg
 {
 //	NSLog(@"svn info - begin");
-	[self retain];
-	NSAutoreleasePool* autoPool = [[NSAutoreleasePool alloc] init];
+	NSAutoreleasePool* autoPool = [NSAutoreleasePool new];
 	SvnPool pool = SvnNewPool();	// Create top-level memory pool.
 	@try
 	{
@@ -651,6 +762,14 @@ svnInfoReceiver (void*       baton,
 	@catch (SvnException* ex)
 	{
 		SvnReportCatch(ex);
+		if (fRevision == nil)	// First time?
+		{
+			if (fLog != nil)
+				[self performSelectorOnMainThread: @selector(setRevision:)
+									   withObject: getRevision([fLog objectAtIndex: 0]) waitUntilDone: NO];
+			[completedMsg sendToOnMainThread: self];
+			[self performSelectorOnMainThread: @selector(displayUrlTextView) withObject: nil waitUntilDone: NO];
+		}
 		[self performSelectorOnMainThread: @selector(svnError:) withObject: [ex message] waitUntilDone: NO];
 	}
 	@finally
@@ -658,7 +777,6 @@ svnInfoReceiver (void*       baton,
 		SvnDeletePool(pool);
 		[autoPool release];
 		[completedMsg release];
-		[self release];
 //		NSLog(@"svn info - end");
 	}
 }
@@ -859,17 +977,123 @@ svnInfoReceiver (void*       baton,
 
 - (IBAction) svnFileMerge: (id) sender
 {
-	#pragma unused(sender)
-	RepoItem* selection = [self selectedItemOrNil];
-	if (!selection)
+	[self svnDiff: sender];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Return TRUE if there is no sheet blocking this window, otherwise beep & return FALSE.
+
+- (BOOL) noSheet
+{
+	if ([[self window] attachedSheet])
 	{
-		[self svnError: @"Please select exactly one item."];
+		NSBeep();
+		return FALSE;
+	}
+	return TRUE;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) diff:    (id) fileURLs
+		 options: (id) options
+{
+	if (!ISA(fileURLs, NSArray))
+		fileURLs = [NSArray arrayWithObject: fileURLs];
+	if (options && !ISA(options, NSArray))
+		options = [NSArray arrayWithObject: options];
+	[MySvn      diffItems: fileURLs
+		   generalOptions: [self svnOptionsInvocation]
+				  options: options
+				 callback: MakeCallbackInvocation(self, @selector(svnErrorIf:))
+			 callbackInfo: nil
+				 taskInfo: [self documentNameDict]];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) diff:     (id)        fileURLs
+		 revision: (NSString*) revision
+{
+	Assert(revision);
+	[self diff: fileURLs options: [NSArray arrayWithObjects: @"-c", revision, nil]];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Diff PREV or sheet of the selected log-item, log-item path or repository-items.
+
+- (IBAction) svnDiff: (id) sender
+{
+	if (![self noSheet])
+		return;
+	const bool useSheet = wantsOption(sender);
+	NSDictionary* target = [svnLogView targetSvnItem];
+	if (target)											// log-item or log-item path?
+	{
+		const id path     = getPath(target),
+				 revision = [svnLogView selectedRevision],
+				 url      = path ? [NSURL URLWithString: [self pathToURL: path]] : fURL;
+		const int action  = getAction(target);
+		if (url == nil || revision == nil || (useSheet && path == nil))
+		{
+			NSBeep();
+		}
+		else if (useSheet)								// diff sheet for highlighted changed-path
+		{
+			// Only display diff sheet if action is modify, replace or add with history
+			if (action == 'M' || action == 'R' || (action == 'A' && [target objectForKey: @"copyfrompath"] != nil))
+				[MyFileMergeController runSheet: self url: url revision: revision];
+			else	// Added or deleted path...
+				NSBeep();
+		}
+		else											// last change of highlighted changed-path
+		{												// or highlighted change of repository-URL
+			const id newURL = PathPegRevision(url, revision);
+			NSString* str;
+			if (path && (str = [target objectForKey: @"copyfrompath"]) != nil)
+			{
+				// svn diff <src-URL>@src-rev <new-URL>@sel-rev
+				[self diff: [NSArray arrayWithObjects:
+										PathPegRevision([self pathToURL: str],
+														[target objectForKey: @"copyfromrev"]),
+										newURL, nil]
+						  options: nil];
+			}
+			else if (!path || action == 'M' || action == 'R')
+			{
+				[self diff: newURL revision: revision];
+			}
+			else	// Added or deleted path...
+				NSBeep();
+		}
+	}
+	else if ([svnBrowserView isFirstResponder])
+	{
+		NSArray* const repoItems = [svnBrowserView selectedItems];
+		if (useSheet)									// diff sheet for repository-item
+		{
+			if ([repoItems count])
+			{
+				RepoItem* repoItem = [repoItems objectAtIndex: 0];
+				[MyFileMergeController runSheet: self url: [repoItem url] revision: [repoItem revision]];
+			}
+			else
+				NSBeep();
+		}
+		else											// last change of repository-items
+		{
+			for_each_obj(en, item, repoItems)
+			{
+				[self diff: [item pathPegRevision] revision: [item modRev]];
+			}
+		}
 	}
 	else
-	{
-		[MyFileMergeController runSheet: kSvnDiff repository: self
-							   url: [selection url] sourceItem: selection];
-	}
+		NSBeep();
 }
 
 
@@ -877,30 +1101,50 @@ svnInfoReceiver (void*       baton,
 
 - (IBAction) svnBlame: (id) sender
 {
-	#pragma unused(sender)
-	NSArray* const selectedObjects = [svnBrowserView selectedItems];
-//	NSLog(@"svnBlame: %@", selectedObjects);
+	if (![self noSheet])
+		return;
 	NSMutableArray* files = [NSMutableArray array];
-	for_each_obj(enumerator, item, selectedObjects)
+	id revision = nil;
+	NSDictionary* target = [svnLogView targetSvnItem];
+	if (target)												// log-item or log-item path?
 	{
-		if (![item isDir])
-			[files addObject: PathPegRevision([item url], fRevision)];
+		const id path = getPath(target);
+		if (path)											// log-item path?
+		if (getAction(target) != 'D')						// not delete?
+		{
+			revision = [svnLogView selectedRevision];
+			[files addObject: PathPegRevision([self pathToURL: path], revision)];
+			[files addObject: [path lastPathComponent]];
+		}
+	}
+	else if ([svnBrowserView isFirstResponder])
+	{
+		for_each_obj(en, item, [svnBrowserView selectedItems])
+		{
+			if ([item isDir]) continue;
+			[files addObject: [item pathPegRevision]];
+			[files addObject: [item name]];
+		}
+
+		if ([files count] == 0)
+		{
+			[self svnError: @"Please select one or more repository files."];
+			return;
+		}
 	}
 
-	if ([files count] == 0)
+	if ([files count] != 0)
 	{
-		[self svnError: @"Please select one or more files."];
-	}
-	else
-	{
-		[MySvn blame:          files
-			   revision:       fRevision
+		[MySvn blame:          files		// URL@rev, file-name pairs
+			   revision:       revision ? revision : [self revision]
 			   generalOptions: [self svnOptionsInvocation]
-			   options:        [NSArray arrayWithObjects: AltOrShiftPressed() ? @"--verbose" : @"", nil]
+			   options:        [NSArray arrayWithObjects: wantsOption(sender) ? @"--verbose" : @"", nil]
 			   callback:       MakeCallbackInvocation(self, @selector(svnErrorIf:))
 			   callbackInfo:   nil
 			   taskInfo:       [self documentNameDict]];
 	}
+	else
+		NSBeep();
 }
 
 
@@ -918,21 +1162,57 @@ svnInfoReceiver (void*       baton,
 //----------------------------------------------------------------------------------------
 // Export & open the selected files/folders
 
-- (IBAction) svnOpen: (id) sender
+- (void) openFiles: (NSArray*) repoItems
 {
-	#pragma unused(sender)
-
 	FSRef tempFolder;
 	if (Folder_TemporaryItems(&tempFolder))
 	{
 		NSURL* folderURL = (NSURL*) CFURLCreateFromFSRef(NULL, &tempFolder);
 		if (folderURL != nil)
 		{
-			[self exportFiles: [svnBrowserView selectedItems]
-				  toFolder: folderURL includeRev: YES openAfter: YES];
-			CFRelease(folderURL);
+			[self exportFiles: repoItems
+					 toFolder: [folderURL autorelease] includeRev: YES openAfter: YES];
 		}
 	}
+}
+
+
+//----------------------------------------------------------------------------------------
+// Export & open the selected files/folders
+
+- (IBAction) svnOpen: (id) sender
+{
+	#pragma unused(sender)
+	if (![self noSheet])
+		return;
+	NSArray* files = nil;
+	NSDictionary* target = [svnLogView targetSvnItem];
+	if (target)												// log-item or log-item path?
+	{
+		const id path     = getPath(target),
+				 revision = [svnLogView selectedRevision],
+				 url      = path ? [self pathToURL: path] : nil;
+		if (url != nil && revision != nil)					// log-item path?
+		if (getAction(target) != 'D')						// not delete?
+		{
+			RepoItem* repoItem = [RepoItem repoPath: path
+										   revision: SvnRevNumFromString(revision)
+												url: fURL];
+			[repoItem svnInfo: self];
+			files = [NSArray arrayWithObject: repoItem];
+		}
+	}
+	else if ([svnBrowserView isFirstResponder])
+	{
+		files = [svnBrowserView selectedItems];
+	}
+
+	if ([files count] != 0)
+	{
+		[self openFiles: files];
+	}
+	else
+		NSBeep();
 }
 
 
@@ -1205,25 +1485,23 @@ enum {
 	includeRev = includeRev && GetPreferenceBool(@"includeRevisionInName");
 	for_each_obj(enumerator, item, fileObjs)
 	{
+		NSString* name = [item name];
+		if (includeRev)									// 'name' => 'r# name'
+			name = [NSString stringWithFormat: @"r%u %@", [item revisionNum], name];
 		// operation, sourcePath, destinationPath
 		[arguments addObject: [item isDir] ? @"e"		// folder => svn export (see svnextract.sh)
 										   : @"c"];		// file   => svn cat
 		[arguments addObject: [self pathAtCurrentRevision: item]];
-		NSString* name = [item name];
-		if (includeRev)		// name.ext => name-r#.ext
-		{
-			NSString* const ext = [name pathExtension];
-			name = [NSString stringWithFormat: [ext length] ? @"%@-r%@.%@" : @"%@-r%@",
-											   [name stringByDeletingPathExtension], fRevision, ext];
-		}
 		[arguments addObject: [destPath stringByAppendingPathComponent: name]];
 		[fileNames addObject: name];
 	}
 
+	// We used to call `extractItems: arguments options: NewArray(@"-r", fRevision)`
+	// But the Subversion docs are wrong (1.4.5-1.6.6) and -r REV is not required (or wanted).
 	[self setDisplayedTaskObj:
 		[MySvn	extractItems: arguments
 			  generalOptions: [self svnOptionsInvocation]
-					 options: [NSArray arrayWithObjects: @"-r", fRevision, nil]
+					 options: [NSArray array]
 					callback: [self makeExtractedCallback]
 				callbackInfo: destPath
 					taskInfo: [self documentNameDict]]
@@ -1411,17 +1689,14 @@ enum {
 		 intoFolder:  (RepoItem*) destRepoDir
 {
 	// Abort if any sheet already open
-	if ([[self window] attachedSheet] != nil)
-	{
-		NSBeep();
+	if (![self noSheet])
 		return;
-	}
 
 	// Setup name, source & destination fields
 	NSString* const filePath = [files objectAtIndex: 0];
 	[fileNameTextField setStringValue: [filePath lastPathComponent]];
 	WSetViewString(importCommitPanel, vImportSource, GetPreferenceBool(@"abbrevWCFilePaths")
-													 ? [filePath stringByAbbreviatingWithTildeInPath] : filePath);
+											? [filePath stringByAbbreviatingWithTildeInPath] : filePath);
 	WSetViewString(importCommitPanel, vImportDest, [[destRepoDir path] stringByAppendingString: @"/"]);
 
 	// Recursive checkbox only shown for directories
@@ -1638,21 +1913,52 @@ enum {
 
 - (void) svnError: (NSString*) errorString
 {
-	NSAlert* alert = [NSAlert alertWithMessageText: @"svn Error"
-									 defaultButton: @"OK"
-								   alternateButton: nil
-									   otherButton: nil
-						 informativeTextWithFormat: @"%@", errorString];
+	[self performSelector: @selector(doSvnError:) withObject: errorString afterDelay: 0.1];
+}
 
-	[alert setAlertStyle: NSCriticalAlertStyle];
 
-	if ([[self windowForSheet] attachedSheet] != nil)
-		[NSApp endSheet: [[self windowForSheet] attachedSheet]];
+//----------------------------------------------------------------------------------------
 
-	[alert beginSheetModalForWindow: [self windowForSheet]
-					  modalDelegate: self
-					 didEndSelector: nil
-						contextInfo: nil];
+- (void) doSvnError: (NSString*) errorString
+{
+	const BOOL wasErrorShown = fIsErrorShown;
+	fIsErrorShown = YES;
+//	dprintf("wasErrorShown=%d \"%@\"", wasErrorShown, errorString);
+	Assert(errorString);
+	NSWindow* const window = [self window];
+	if ([window isVisible])
+	{
+		[svnLogView     setIsFetching: NO];
+		[svnBrowserView setIsFetching: NO];
+
+		if (!wasErrorShown)
+		{
+			NSBeep();
+			NSAlert* alert = [NSAlert alertWithMessageText: @"svn Error"
+											 defaultButton: @"OK"
+										   alternateButton: nil
+											   otherButton: nil
+								 informativeTextWithFormat: @"%@", errorString];
+
+			NSWindow* const sheet = [window attachedSheet];
+			[alert setAlertStyle: NSCriticalAlertStyle];
+			[alert beginSheetModalForWindow: sheet ? sheet : window
+							  modalDelegate: self
+							 didEndSelector: @selector(svnError_SheetEnded:returnCode:contextInfo:)
+								contextInfo: nil];
+		}
+	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) svnError_SheetEnded: (NSAlert*) alert
+		 returnCode:          (int)      returnCode
+		 contextInfo:         (void*)    contextInfo
+{
+	#pragma unused(alert, returnCode, contextInfo)
+	fIsErrorShown = NO;
 }
 
 

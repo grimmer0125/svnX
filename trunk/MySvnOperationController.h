@@ -30,6 +30,11 @@ typedef enum SvnOperation { kSvnCopy = 0, kSvnMove, kSvnDelete, kSvnMkdir, kSvnD
 		 url:        (NSURL*)        url
 		 sourceItem: (RepoItem*)     sourceItem;
 
++ (void) runSheet:   (SvnOperation)  operation
+		 repository: (MyRepository*) repository
+		 url:        (NSURL*)        url
+		 revision:   (NSString*)     revision;
+
 - (NSString*) getTargetPath;
 - (NSURL*)    getTargetUrl;
 - (NSString*) getCommitMessage;

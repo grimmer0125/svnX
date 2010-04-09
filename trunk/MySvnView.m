@@ -52,11 +52,21 @@
 
 - (IBAction) refetch: (id) sender
 {
-	if ( [sender state] == NSOnState )
+	// An object that sends this message with a tag of the form 10### is an alias for
+	// the fetch command only (not the stop command).
+	const int tag = [sender tag];
+	if ((tag / 1000) == 10)					// => Maps cmd-key to fetch only
+	{
+		if (!isFetching)
+			[[self viewWithTag: (tag % 1000)] performClick: self];
+		else
+			NSBeep();
+	}
+	else if ([sender state] == NSOnState)	// => Fetch
 	{
 		[self fetchSvn];
 	}
-	else
+	else									// => Stop
 	{
 		[self setIsFetching: FALSE];
 
@@ -102,6 +112,12 @@
 
 - (void) svnError: (NSString*) errorString
 {
+	if (fRepository)
+	{
+		[fRepository svnError: errorString];
+		return;
+	}
+
 	NSAlert *alert = [NSAlert alertWithMessageText: @"svn Error"
 									 defaultButton: @"OK"
 								   alternateButton: nil

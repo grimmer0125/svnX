@@ -62,6 +62,7 @@ NSString*	GetViewString			(NSView* rootView, int tag);
 void		SetViewString			(NSView* rootView, int tag, NSString* value);
 void		ViewShow				(NSView* rootView, int tag, bool isVisible);
 void		ViewEnable				(NSView* rootView, int tag, bool isEnabled);
+NSView*		SubView					(NSView* aView, int index);
 
 id			WGetView				(NSWindow* window, int tag);
 int			WGetViewInt				(NSWindow* window, int tag);
@@ -100,6 +101,8 @@ bool		IsInResponderChain		(NSWindow* window, NSResponder* obj);
 bool		IsViewInResponderChain	(NSView* obj);
 
 void		ChangeMenuCheck			(NSMenu* menu, int checkTag, int uncheckTag);
+
+bool		IsOpen					(NSDrawer* drawer);
 
 NSPoint		locationInView			(NSEvent* event, NSView* destView);
 

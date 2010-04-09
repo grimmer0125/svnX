@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------------------
 //	SvnInterface.h - Interface to Subversion libraries
 //
-//	Copyright © Chris, 2003 - 2009.  All rights reserved.
+//	Copyright © Chris, 2003 - 2010.  All rights reserved.
 //----------------------------------------------------------------------------------------
 
 #pragma once
@@ -100,10 +100,14 @@ NSString*	SvnRevNumToString	(SvnRevNum rev);
 NSString*	SvnStatusToString	(SvnWCStatusKind kind);
 SvnClient	SvnSetupClient		(SvnEnv** envRef, SvnInterface* delegate);
 void		SvnEndClient		(SvnEnv* env);
+SvnPool		SvnGetPool			(SvnEnv* env);
 
 static inline
 SvnArray	SvnNewArray			(SvnPool pool, int count, int elem_size)
 									{ return apr_array_make(pool, count, elem_size); }
+
+int			SvnRun				(NSArray* args, NSData** stdOut, NSData** stdErr,
+								 NSTimeInterval maxTime);	// maxTime=0 => default
 
 
 //----------------------------------------------------------------------------------------

@@ -24,6 +24,7 @@
 
 - (void) unload;
 
+- (void) setAutosaveName: (NSString*) name;
 - (void) resetUrl: (NSURL*) anUrl;
 - (void) fetchSvn: (NSInvocation*) callback;
 - (void) fetchSvn;
@@ -41,6 +42,7 @@
 - (BOOL) advanced;
 - (void) setAdvanced: (BOOL) isAdvanced;
 - (NSArray*) arrangedObjects;
+- (NSDictionary*) targetSvnItem;
 
 @end
 

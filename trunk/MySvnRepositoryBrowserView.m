@@ -220,6 +220,15 @@ enum {
 
 
 //----------------------------------------------------------------------------------------
+
+- (BOOL) isFirstResponder
+{
+	id view = [[self window] firstResponder];
+	return ISA(view, NSView) && [view isDescendantOf: self];
+}
+
+
+//----------------------------------------------------------------------------------------
 // Note: <sender> is an NSCell in an NSMatrix in the NSBrowser <browser>
 
 - (void) onDoubleClick: (id) sender

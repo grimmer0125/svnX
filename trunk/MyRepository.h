@@ -35,6 +35,8 @@
 	NSMutableArray*							fLog;
 	NSMutableDictionary*					displayedTaskObj;
 	struct SvnEnv*							fSvnEnv;		// The svn client environment
+	BOOL									fPrefsChanged,
+											fIsErrorShown;
 }
 
 + (unsigned int) cleanUpLog: (NSMutableArray*) aLog;
@@ -45,6 +47,7 @@
 - (IBAction) svnMkdir:        (id) sender;
 - (IBAction) svnDelete:       (id) sender;
 - (IBAction) svnFileMerge:    (id) sender;
+- (IBAction) svnDiff:         (id) sender;
 - (IBAction) svnBlame:        (id) sender;
 - (IBAction) svnReport:       (id) sender;
 - (IBAction) svnOpen:         (id) sender;
@@ -84,6 +87,7 @@
 
 - (NSInvocation*) svnOptionsInvocation;
 - (int) svnStdOptions: (id[]) objs;
+- (void) svnError: (NSString*) errorString;
 
 @end	// MyRepository
 

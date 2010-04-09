@@ -77,6 +77,18 @@ ViewShow (NSView* rootView, int tag, bool isVisible)
 
 
 //----------------------------------------------------------------------------------------
+// Return the n'th sub-view of this view.
+
+NSView*
+SubView (NSView* aView, int index)
+{
+	Assert(aView != nil);
+	Assert(index >= 0 && index < 999);
+	return [[aView subviews] objectAtIndex: index];
+}
+
+
+//----------------------------------------------------------------------------------------
 #pragma mark	-
 #pragma mark	Window Based
 //----------------------------------------------------------------------------------------
@@ -305,6 +317,17 @@ ChangeMenuCheck (NSMenu* menu, int checkTag, int uncheckTag)
 		[[menu itemWithTag: uncheckTag] setState: NSOffState];
 	if (checkTag)
 		[[menu itemWithTag: checkTag] setState: NSOnState];
+}
+
+
+//----------------------------------------------------------------------------------------
+// Return true if the drawer is open (or opening).
+
+bool
+IsOpen (NSDrawer* drawer)
+{
+	const int state = [drawer state];
+	return (state == NSDrawerOpeningState || state == NSDrawerOpenState);
 }
 
 

@@ -236,6 +236,16 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 
 
 //----------------------------------------------------------------------------------------
+// Set unique name for saving log & paths tables' size & sort, and load that info.
+
+- (void) setAutosaveName: (NSString*) name
+{
+	[logTable   setAutosaveName: name];
+	[pathsTable setAutosaveName: [@"P:" stringByAppendingString: name]];
+}
+
+
+//----------------------------------------------------------------------------------------
 
 - (void) resetUrl: (NSURL*) anUrl
 {
@@ -673,5 +683,21 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 	return [MySvn cachePathForKey: [[[self url] absoluteString] stringByAppendingString: logName]];
 }
 
-@end
+
+//----------------------------------------------------------------------------------------
+// Return the currently user focused log-item, log-item path or nil.
+
+- (NSDictionary*) targetSvnItem
+{
+	const id firstResponder = [[self window] firstResponder];
+	if (firstResponder == logTable)
+		return [[logsAC selectedObjects] lastObject];
+
+	if (firstResponder == pathsTable)
+		return [[logsACSelection selectedObjects] lastObject];
+
+	return nil;
+}
+
+@end	// MySvnLogView
 

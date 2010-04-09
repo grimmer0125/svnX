@@ -20,6 +20,7 @@
 
 - (void) unload;
 
+- (BOOL) isFirstResponder;
 - (void) onDoubleClick: (id) sender;
 - (void) fetchSvn;
 - (void) fetchSvnListForUrl: (NSString*) theURL

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!--
+	flags:
+		// Edit: 1 of these
+		kNone			0
+		kCombo			1
+		kPopUp			2
+		kText1			3		// Single-line
+		kTextN			4		// Multi-line
+		kList			5
+
+		// Mode: 1 of these
+		kText			00
+		kBinary			10		// => kTextN
+		kTrueFalse		20		// => kPopUp
+		kYesNo			30		// => kPopUp
+	//	kOpen			40		// => kList (of combo-boxes)
+
+		// Items: 1 of these
+		kAnyItem		000
+		kNoFiles		100
+		kNoDirs			200
+-->
+<array>
+	<dict>
+		<key>name</key>		<string>svn:ignore</string>
+		<key>desc</key>		<string>A newline separated list of file glob patterns to ignore.</string>
+		<key>flags</key>	<integer>105</integer>	<!-- kNoFiles + kText + kList -->
+	</dict>
+
+	<dict>
+		<key>name</key>		<string>svn:keywords</string>
+		<key>desc</key>		<string>Keywords to be expanded.</string>
+		<key>flags</key>	<integer>245</integer>	<!-- kNoDirs + kOpen + kList -->
+		<key>values</key>
+		<array>
+			<string>URL</string>
+			<string>HeadURL</string>
+			<string>Author</string>
+			<string>LastChangedBy</string>
+			<string>Date</string>
+			<string>LastChangedDate</string>
+			<string>Rev</string>
+			<string>Revision</string>
+			<string>LastChangedRevision</string>
+			<string>Id</string>
+			<string>Header</string>
+		</array>
+	</dict>
+
+	<dict>
+		<key>name</key>		<string>svn:executable</string>
+		<key>desc</key>		<string>If present, make the file executable.</string>
+		<key>flags</key>	<integer>200</integer>	<!-- kNoDirs + kNone -->
+		<key>value</key>	<string>*</string>
+	</dict>
+
+	<dict>
+		<key>name</key>		<string>svn:special</string>
+		<key>desc</key>		<string>If present, make the file a symbolic link.</string>
+		<key>flags</key>	<integer>200</integer>	<!-- kNoDirs + kNone -->
+		<key>value</key>	<string>*</string>
+	</dict>
+
+	<dict>
+		<key>name</key>		<string>svn:eol-style</string>
+		<key>desc</key>		<string>One of ‘native’, ‘LF’, ‘CR’, ‘CRLF’.</string>
+		<key>flags</key>	<integer>202</integer>	<!-- kNoDirs + kPopUp -->
+		<key>values</key>
+		<array>
+			<string>native</string>
+			<string>LF</string>
+			<string>CR</string>
+			<string>CRLF</string>
+		</array>
+	</dict>
+
+	<dict>
+		<key>name</key>		<string>svn:mime-type</string>
+		<key>desc</key>		<string>The mimetype of the file.</string>
+		<key>flags</key>	<integer>201</integer>	<!-- kNoDirs + kCombo -->
+		<key>values</key>
+		<array>
+			<string>application/octet-stream</string>
+			<string>image/jpeg</string>
+			<string>image/png</string>
+			<string>image/tiff</string>
+			<string>text/plain;charset=UTF-16</string>
+			<string>text/plain;charset=UTF-16-BE</string>
+			<string>text/plain;charset=UTF-16-LE</string>
+		</array>
+	</dict>
+
+	<dict>
+		<key>name</key>		<string>svn:externals</string>
+		<key>desc</key>		<string>A newline separated list of module specifiers.</string>
+		<key>flags</key>	<integer>105</integer>	<!-- kNoFiles + kText + kList -->
+	</dict>
+
+	<dict>
+		<key>name</key>		<string>svn:needs-lock</string>
+		<key>desc</key>		<string>Indicates that the file should be locked before it is modified.</string>
+		<key>flags</key>	<integer>200</integer>	<!-- kNoDirs + kNone -->
+		<key>value</key>	<string>*</string>
+	</dict>
+
+	<dict>
+		<key>name</key>		<string>svn:mergeinfo</string>
+		<key>desc</key>		<string>Used by Subversion to track merge data.</string>
+		<key>flags</key>	<integer>004</integer>	<!-- kText + kTextN -->
+	</dict>
+</array>
+</plist>

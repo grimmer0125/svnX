@@ -203,7 +203,8 @@ SvnNewPool ()
 void
 SvnDeletePool (SvnPool pool)
 {
-	svn_pool_destroy(pool);
+	if (pool)
+		svn_pool_destroy(pool);
 }
 
 

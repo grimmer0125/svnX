@@ -10,9 +10,11 @@
 
 	FN(svn_client_info)
 	FN(svn_client_list)
+	FN(svn_client_log3)
 	FN(svn_client_status2)
 	FN(svn_client_create_context)
 	FN(svn_client_proplist2)
+	FN(svn_client_propset2)
 	FN(svn_client_version)
 
 #endif	// LIB_svn_client
@@ -42,6 +44,7 @@
 	FN(svn_ver_check_list)
 	FN(svn_base64_decode_string)
 	FN(svn_string_create)
+	FN(svn_string_ncreate)
 
 #endif	// LIB_svn_subr
 
@@ -61,9 +64,6 @@
 #ifdef LIB_svn_wc
 
 	FN(svn_wc_version)
-	FN(svn_wc_adm_close)
-	FN(svn_wc_adm_open3)
-	FN(svn_wc_prop_list)
 
 #endif	// LIB_svn_wc
 

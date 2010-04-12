@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		830910EE11715F6600E387C8 /* libsvnXplus.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 830910ED11715F6600E387C8 /* libsvnXplus.a */; };
 		830B23150DE67B0E0080B2FD /* Review.js in Resources */ = {isa = PBXBuildFile; fileRef = 830B23140DE67B0E0080B2FD /* Review.js */; };
 		8314B1A60DB9769900C6F545 /* svnBlame.png in Resources */ = {isa = PBXBuildFile; fileRef = 8314B1A50DB9769900C6F545 /* svnBlame.png */; };
 		8314B22E0DB9A0CD00C6F545 /* svnblame.sh in Resources */ = {isa = PBXBuildFile; fileRef = 8314B22D0DB9A0CD00C6F545 /* svnblame.sh */; };
@@ -35,6 +36,12 @@
 		83CCC97011678AA5003F269B /* ActionPopup.png in Resources */ = {isa = PBXBuildFile; fileRef = 83CCC96F11678AA5003F269B /* ActionPopup.png */; };
 		83CCCE390D78D7E900237C1E /* EditListResponder.m in Sources */ = {isa = PBXBuildFile; fileRef = 83CCCE370D78D7E900237C1E /* EditListResponder.m */; };
 		83CD86CC0F54588E00512219 /* MyDragSupportWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F2E114B10830A7E20026EEBF /* MyDragSupportWindow.m */; };
+		83CDCBF1116FA02C00ECD41D /* Properties.plist in Resources */ = {isa = PBXBuildFile; fileRef = 83CDCBEB116FA02C00ECD41D /* Properties.plist */; };
+		83CDCBF2116FA02C00ECD41D /* Properties.png in Resources */ = {isa = PBXBuildFile; fileRef = 83CDCBEC116FA02C00ECD41D /* Properties.png */; };
+		83CDCBF3116FA02C00ECD41D /* Properties.xib in Resources */ = {isa = PBXBuildFile; fileRef = 83CDCBED116FA02C00ECD41D /* Properties.xib */; };
+		83CDCBF4116FA02C00ECD41D /* PropertyView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 83CDCBEE116FA02C00ECD41D /* PropertyView.xib */; };
+		83CDCBF5116FA02C00ECD41D /* BinTxt1.png in Resources */ = {isa = PBXBuildFile; fileRef = 83CDCBEF116FA02C00ECD41D /* BinTxt1.png */; };
+		83CDCBF6116FA02C00ECD41D /* BinTxt0.png in Resources */ = {isa = PBXBuildFile; fileRef = 83CDCBF0116FA02C00ECD41D /* BinTxt0.png */; };
 		83CFE69D0FAFE01200EDFC88 /* svnx in Resources */ = {isa = PBXBuildFile; fileRef = 83CFE69C0FAFE01200EDFC88 /* svnx */; };
 		83D61C160DBA4C5000D8E74E /* Advanced.icns in Resources */ = {isa = PBXBuildFile; fileRef = 83D61C150DBA4C5000D8E74E /* Advanced.icns */; };
 		83DBD3400DBF7CB400264348 /* ReviewCommit.nib in Resources */ = {isa = PBXBuildFile; fileRef = 83DBD33D0DBF7CB400264348 /* ReviewCommit.nib */; };
@@ -150,6 +157,7 @@
 		2A37F4C4FDCFA73011CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		2A37F4C5FDCFA73011CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32DBCF750370BD2300C91783 /* svnX_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = svnX_Prefix.pch; sourceTree = "<group>"; };
+		830910ED11715F6600E387C8 /* libsvnXplus.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsvnXplus.a; sourceTree = SOURCE_ROOT; };
 		830B23140DE67B0E0080B2FD /* Review.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = Review.js; sourceTree = "<group>"; };
 		8314B1A50DB9769900C6F545 /* svnBlame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = svnBlame.png; sourceTree = "<group>"; };
 		8314B22D0DB9A0CD00C6F545 /* svnblame.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; lineEnding = 0; path = svnblame.sh; sourceTree = "<group>"; };
@@ -186,6 +194,12 @@
 		83CCCE370D78D7E900237C1E /* EditListResponder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EditListResponder.m; sourceTree = "<group>"; };
 		83CCCE380D78D7E900237C1E /* EditListResponder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EditListResponder.h; sourceTree = "<group>"; };
 		83CD86CE0F5458B800512219 /* MyDragSupportWindow.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MyDragSupportWindow.h; sourceTree = "<group>"; };
+		83CDCBEB116FA02C00ECD41D /* Properties.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Properties.plist; sourceTree = "<group>"; };
+		83CDCBEC116FA02C00ECD41D /* Properties.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Properties.png; sourceTree = "<group>"; };
+		83CDCBED116FA02C00ECD41D /* Properties.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = Properties.xib; sourceTree = "<group>"; };
+		83CDCBEE116FA02C00ECD41D /* PropertyView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = PropertyView.xib; sourceTree = "<group>"; };
+		83CDCBEF116FA02C00ECD41D /* BinTxt1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = BinTxt1.png; sourceTree = "<group>"; };
+		83CDCBF0116FA02C00ECD41D /* BinTxt0.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = BinTxt0.png; sourceTree = "<group>"; };
 		83CFE69C0FAFE01200EDFC88 /* svnx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = svnx; sourceTree = "<group>"; };
 		83D61C150DBA4C5000D8E74E /* Advanced.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Advanced.icns; sourceTree = "<group>"; };
 		83DBD33D0DBF7CB400264348 /* ReviewCommit.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = ReviewCommit.nib; sourceTree = "<group>"; };
@@ -332,6 +346,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				830910EE11715F6600E387C8 /* libsvnXplus.a in Frameworks */,
 				8D15AC340486D014006FF6A4 /* Cocoa.framework in Frameworks */,
 				F20521D10A5D2159003F966A /* Sparkle.framework in Frameworks */,
 				F20525080A5D3D7F003F966A /* IOKit.framework in Frameworks */,
@@ -348,6 +363,7 @@
 				F20521BE0A5D2159003F966A /* Sparkle.framework */,
 				1058C7A7FEA54F5311CA2CBB /* Cocoa.framework */,
 				8352C4780FF49F9D00C978F5 /* Carbon.framework */,
+				830910ED11715F6600E387C8 /* libsvnXplus.a */,
 			);
 			name = "Linked Frameworks";
 			path = /System/Library/Frameworks;
@@ -507,6 +523,12 @@
 				F2830130082BE371008E002A /* DrawerLogView.nib */,
 				83D61C150DBA4C5000D8E74E /* Advanced.icns */,
 				83BCF01D0FBCAD25007E9B6B /* Templates.plist */,
+				83CDCBEB116FA02C00ECD41D /* Properties.plist */,
+				83CDCBEC116FA02C00ECD41D /* Properties.png */,
+				83CDCBED116FA02C00ECD41D /* Properties.xib */,
+				83CDCBEE116FA02C00ECD41D /* PropertyView.xib */,
+				83CDCBEF116FA02C00ECD41D /* BinTxt1.png */,
+				83CDCBF0116FA02C00ECD41D /* BinTxt0.png */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -758,6 +780,12 @@
 				83E8BF650FF648130011021A /* svnBadge.icns in Resources */,
 				836B4B151090EDBE00E76236 /* svnresolve.sh in Resources */,
 				83CCC97011678AA5003F269B /* ActionPopup.png in Resources */,
+				83CDCBF1116FA02C00ECD41D /* Properties.plist in Resources */,
+				83CDCBF2116FA02C00ECD41D /* Properties.png in Resources */,
+				83CDCBF3116FA02C00ECD41D /* Properties.xib in Resources */,
+				83CDCBF4116FA02C00ECD41D /* PropertyView.xib in Resources */,
+				83CDCBF5116FA02C00ECD41D /* BinTxt1.png in Resources */,
+				83CDCBF6116FA02C00ECD41D /* BinTxt0.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -972,6 +1000,7 @@
 					"$(inherited)",
 				);
 				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)";
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_LDFLAGS = (
 					"-weak_library",
@@ -982,6 +1011,7 @@
 					$APR_SVN/libsvn_fs.dylib,
 					"-weak_library",
 					$APR_SVN/libapr.dylib,
+					"-lstdc++.6",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = svnX;
@@ -1027,6 +1057,7 @@
 					"$(inherited)",
 				);
 				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)";
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_LDFLAGS = (
 					"-weak_library",
@@ -1037,6 +1068,7 @@
 					$APR_SVN/libsvn_fs.dylib,
 					"-weak_library",
 					$APR_SVN/libapr.dylib,
+					"-lstdc++.6",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = svnX;

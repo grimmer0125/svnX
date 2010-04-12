@@ -50,6 +50,10 @@ static const GCoord kMinFilesHeight    = 96,
 
 static NSString* gInitName = nil;
 
+extern BOOL Props_Toggle(void);
+extern void Props_Reset(void);
+extern void Props_Changed(id wc);
+
 
 //----------------------------------------------------------------------------------------
 // Subversion 1.4.6 commands that support recursive flags
@@ -488,6 +492,16 @@ InitWCPreferences (void)
 	{
 		[document performSelector: @selector(svnRefresh) withObject: nil afterDelay: 0];
 	}
+	[self selectionChanged];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) windowDidResignMain: (NSNotification*) notification
+{
+	#pragma unused(notification)
+	Props_Reset();
 }
 
 
@@ -681,6 +695,7 @@ InitWCPreferences (void)
 
 		[savedSelection release];
 		savedSelection = nil;
+		[self selectionChanged];
 	}
 }
 
@@ -703,6 +718,10 @@ InitWCPreferences (void)
 
 - (void) selectionChanged
 {
+	if ([window isVisible])
+	{
+		Props_Changed(self);
+	}
 }
 
 
@@ -1065,6 +1084,16 @@ InitWCPreferences (void)
 		[window retain];
 		[self resetStatusMessage];
 	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (IBAction) togglePropsView: (id) sender
+{
+	#pragma unused(sender)
+	if (Props_Toggle())
+		[self selectionChanged];
 }
 
 
@@ -2373,6 +2402,12 @@ enum {
 - (NSWindow*) window
 {
 	return window;
+}
+
+
+- (NSArray*) selectedFiles
+{
+	return [svnFilesAC selectedObjects];
 }
 
 

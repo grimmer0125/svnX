@@ -102,19 +102,19 @@
 		</dict>
 		<dict>
 			<key>CLASS</key>
-			<string>NSTextView</string>
-			<key>LANGUAGE</key>
-			<string>ObjC</string>
-			<key>SUPERCLASS</key>
-			<string>NSText</string>
-		</dict>
-		<dict>
-			<key>CLASS</key>
 			<string>MyTableView</string>
 			<key>LANGUAGE</key>
 			<string>ObjC</string>
 			<key>SUPERCLASS</key>
 			<string>NSTableView</string>
+		</dict>
+		<dict>
+			<key>CLASS</key>
+			<string>NSTextView</string>
+			<key>LANGUAGE</key>
+			<string>ObjC</string>
+			<key>SUPERCLASS</key>
+			<string>NSText</string>
 		</dict>
 		<dict>
 			<key>CLASS</key>

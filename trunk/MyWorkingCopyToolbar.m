@@ -85,6 +85,9 @@
 	[self createItem: @"openRepository" label: @"Repository" image: @"Repository"
 		  help:       @"Open repository window for this working copy."];
 
+	[self createItem: @"togglePropsView" label: @"Properties" image: @"Properties"
+		  help:       @"Show/Hide Subversion properties editor."];
+
 	[self createItem: @"toggleSidebar" label: @"Output" image: @"sidebar"
 		  help:       @"Show/Hide output of updates, commits, merges, etc."];
 
@@ -135,6 +138,7 @@
 				@"openRepository",
 				@"refresh",
 				NSToolbarFlexibleSpaceItemIdentifier,
+				@"togglePropsView",
 				@"toggleSidebar",
 				nil];
 }
@@ -154,6 +158,7 @@
 				@"svnUpdate",
 				@"openRepository",
 				@"refresh",
+				@"togglePropsView",
 				@"toggleSidebar",
 				NSToolbarSeparatorItemIdentifier,
 				NSToolbarSpaceItemIdentifier,

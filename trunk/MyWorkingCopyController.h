@@ -54,6 +54,7 @@
 	float					fTreeWidth;
 	NSMutableArray*			fTreeExpanded;		// expanded paths in tree view
 	NSArray*				savedSelection;		// used by save/restoreSelection
+	NSMutableDictionary*	fDialogPrefs;
 }
 
 + (void) presetDocumentName: name;
@@ -69,10 +70,7 @@
 - (IBAction) openRepository:       (id) sender;
 - (IBAction) toggleSidebar:        (id) sender;
 - (IBAction) changeMode:           (id) sender;
-- (IBAction) updateSheetDoClick:   (id) sender;
 - (IBAction) renamePanelValidate:  (id) sender;
-- (IBAction) mergeSheetDoClick:    (id) sender;
-- (IBAction) mergeSheetURLChanged: (id) sender;
 - (IBAction) switchPanelValidate:  (id) sender;
 - (IBAction) commitPanelValidate:  (id) sender;
 - (IBAction) commitPanelCancel:    (id) sender;

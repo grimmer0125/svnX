@@ -4,6 +4,7 @@
 #import "MyRepository.h"
 #import "MyApp.h"
 #import "NSString+MyAdditions.h"
+#import "RepoItem.h"
 #import "Tasks.h"
 #import "CommonUtils.h"
 #import "ViewUtils.h"
@@ -229,8 +230,18 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 		SetColumnSort(pathsTable, @"path",    @"path");
 		SetColumnSort(pathsTable, @"from",    @"copyfromrev");
 		SetColumnSort(pathsTable, @"srcPath", @"copyfrompath");
+		[pathsTable setDataSource: self];
 
 		[window makeFirstResponder: logTable];
+
+		if ([self repository])	// Enable dragging from repository log & paths tables only
+		{
+			const NSDragOperation kSourceMask = NSDragOperationCopy;
+			[logTable   setDraggingSourceOperationMask: kSourceMask forLocal: NO];
+			[logTable   setDraggingSourceOperationMask: kSourceMask forLocal: YES];
+			[pathsTable setDraggingSourceOperationMask: kSourceMask forLocal: NO];
+			[pathsTable setDraggingSourceOperationMask: kSourceMask forLocal: YES];
+		}
 	}
 }
 
@@ -533,6 +544,61 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 			[aTableView setNeedsDisplay: YES];
 		}
 	}
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (BOOL) tableView:            (NSTableView*)  tableView
+		 writeRowsWithIndexes: (NSIndexSet*)   rowIndexes
+		 toPasteboard:         (NSPasteboard*) pboard
+{
+	if (![self repository])
+		return NO;
+
+	NSString* string = nil;
+	id logObj = nil;
+	NSString* path_ = nil;
+	if (tableView == logTable)
+	{
+		logObj = [[logsAC arrangedObjects] objectAtIndex: [rowIndexes firstIndex]];
+		string = logItemToString(logObj, fIsAdvanced);
+	}
+	else if (tableView == pathsTable)
+	{
+		logObj = [[logsAC selectedObjects] lastObject];
+		const id pathObj = [[logsACSelection arrangedObjects] objectAtIndex: [rowIndexes firstIndex]];
+		string = pathItemToString(pathObj);
+		if (![[pathObj objectForKey: @"action"] isEqualToString: @"D"])
+			path_ = [pathObj objectForKey: @"path"];
+		else
+			logObj = nil;		// Disallow merge from deleted path
+	}
+
+	if (logObj && string)
+	{
+		RepoItem* repoItem = [RepoItem repoPath: path_
+									   revision: [[logObj objectForKey: @"revision_n"] intValue]
+											url: fURL];
+		[repoItem svnInfo: fRepository];
+	/*	dprintf_("isLog=%d isDir=%d isRoot=%d path=\"%@\" name=\"%@\" r%u\n\turl=<%@>",
+				 [repoItem isLog], [repoItem isDir], [repoItem isRoot], [repoItem path],
+				 [repoItem name], [repoItem revisionNum], [repoItem url]);*/
+		[pboard declareTypes: [NSArray arrayWithObjects: NSStringPboardType, kTypeRepoItem, nil] owner: nil];
+		[pboard setString: string forType: NSStringPboardType];
+		[pboard setData: [NSData dataWithBytes: &repoItem length: sizeof(repoItem)]
+				forType: kTypeRepoItem];
+
+		return YES;
+	}
+	else if (string)
+	{
+		[pboard declareTypes: [NSArray arrayWithObject: NSStringPboardType] owner: nil];
+		[pboard setString: string forType: NSStringPboardType];
+		return YES;
+	}
+
+	return NO;
 }
 
 

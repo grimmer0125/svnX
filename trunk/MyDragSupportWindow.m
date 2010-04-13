@@ -9,8 +9,7 @@
 #import "RepoItem.h"
 
 
-NSString* const kTypeRepositoryPathAndRevision = @"REPOSITORY_PATH_AND_REVISION_TYPE";
-static bool gIsFile;
+static bool gMergeOnly;
 
 
 //----------------------------------------------------------------------------------------
@@ -19,8 +18,8 @@ static bool gIsFile;
 static RepoItem*
 repoItemFromPasteboard (NSPasteboard* pboard)
 {
-	Assert([[pboard dataForType: kTypeRepositoryPathAndRevision] length] == sizeof(RepoItem*));
-	return *(RepoItem* const*) [[pboard dataForType: kTypeRepositoryPathAndRevision] bytes];
+	Assert([[pboard dataForType: kTypeRepoItem] length] == sizeof(RepoItem*));
+	return *(RepoItem* const*) [[pboard dataForType: kTypeRepoItem] bytes];
 }
 
 
@@ -34,7 +33,7 @@ repoItemFromPasteboard (NSPasteboard* pboard)
 
 - (void) awakeFromNib
 {
-	[self registerForDraggedTypes: [NSArray arrayWithObject: kTypeRepositoryPathAndRevision]];
+	[self registerForDraggedTypes: [NSArray arrayWithObject: kTypeRepoItem]];
 }
 
 
@@ -42,7 +41,8 @@ repoItemFromPasteboard (NSPasteboard* pboard)
 
 - (NSDragOperation) draggingEntered: (id<NSDraggingInfo>) sender
 {
-	gIsFile = ![repoItemFromPasteboard([sender draggingPasteboard]) isDir];
+	RepoItem* repoItem = repoItemFromPasteboard([sender draggingPasteboard]);
+	gMergeOnly = [repoItem isLog] || ![repoItem isDir];
 	return NSDragOperationCopy;
 }
 
@@ -54,7 +54,7 @@ repoItemFromPasteboard (NSPasteboard* pboard)
 	if ([self attachedSheet])
 		return NSDragOperationNone;
 	NSDragOperation op = [sender draggingSourceOperationMask];
-	return (gIsFile || op != NSDragOperationNone) ? NSDragOperationCopy : NSDragOperationLink;
+	return (gMergeOnly || op != NSDragOperationNone) ? NSDragOperationCopy : NSDragOperationLink;
 }
 
 
@@ -78,7 +78,7 @@ repoItemFromPasteboard (NSPasteboard* pboard)
 	// op: No keys => NSDragOperationPrivate | NSDragOperationCopy => Merge
 	//	   Command or Control keys => NSDragOperationNone => Switch
 	MyWorkingCopyController* controller = [[[self windowController] document] controller];
-	if (gIsFile || op != NSDragOperationNone)
+	if (gMergeOnly || op != NSDragOperationNone)
 		[controller requestMergeFrom: repoItem];
 	else
 		[controller requestSwitchToRepositoryPath: repoItem];
@@ -112,7 +112,7 @@ repoItemFromPasteboard (NSPasteboard* pboard)
 	[self sendActionOn: 0];
 	if ([NSTextField instancesRespondToSelector: @selector(awakeFromNib)])
 		[super awakeFromNib];
-	[self registerForDraggedTypes: [NSArray arrayWithObject: kTypeRepositoryPathAndRevision]];
+	[self registerForDraggedTypes: [NSArray arrayWithObject: kTypeRepoItem]];
 }
 
 

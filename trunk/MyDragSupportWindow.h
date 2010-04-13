@@ -3,12 +3,8 @@
 #import <Cocoa/Cocoa.h>
 
 @class RepoItem;
-extern NSString* const kTypeRepositoryPathAndRevision;
 
-@interface MyDragSupportWindow : NSWindow
-{
-}
-@end
+@interface MyDragSupportWindow : NSWindow @end
 
 
 //----------------------------------------------------------------------------------------

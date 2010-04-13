@@ -317,6 +317,15 @@ addDirToTree (const SvnStatusEnv* env, ConstString fullPath)
 
 
 //----------------------------------------------------------------------------------------
+
+static inline BOOL
+isOutOfDate (SvnWCStatusKind repos_status, SvnWCStatusKind status)
+{
+	return repos_status > svn_wc_status_none && repos_status != status;
+}
+
+
+//----------------------------------------------------------------------------------------
 // WC 'svn status' callback.
 
 static void
@@ -378,10 +387,8 @@ svnStatusReceiver (void*     baton,
 		column6 = kIsLocked;			// File is locked in this working copy
 
 	// COLUMN 7
-	SvnWCStatusKind repos_status = status->repos_text_status;
-	if (repos_status == svn_wc_status_none || repos_status == svn_wc_status_normal)
-		repos_status = status->repos_prop_status;
-	ConstString column7 = SvnStatusToString(repos_status);
+	ConstString column7 = (isOutOfDate(status->repos_text_status, text_status) ||
+						   isOutOfDate(status->repos_prop_status, prop_status)) ? @"*" : @" ";
 
 	// COLUMN 8
 	ConstString column8 = (prop_status == svn_wc_status_normal) ? @"P" : SvnStatusToString(prop_status);
@@ -438,6 +445,11 @@ svnStatusReceiver (void*     baton,
 	else if (text_status == svn_wc_status_obstructed)
 	{
 		revertible = YES;
+		updatable = YES;
+	}
+	else if (text_status == svn_wc_status_none)
+	{
+		updatable = YES;
 	}
 	if (text_status == svn_wc_status_conflicted || prop_status == svn_wc_status_conflicted)
 	{
@@ -1269,16 +1281,26 @@ svnInfoReceiver (void*     baton,
 #pragma mark	svn merge
 //----------------------------------------------------------------------------------------
 
-- (void) svnMerge: (NSArray*) options
+- (void) svnMerge: (BOOL)     dryRun
+		 options:  (NSArray*) options
 {
+	NSInvocation* callback = dryRun ? MakeCallbackInvocation(self, @selector(svnError:))
+									: [self genericCompletedCallback];
 	id taskObj = [MySvn genericCommand: @"merge"
-							 arguments: [NSArray array]
+							 arguments: [NSArray arrayWithObjects: dryRun ? @"--dry-run" : nil, nil]
 						generalOptions: [self svnOptionsInvocation]
 							   options: options
-							  callback: [self genericCompletedCallback]
+							  callback: callback
 						  callbackInfo: nil
 							  taskInfo: [self documentNameDict]];
+	if (dryRun)
+		[[taskObj objectForKey: @"additionalTaskInfo"] setObject: @"svn merge (dry run)"
+														  forKey: @"name"];
 	[self setDisplayedTaskObj: taskObj];
+	if (dryRun)
+		[controller performSelector: @selector(openSidebar) withObject: nil afterDelay: 0.25];
+	else
+		[controller startProgressIndicator];
 }
 
 
@@ -1392,25 +1414,11 @@ svnInfoReceiver (void*     baton,
 #pragma mark	svn update
 //----------------------------------------------------------------------------------------
 
-- (void) svnUpdateSelectedItems: (NSArray*) options
-{
-	[self svnCommand: @"update" options: options info: nil itemPaths: nil];
-}
-
-
-//----------------------------------------------------------------------------------------
-
 - (void) svnUpdate: (NSArray*) options
+		 items:     (NSArray*) itemPaths	// nil => workingCopyPath
 {
-	[controller startProgressIndicator];
-
-	[self setDisplayedTaskObj:
-		[MySvn updateAtWorkingCopyPath: [self workingCopyPath]
-						generalOptions: [self svnOptionsInvocation]
-							   options: options
-							  callback: MakeCallbackInvocation(self, @selector(svnUpdateCompletedCallback:))
-						  callbackInfo: nil
-							  taskInfo: [self documentNameDict]]];
+	[self svnCommand: @"update" options: options info: nil
+		   itemPaths: itemPaths ? itemPaths : [NSArray arrayWithObject: workingCopyPath]];
 }
 
 
@@ -1419,22 +1427,7 @@ svnInfoReceiver (void*     baton,
 
 - (void) svnUpdate
 {
-	[self svnUpdate: nil];
-}
-
-
-//----------------------------------------------------------------------------------------
-
-- (void) svnUpdateCompletedCallback: (id) taskObj
-{
-	[controller stopProgressIndicator];
-
-	if (isCompleted(taskObj))
-	{
-		[self svnRefresh];
-	}
-
-	[self svnError: taskObj];
+	[self svnUpdate: nil items: nil];
 }
 
 
@@ -1998,6 +1991,8 @@ getSvnProps (NSString* args[], int count, NSDictionary* constProps, NSMutableArr
 //----------------------------------------------------------------------------------------
 // get/set revision
 
+- (SvnRevNum) revisionNum { return SvnRevNumFromString(revision); }
+
 - (NSString*) revision { return revision; }
 
 - (void) setRevision: (NSString*) aRevision
@@ -2094,6 +2089,23 @@ getSvnProps (NSString* args[], int count, NSDictionary* constProps, NSMutableArr
 		path[0] = 0;
 
 	return GetFileIcon(path, &isDirectory);
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (id) treeSelectedItem
+{
+	ConstString path = outlineSelectedPath;
+	if (!flatMode && path)
+	{
+		for_each_obj(en, it, svnFiles)
+			if ([[it objectForKey: @"isDir"] boolValue] &&
+				[path isEqualToString: [it objectForKey: @"path"]])
+				return it;
+	}
+
+	return nil;
 }
 
 

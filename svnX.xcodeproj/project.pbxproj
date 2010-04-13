@@ -20,6 +20,8 @@
 		831A7ABB0D7B0F86006A81F0 /* ModeTree.png in Resources */ = {isa = PBXBuildFile; fileRef = 831A7AB80D7B0F86006A81F0 /* ModeTree.png */; };
 		831A7ABC0D7B0F86006A81F0 /* ModeSmart.png in Resources */ = {isa = PBXBuildFile; fileRef = 831A7AB90D7B0F86006A81F0 /* ModeSmart.png */; };
 		831A7ABD0D7B0F86006A81F0 /* ModeFlat.png in Resources */ = {isa = PBXBuildFile; fileRef = 831A7ABA0D7B0F86006A81F0 /* ModeFlat.png */; };
+		832A01FD1173891B000F7E3D /* svnUpdate.xib in Resources */ = {isa = PBXBuildFile; fileRef = 832A01FB1173891B000F7E3D /* svnUpdate.xib */; };
+		832A01FE1173891B000F7E3D /* svnMerge.xib in Resources */ = {isa = PBXBuildFile; fileRef = 832A01FC1173891B000F7E3D /* svnMerge.xib */; };
 		832B702E0DDA881000B0E95D /* svnReport.png in Resources */ = {isa = PBXBuildFile; fileRef = 832B702D0DDA881000B0E95D /* svnReport.png */; };
 		833B71E20D91ABB3006E242E /* SvnInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 833B71E00D91ABB3006E242E /* SvnInterface.m */; };
 		833ED6510FA558BE00B7C862 /* RepoItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 833ED64C0FA558B900B7C862 /* RepoItem.m */; };
@@ -171,6 +173,8 @@
 		831A7AB80D7B0F86006A81F0 /* ModeTree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ModeTree.png; sourceTree = "<group>"; };
 		831A7AB90D7B0F86006A81F0 /* ModeSmart.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ModeSmart.png; sourceTree = "<group>"; };
 		831A7ABA0D7B0F86006A81F0 /* ModeFlat.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ModeFlat.png; sourceTree = "<group>"; };
+		832A01FB1173891B000F7E3D /* svnUpdate.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = svnUpdate.xib; sourceTree = SOURCE_ROOT; };
+		832A01FC1173891B000F7E3D /* svnMerge.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = svnMerge.xib; sourceTree = SOURCE_ROOT; };
 		832B702D0DDA881000B0E95D /* svnReport.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = svnReport.png; sourceTree = "<group>"; };
 		833B71DF0D91ABB3006E242E /* SvnInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SvnInterface.h; sourceTree = "<group>"; };
 		833B71E00D91ABB3006E242E /* SvnInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SvnInterface.m; sourceTree = "<group>"; };
@@ -529,6 +533,8 @@
 				83CDCBEE116FA02C00ECD41D /* PropertyView.xib */,
 				83CDCBEF116FA02C00ECD41D /* BinTxt1.png */,
 				83CDCBF0116FA02C00ECD41D /* BinTxt0.png */,
+				832A01FB1173891B000F7E3D /* svnUpdate.xib */,
+				832A01FC1173891B000F7E3D /* svnMerge.xib */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -786,6 +792,8 @@
 				83CDCBF4116FA02C00ECD41D /* PropertyView.xib in Resources */,
 				83CDCBF5116FA02C00ECD41D /* BinTxt1.png in Resources */,
 				83CDCBF6116FA02C00ECD41D /* BinTxt0.png in Resources */,
+				832A01FD1173891B000F7E3D /* svnUpdate.xib in Resources */,
+				832A01FE1173891B000F7E3D /* svnMerge.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -999,6 +1007,7 @@
 					$APR_SVN/apr,
 					"$(inherited)",
 				);
+				IBC_NOTICES = NO;
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)";
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
@@ -1056,6 +1065,7 @@
 					$APR_SVN/apr,
 					"$(inherited)",
 				);
+				IBC_NOTICES = NO;
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)";
 				MACOSX_DEPLOYMENT_TARGET = 10.4;

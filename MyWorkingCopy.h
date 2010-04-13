@@ -61,8 +61,8 @@ void InitWCPreferences (void);
 - (void) fetchSvnInfo;
 - (void) svnInfo: (id) pathOrPaths
 		 options: (id) options;
-- (void) svnUpdateSelectedItems: (NSArray*) options;
-- (void) svnUpdate: (NSArray*) options;
+- (void) svnUpdate: (NSArray*) options
+		 items:     (NSArray*) itemPaths;	// nil => workingCopyPath
 - (void) svnUpdate;
 - (void) diffItems:    (NSArray*)      items
 		 callback:     (NSInvocation*) callback
@@ -85,7 +85,8 @@ void InitWCPreferences (void);
 
 - (void) svnCommit: (NSString*) message;
 - (void) svnCleanup: (id) paths;
-- (void) svnMerge:  (NSArray*) options;
+- (void) svnMerge:  (BOOL)     dryRun
+		 options:   (NSArray*) options;
 - (void) svnSwitch: (NSArray*) options;
 
 - (void) svnCommand: (NSString*)     command

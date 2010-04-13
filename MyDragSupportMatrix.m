@@ -192,10 +192,10 @@ static const NSSize gDragImageSize = { kDragImageSize, kDragImageSize };
 	if ([cells count] == 1)
 	{
 		RepoItem* repoItem = [[cells lastObject] representedObject];
-		[pboard addTypes: [NSArray arrayWithObjects: kTypeRepositoryPathAndRevision, NSURLPboardType, nil]
+		[pboard addTypes: [NSArray arrayWithObjects: kTypeRepoItem, NSURLPboardType, nil]
 				owner:    self];
 		[pboard setData: [NSData dataWithBytes: &repoItem length: sizeof(repoItem)]
-				forType: kTypeRepositoryPathAndRevision];
+				forType: kTypeRepoItem];
 		[[repoItem url] writeToPasteboard: pboard];
 
 		if ([repoItem isDir])

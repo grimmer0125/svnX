@@ -91,7 +91,7 @@
 	[self createItem: @"toggleSidebar" label: @"Output" image: @"sidebar"
 		  help:       @"Show/Hide output of updates, commits, merges, etc."];
 
-	NSToolbar* toolbar = [[NSToolbar alloc] initWithIdentifier: @"WorkingCopyToolBar2"];
+	NSToolbar* toolbar = [[NSToolbar alloc] initWithIdentifier: @"WorkingCopyToolBar3"];
 	[toolbar setDelegate: self];
 	[toolbar setAllowsUserCustomization: YES];
 	[toolbar setAutosavesConfiguration: YES];

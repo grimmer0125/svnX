@@ -75,7 +75,7 @@
 	[self createItem: @"toggleSidebar" label: @"Output"   image: @"sidebar"
 				help: @"Show/Hide output of main operations."];
 
-	NSToolbar* toolbar = [[NSToolbar alloc] initWithIdentifier: @"RepositoryToolBar2"];
+	NSToolbar* toolbar = [[NSToolbar alloc] initWithIdentifier: @"RepositoryToolBar3"];
 	[toolbar setDelegate: self];
 	[toolbar setAllowsUserCustomization: YES];
 	[toolbar setAutosavesConfiguration: YES];

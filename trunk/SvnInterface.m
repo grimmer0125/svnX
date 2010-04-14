@@ -79,6 +79,8 @@ SvnDoReport (SvnError err)
 	DbgSvnPrint(err);
 #elif 0
 	svn_handle_error2(err, stderr, FALSE, kAppName);
+#else
+	#pragma unused(err)
 #endif
 }
 

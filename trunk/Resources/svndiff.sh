@@ -63,20 +63,13 @@ case "$1" in
 	"araxis"        ) /usr/local/bin/araxissvndiff "$file1" "$file2" "$file1" "$file2" ;;
 	"diffmerge"     ) /usr/local/bin/diffmerge.sh -ro1 --title1="$file1" --title2="$file2" "$file1" "$file2" ;;
 	"changes"       ) /usr/bin/chdiff "$file1" "$file2" ;;
-	"guiffy"        )
-		DIFF='/usr/local/bin/guiffy'
-		if [ $isWorkingCopy ]; then
-			"$DIFF" -m "$file1" "$file2" "$file2"
-		else
-			"$DIFF" "$file1" "$file2"
-		fi ;;
-	"filemerge" | * )
-		DIFF='/usr/bin/opendiff'; if [ ! -x "$DIFF" ]; then DIFF="/Developer$DIFF"; if [ ! -x "$DIFF" ]; then DIFF='opendiff'; fi; fi
-		if [ $isWorkingCopy ]; then
-			"$DIFF" "$file1" "$file2" -merge "$file2" &> /dev/null
-		else
-			"$DIFF" "$file1" "$file2"
-		fi ;;
+	"guiffy"        ) DIFF='/usr/local/bin/guiffy'; if [ $isWorkingCopy ]
+						then "$DIFF" -m "$file1" "$file2" "$file2"; else "$DIFF" "$file1" "$file2"; fi ;;
+	"kdiff3"        ) ~/bin/kdiff3 "$file1" "$file2" --output "$file2" ;;
+	"filemerge" | * ) DIFF='/usr/bin/opendiff'; if [ ! -x "$DIFF" ]; then DIFF="/Developer$DIFF"
+						if [ ! -x "$DIFF" ]; then DIFF='opendiff'; fi; fi
+						if [ $isWorkingCopy ]; then "$DIFF" "$file1" "$file2" -merge "$file2" &> /dev/null
+											   else "$DIFF" "$file1" "$file2"; fi ;;
 esac
 
 exit 0

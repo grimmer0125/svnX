@@ -67,6 +67,9 @@ NSView*		SubView					(NSView* aView, int index);
 id			WGetView				(NSWindow* window, int tag);
 int			WGetViewInt				(NSWindow* window, int tag);
 void		WSetViewInt				(NSWindow* window, int tag, int value);
+static inline
+bool		WViewIsOn				(NSWindow* window, int tag)
+										{ return WGetViewInt(window, tag) == NSOnState; }
 NSString*	WGetViewString			(NSWindow* window, int tag);
 void		WSetViewString			(NSWindow* window, int tag, NSString* value);
 void		WViewEnable				(NSWindow* window, int tag, bool isEnabled);

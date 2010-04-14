@@ -1359,6 +1359,7 @@ enum {
 // Private:
 
 - (void) chooseAny:      (NSString*) message
+		 name:           (NSString*) name
 		 allowFiles:     (BOOL)      allowFiles
 		 didEndSelector: (SEL)       didEndSelector
 		 contextInfo:    (void*)     contextInfo
@@ -1369,10 +1370,11 @@ enum {
 	[oPanel setCanChooseDirectories:    YES];
 	[oPanel setCanChooseFiles:          allowFiles];
 	[oPanel setCanCreateDirectories:    !allowFiles];
-	[oPanel setMessage: message];
+	[oPanel setMessage:                 message];
+	[oPanel setPrompt:                  name];
 
-	[oPanel beginSheetForDirectory: NSHomeDirectory() file: nil types: nil
-					modalForWindow: [self windowForSheet]
+	[oPanel beginSheetForDirectory: nil file: nil types: nil
+					modalForWindow: [self window]
 					 modalDelegate: self
 					didEndSelector: didEndSelector
 					   contextInfo: contextInfo];
@@ -1383,10 +1385,12 @@ enum {
 // Private:
 
 - (void) chooseFolder:   (NSString*) message
+		 name:           (NSString*) name
 		 didEndSelector: (SEL)       didEndSelector
 		 contextInfo:    (void*)     contextInfo
 {
-	[self chooseAny: message allowFiles: NO didEndSelector: didEndSelector contextInfo: contextInfo];
+	[self chooseAny: message name: name allowFiles: NO
+		  didEndSelector: didEndSelector contextInfo: contextInfo];
 }
 
 
@@ -1422,11 +1426,12 @@ enum {
 	NSArray* const selectedObjects = [svnBrowserView selectedItems];
 	const int count = [selectedObjects count];
 	NSString* message = (count == 1)
-				? [NSString stringWithFormat: @"Export %C%@%C into folder:", 0x201C,
-											  [[selectedObjects lastObject] name], 0x201D]
-				: [NSString stringWithFormat: @"Export %d items into folder:", count];
+				? [NSString stringWithFormat: @"Export \u201C%@\u201D into folder:",
+											  [[selectedObjects lastObject] path]]
+				: [NSString stringWithFormat: @"Export %u items into folder:", count];
 
 	[self chooseFolder: message
+				  name: @"Export"
 		didEndSelector: @selector(exportPanelDidEnd:returnCode:contextInfo:)
 		   contextInfo: [selectedObjects retain]];
 }
@@ -1444,9 +1449,9 @@ enum {
 	}
 	else
 	{
-		NSString* message = [NSString stringWithFormat: @"Checkout %C%@%C into folder:",
-														0x201C, [selection name], 0x201D];
-		[self chooseFolder: message
+		[self chooseFolder: [NSString stringWithFormat: @"Checkout \u201C%@\u201D into folder:",
+														[selection path]]
+					  name: @"Checkout"
 			didEndSelector: @selector(checkoutPanelDidEnd:returnCode:contextInfo:)
 			   contextInfo: selection];
 	}
@@ -1640,11 +1645,53 @@ enum {
 //----------------------------------------------------------------------------------------
 
 enum {
+	vForceOp		=	300,
 	vImportSource	=	10,
 	vImportDest,
 	vImportName,
-	vImportRecursive
+	vImportAutoProps,
+	vImportNoIgnore
 };
+
+extern id	InitDepthViews (NSWindow* window, BOOL show);
+extern int	GetDepthOptions (NSWindow* window, id objs[]);
+
+static inline bool HasSvnV1_6 (void) { extern UInt32 gSvnVersion; return gSvnVersion >= 1006000; }
+
+
+//----------------------------------------------------------------------------------------
+
+typedef struct ImportInfo
+{
+	NSString*	fDestURL, *fFilePath;
+	bool		fIsDir;
+} ImportInfo;
+
+
+//----------------------------------------------------------------------------------------
+
+static ImportInfo*
+new_ImportInfo (NSString* destURL,
+				NSString* srcFilePath,
+				bool      isDir)
+{
+	ImportInfo* obj = malloc(sizeof(ImportInfo));
+	obj->fDestURL  = [destURL retain];
+	obj->fFilePath = [srcFilePath retain];
+	obj->fIsDir    = isDir;
+	return obj;
+}
+
+
+//----------------------------------------------------------------------------------------
+
+static void
+delete_ImportInfo (ImportInfo* obj)
+{
+	[obj->fDestURL  release];
+	[obj->fFilePath release];
+	free(obj);
+}
 
 
 //----------------------------------------------------------------------------------------
@@ -1656,11 +1703,11 @@ enum {
 	Assert(destDir != nil);
 	if (destDir != nil)
 	{
-		[self chooseAny:    [NSString stringWithFormat: @"Import into %C%@%C:", 0x201C,
-														UnEscapeURL([destDir url]), 0x201D]
-			allowFiles:     YES
-			didEndSelector: @selector(importPanelDidEnd:returnCode:contextInfo:)
-			contextInfo:    [destDir retain]];
+		[self chooseAny: [NSString stringWithFormat: @"Import into \u201C%@/\u201D:", [destDir path]]
+				   name: @"Import"
+			 allowFiles: YES
+		 didEndSelector: @selector(importPanelDidEnd:returnCode:contextInfo:)
+			contextInfo: [destDir retain]];
 	}
 }
 
@@ -1671,15 +1718,13 @@ enum {
 		 returnCode:        (int)          returnCode
 		 contextInfo:       (void*)        contextInfo
 {
-	RepoItem* destDir = contextInfo;
+	RepoItem* destDir = [(RepoItem*) contextInfo autorelease];
 
 	if (returnCode == NSOKButton)
 	{
 		[sheet orderOut: self];
 		[self importFiles: [sheet filenames] intoFolder: destDir];
 	}
-
-	[destDir release];
 }
 
 
@@ -1698,28 +1743,18 @@ enum {
 	WSetViewString(importCommitPanel, vImportSource, GetPreferenceBool(@"abbrevWCFilePaths")
 											? [filePath stringByAbbreviatingWithTildeInPath] : filePath);
 	WSetViewString(importCommitPanel, vImportDest, [[destRepoDir path] stringByAppendingString: @"/"]);
+	WViewEnable(importCommitPanel, vForceOp, HasSvnV1_6());
 
-	// Recursive checkbox only shown for directories
+	// Depth pop-up/recursive checkbox only shown for directories
 	BOOL isDir = FALSE;
-	NSButton* const recursive = WGetView(importCommitPanel, vImportRecursive);
-	if (recursive)
-	{
-		[recursive setHidden: !([[NSFileManager defaultManager]
-									fileExistsAtPath: filePath isDirectory: &isDir] && isDir)];
-		if (isDir)
-			[recursive setState: NSOnState];
-	}
+	[[NSFileManager defaultManager] fileExistsAtPath: filePath isDirectory: &isDir];
+	InitDepthViews(importCommitPanel, isDir);
 
 	[NSApp beginSheet:     importCommitPanel
-		   modalForWindow: [self windowForSheet]
+		   modalForWindow: [self window]
 		   modalDelegate:  self
 		   didEndSelector: @selector(importCommitPanelDidEnd:returnCode:contextInfo:)
-		   contextInfo:    [[NSDictionary dictionaryWithObjectsAndKeys:
-										TrimSlashes(destRepoDir), @"destination",
-										filePath,                 @"filePath",
-										NSBool(isDir),            @"isDir",
-										nil] retain]
-	];
+		   contextInfo:    new_ImportInfo(TrimSlashes(destRepoDir), filePath, isDir)];
 }
 
 
@@ -1740,27 +1775,36 @@ enum {
 {
 	[sheet orderOut: self];
 
-	NSDictionary* dict = contextInfo;
+	ImportInfo* const info = (ImportInfo*) contextInfo;
 
 	if (returnCode == NSOKButton)
 	{
-		id recursive = ([dict objectForKey: @"isDir"] == kNSTrue &&
-						WGetViewInt(sheet, vImportRecursive) == NSOffState) ? @"-N" : nil;
+		NSWindow* const win = importCommitPanel;
+		id objs[10]; int count = 0;
+		objs[count++] = WViewIsOn(win, vImportAutoProps) ? @"--auto-props" : @"--no-auto-props";
+		if (WViewIsOn(win, vForceOp) && HasSvnV1_6())
+			objs[count++] = @"--force";
+		if (WViewIsOn(win, vImportNoIgnore))
+			objs[count++] = @"--no-ignore";
+		if (info->fIsDir)
+			count += GetDepthOptions(win, objs + count);
+		if (0 && HasSvnV1_6())
+			objs[count++] = @"--force-log";
+		objs[count++] = @"--message";
+		objs[count++] = MessageString([commitTextView string]);
+
+		Assert(count <= 8);
 		[self setDisplayedTaskObj:
-			[MySvn		import: [dict objectForKey: @"filePath"]
-				   destination: [NSString stringWithFormat: @"%@/%@",
-									[dict objectForKey: @"destination"], [fileNameTextField stringValue]]
-											// stringByAppendingPathComponent would eat svn:// into svn:/ !
+			[MySvn		import: info->fFilePath
+				   destination: AppendPathComponent(info->fDestURL, [fileNameTextField stringValue])
 				generalOptions: [self svnOptionsInvocation]
-					   options: [NSArray arrayWithObjects: @"-m", MessageString([commitTextView string]),
-														   recursive, nil]
+					   options: [NSArray arrayWithObjects: objs count: count]
 					  callback: [self makeCommandCallback]
 				  callbackInfo: nil
 					  taskInfo: [self documentNameDict]]
 			];
 	}
-
-	[dict release];
+	delete_ImportInfo(info);
 }
 
 

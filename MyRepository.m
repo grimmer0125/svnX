@@ -428,6 +428,7 @@ compareRevisions (id obj1, id obj2, void* context)
 		int oldLength = [tmpString length] - 1;
 		if ([tmpString characterAtIndex: oldLength] != '/')
 			++oldLength;
+		if (oldLength <= tmpLength) break;
 		NSRange range = { tmpLength, oldLength - tmpLength };
 
 		if (tmpLength < rootLength)
@@ -731,7 +732,7 @@ svnInfoReceiver (void*       baton,
 		if (ToUTF8([fRootURL absoluteString], path, sizeof(path)))
 		{
 			int len = strlen(path);
-			if (len > 0 && path[len - 1] == '/')
+			if (len > 5 && path[len - 1] == '/' && path[len - 2] != '/')
 				path[len - 1] = 0;
 			const SvnOptRevision peg_rev = { svn_opt_revision_head, 0 },
 								 rev_opt = { svn_opt_revision_unspecified, 0 };

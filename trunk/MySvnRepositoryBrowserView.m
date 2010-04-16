@@ -447,7 +447,7 @@ svnListReceiver (void*        baton,
 		if (ToUTF8([[info objectForKey: @"url"] absoluteString], path, sizeof(path)))
 		{
 			int len = strlen(path);
-			if (len > 0 && path[len - 1] == '/')
+			if (len > 5 && path[len - 1] == '/' && path[len - 2] != '/')
 				path[len - 1] = 0;
 			NSString* const revision = [self revision];
 			const BOOL isHead = [revision isEqualToString: @"HEAD"];

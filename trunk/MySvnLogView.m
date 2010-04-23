@@ -579,7 +579,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 	{
 		RepoItem* repoItem = [RepoItem repoPath: path_
 									   revision: [[logObj objectForKey: @"revision_n"] intValue]
-											url: fURL];
+											url: [fRepository rootURL]];
 		[repoItem svnInfo: fRepository];
 	/*	dprintf_("isLog=%d isDir=%d isRoot=%d path=\"%@\" name=\"%@\" r%u\n\turl=<%@>",
 				 [repoItem isLog], [repoItem isDir], [repoItem isRoot], [repoItem path],

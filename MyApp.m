@@ -390,6 +390,19 @@ addTransform (Class itsClass, NSString* itsName)
 	fSvnVersion = version;
 //	dprintf("version=%u => '%@' %@", version, [self svnVersion], data);
 	[self setSvnHasLibs: nil];		// Force bindings to update
+
+	// Fix-up /opt/subversion/lib if svn >= 1.6.9
+	NSFileManager* const fm = [NSFileManager defaultManager];
+	BOOL isDirectory;
+	if (version >= 1006009 &&
+		[GetPreference(@"svnBinariesFolder") isEqualToString: @"/opt/subversion/bin"] &&
+		[fm fileExistsAtPath: @"/opt/subversion/lib" isDirectory: &isDirectory] && isDirectory)
+	{
+		[fm createSymbolicLinkAtPath: @"/opt/subversion/lib/libapr-1.0.dylib"
+						 pathContent: @"/usr/lib/libapr-1.0.dylib"];
+		[fm createSymbolicLinkAtPath: @"/opt/subversion/lib/libaprutil-1.0.dylib"
+						 pathContent: @"/usr/lib/libaprutil-1.0.dylib"];
+	}
 }
 
 
@@ -557,7 +570,26 @@ static BOOL gCanFocus = YES;
 
 - (void) awakeFromNib
 {
-	[self readRTFDFromFile: [[NSBundle mainBundle] pathForResource: @"Documentation" ofType: @"rtf"]];
+	[[self window] setDelegate: self];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) windowDidBecomeMain: (NSNotification*) notification
+{
+	#pragma unused(notification)
+	if ([[self string] length] == 0)
+		[self readRTFDFromFile: [[NSBundle mainBundle] pathForResource: @"Documentation" ofType: @"rtf"]];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (void) windowWillClose: (NSNotification*) notification
+{
+	#pragma unused(notification)
+	[self setString: @""];
 }
 
 @end	// HelpDocView

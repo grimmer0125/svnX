@@ -173,8 +173,8 @@
 		831A7AB80D7B0F86006A81F0 /* ModeTree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ModeTree.png; sourceTree = "<group>"; };
 		831A7AB90D7B0F86006A81F0 /* ModeSmart.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ModeSmart.png; sourceTree = "<group>"; };
 		831A7ABA0D7B0F86006A81F0 /* ModeFlat.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ModeFlat.png; sourceTree = "<group>"; };
-		832A01FB1173891B000F7E3D /* svnUpdate.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = svnUpdate.xib; sourceTree = SOURCE_ROOT; };
-		832A01FC1173891B000F7E3D /* svnMerge.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = svnMerge.xib; sourceTree = SOURCE_ROOT; };
+		832A01FB1173891B000F7E3D /* svnUpdate.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = svnUpdate.xib; sourceTree = "<group>"; };
+		832A01FC1173891B000F7E3D /* svnMerge.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = svnMerge.xib; sourceTree = "<group>"; };
 		832B702D0DDA881000B0E95D /* svnReport.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = svnReport.png; sourceTree = "<group>"; };
 		833B71DF0D91ABB3006E242E /* SvnInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SvnInterface.h; sourceTree = "<group>"; };
 		833B71E00D91ABB3006E242E /* SvnInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SvnInterface.m; sourceTree = "<group>"; };

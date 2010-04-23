@@ -12,7 +12,7 @@
 	beta		{background-color: #D00}
 	release		{background-color: #0B0}
 	vers		{background-color: #000; text-transform: none}
-	ul h4		{position: relative; left: -22px}
+	ul h4,txt	{position: relative; left: -22px}
 	new			{background-color: #F70; /*font: 10px sans-serif*/}
 	date		{font: 80%  sans-serif; font-weight: bold; padding: 0 4em}
 	a.wik		{font: 11px sans-serif; font-weight: bold; background: #EEE;
@@ -26,9 +26,59 @@
 	dd			{left: 18em}
 </style>
 
-<h3><span style="color: #A00">Visit the svnX discussion group at</span>
+<h3><span style="color: #080">Visit the svnX discussion group at </span>
  <a class="wik" href="http://groups.google.com/group/svnx">groups.google.com/group/svnx </a>
+</h3>
+
+<h3><span style="color: #900">Check &amp; report svnX issues at </span>
+ <a class="wik" href="http://code.google.com/p/svnx/issues/list">code.google.com/p/svnx/issues </a>
 </h3><hr/>
+
+
+<!--..............................  1.2b1  ..............................-->
+<h3><vers>1.2b1</vers> — <beta>beta</beta><date>2010–04–22</date>
+<a class="wik" href="wiki/Features_1_2">View Detailed Features and Changes</a></h3>
+
+  <ul class="normal">
+	<h4>Working Copy windows</h4>
+	<li>Subversion properties browser &amp; editor panel.  <new>NEW</new><br/>[View, add, edit &amp; delete multiple text &amp; binary properties on multiple items.]</li>
+	<li>Interactively resolve file conflicts.  <new>NEW</new></li>
+	<li>Merge sheet now provides dry-run &amp; Subversion 1.6 feature support including reintegrate, depth control, automatic conflict resolution &amp; record only.</li>
+	<li>Support for Subversion 1.6 features has also been added to the Update sheet including force operation, depth control &amp; automatic conflict resolution.</li>
+	<li>Diff any items against their PREV revisions with a single click or key press.  <new>NEW</new></li>
+	<li>New item list contextual menu provides access to several commands including new ‘svn info’ commands.  <new>NEW</new></li>
+	<li>Rename or copy items in flat-view &amp; smart-view modes.</li>
+	<li>Support for ‘svn cleanup’ command.  <new>NEW</new></li>
+	<li>Removed ‘Working Copy Path’ toolbar item.</li>
+	<li>Improved save &amp; restore of window settings &amp; state.</li>
+
+	<h4>Review &amp; Commit window</h4>
+	<li>Display side-by-side diffs.  <new>NEW</new></li>
+	<li>Diff pane settings pop-up menu to customise &amp; control many aspects of the diff display.  <new>NEW</new></li>
+	<li>Protect user from accidental closure/loss of un-commited message.</li>
+
+	<h4>Repository windows</h4>
+	<li>Drag &amp; drop a repository log entry to a working copy window to request a reverse merge of that change.  <new>NEW</new></li>
+	<li>Drag &amp; drop a repository log entry’s path item to a working copy window to request a reverse merge of that change of that file/directory.  <new>NEW</new><br/>[Also drag either of the above to a text editor or the Finder.]</li>
+	<li>Diff repository items, log entries (changes) &amp; log entry paths against their PREV revisions with a single click or key press.  <new>NEW</new></li>
+	<li>Blame &amp; its verbose option now also supports log entry path items.</li>
+	<li>Directly open files &amp; directories from there log entry path items.</li>
+	<li>Browse the log of any repository log entry paths (like you can for repository items).</li>
+	<li>Added support to Import sheet for enable/disable automatic properties, disregard ignore settings, force operation &amp; depth control (last 2 require svn 1.6+).</li>
+	<li>Improved import, export &amp; checkout file selection sheets with better prompts &amp; custom button titles.</li>
+	<li>Improved save &amp; restore of window settings &amp; state.</li>
+
+	<h4>General</h4>
+	<li>New global icon cache for improved display, performance &amp; resource usage.</li>
+	<li>Various bug fixes &amp; code improvements.</li>
+	<li>Added several new &amp; updated other keyboard short-cuts.</li>
+	<li>Added support for Guiffy &amp; KDiff3 diff applications.</li>
+	<li>Improved naming of temporary diff files, repository files &amp; blame files.</li>
+	<li>Added ‘resolve’ command to <code>svnx</code> shell-script/tool.</li>
+	<li>Updated &amp; extended documentation.</li>
+	<li>Fully compatible with Subversion 1.6.11 (&amp; 1.6.9).</li>
+  </ul>
+<br/><hr/>
 
 
 <!--..............................  1.1  ..............................-->
@@ -36,8 +86,10 @@
 <a class="wik" href="wiki/Features_1_1">View Detailed Features and Changes</a></h3>
 
   <ul class="normal">
+	<txt><b>NOTE: </b>Also includes all changes listed under 1.1b1, 1.1b2 &amp; 1.1b3.</txt>
+
 	<h4>Working Copy windows</h4>
-	<li>The ‘Review…’ button now only opens additional Review &amp; Commit windows if _alt_ is pressed.  Otherwise it activates an extant R&amp;C window.</li>
+	<li>The ‘Review…’ button now only opens additional Review &amp; Commit windows if <i>alt</i> is pressed.  Otherwise it activates an extant R&amp;C window.</li>
 	<li>Automatically refresh all related Review &amp; Commit file lists after refreshing the working copy’s file list.</li>
 	<li>Fixed an occasional crash when refreshing the file list and ‘Call Subversion libraries directly’ preference is on.</li>
 	<li>Improved diff compatibility with Subversion 1.6.x.</li>
@@ -178,7 +230,7 @@
 	<li>Save &amp; restore each window's frame, view &amp; filter modes.</li>
 	<li>Improvements, corrections &amp; optimisations to file list's help tags.</li>
 	<li>Refresh is up to 5-10 times as fast.  Uses less memory.</li>
-	<li>Fixed commit failure due to mixed end-of-line characters in commit message. [Maps all <code>EoLs</code> to \n.]</li>
+	<li>Fixed commit failure due to mixed end-of-line characters in commit message. [Maps all <code>EoLs</code> to &#92;n.]</li>
 	<li>Fixed dragging of non-selected items in Flat &amp; Smart modes.</li>
 	<li>Maintain file selection after refresh or view mode change.  Also maintain tree state.</li>
 	<li>New recent items menu in search field.</li>
@@ -440,5 +492,6 @@
   <ul class="normal">
 	<li>Initial release.</li>
   </ul>
-				
+
+			
 </html>

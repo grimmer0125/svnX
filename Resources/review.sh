@@ -1,4 +1,4 @@
-#! /usr/bin/perl -w -Co
+#! /usr/bin/perl -w
 #
 # review.sh <svn-tool> <options> <default-tab> <ctx-lines> <show-func> <show-chars> <dest-html> <paths...>
 #

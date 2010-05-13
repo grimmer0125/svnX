@@ -1024,7 +1024,6 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = svnX;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				SPARKLE_BUILD = $SRCROOT/sparkle/build/Release;
 				SVN_LIBS = /opt/subversion/lib;
 				USER_HEADER_SEARCH_PATHS = "$APR_SVN/svn $(inherited)";
@@ -1082,7 +1081,6 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = svnX;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				SPARKLE_BUILD = $SRCROOT/sparkle/build/Release;
 				STRIP_INSTALLED_PRODUCT = NO;
 				SVN_LIBS = /opt/subversion/lib;

@@ -1826,6 +1826,9 @@ getSvnProps (NSString* args[], int count, NSDictionary* constProps, NSMutableArr
 			id objs[8]; int count = 0;
 			objs[count++] = value ? @"propset" : @"propdel";
 			objs[count++] = name;
+
+			if (ISA(value, NSString) && [value length] > 0 && [value characterAtIndex: 0] == '-')
+				value = [value dataUsingEncoding: NSUTF8StringEncoding];	// Use --file for "-*" values
 			if (value == nil)
 				;	// propdel
 			else if (ISA(value, NSData))

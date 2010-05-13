@@ -33,10 +33,10 @@ until [ -z "$1" ]; do
 	#	"textwrangler"  ) /usr/bin/twdiff --case-sensitive "$file1" "$file2" ;;
 	#	"bbedit"        ) /usr/bin/bbdiff --case-sensitive "$file1" "$file2" ;;
 		"araxis"        ) /usr/local/bin/araxissvndiff3 "$left" "$base" "$right" "$left" "$base" "$right" ;;
-	#	"diffmerge"     ) /usr/local/bin/diffmerge.sh -ro1 --title1="$file1" --title2="$file2" "$file1" "$file2" ;;
+		"diffmerge"     ) /usr/local/bin/diffmerge.sh -ro2 -r="$1" "$left" "$base" "$right" ;;
 	#	"changes"       ) /usr/bin/chdiff "$file1" "$file2" ;;
 		"guiffy"        ) /usr/local/bin/guiffy -s "$left" "$right" "$base" "$1" ;;
-		"kdiff3"        ) ~/bin/kdiff3 "$base" "$left" "$right" --output "$1" ;;
+		"kdiff3"        ) ~/bin/kdiff3 "$base" "$left" "$right" --output "$1" &> /dev/null ;;
 		"filemerge" | * ) DIFF='/usr/bin/opendiff'; if [ ! -x "$DIFF" ]; then DIFF="/Developer$DIFF"
 							if [ ! -x "$DIFF" ]; then DIFF='opendiff'; fi; fi
 							"$DIFF" "$left" "$right" -ancestor "$base" -merge "$1" ;;

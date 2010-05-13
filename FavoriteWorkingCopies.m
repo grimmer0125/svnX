@@ -59,14 +59,28 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 //----------------------------------------------------------------------------------------
 
 - (id) newObjectWithName: (NSString*) name
-					path: (NSString*) path
+	   path:              (NSString*) path
+	   username:          (NSString*) username
+	   password:          (NSString*) password
 {
 	return [NSMutableDictionary dictionaryWithObjectsAndKeys:
 				name,								@"name",
 				[path stringByStandardizingPath],	@"fullPath",
-				@"",								@"user",
-				@"",								@"pass",
+				username,							@"user",
+				password,							@"pass",
 				nil];
+}
+
+
+//----------------------------------------------------------------------------------------
+
+- (id) newObjectWithName: (NSString*) name
+					path: (NSString*) path
+{
+	return [self newObjectWithName: name
+							  path: path
+						  username: @""
+						  password: @""];
 }
 
 
@@ -106,7 +120,13 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 
 - (void) newWorkingCopyNotificationHandler: (NSNotification*) notification
 {
-	[self newWorkingCopyItemWithPath: [notification object]];
+	NSDictionary* obj = [notification object];
+	ConstString name = [NSString stringWithFormat: @"%@ Working Copy", [obj objectForKey: @"name"]];
+	[fAC addObject: [self newObjectWithName: name
+									   path: [obj objectForKey: @"path"]
+								   username: [obj objectForKey: @"username"]
+								   password: [obj objectForKey: @"password"]]];
+	[super newItem: self];
 
 	[fWindow makeKeyAndOrderFront: nil];
 }

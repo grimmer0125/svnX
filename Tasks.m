@@ -190,7 +190,8 @@ static int gLogLevel = kLogLevelAll;
 
 - (void) invokeCallBackForTask: (id) taskObj
 {
-	NSInvocation* callback = [taskObj objectForKey: @"callback"];
+	NSInvocation* callback = [[[taskObj objectForKey: @"callback"] retain] autorelease];
+	[taskObj removeObjectForKey: @"callback"];
 	id status = @"completed";
 
 	if ( ![[taskObj objectForKey: @"status"] isEqualToString: @"error"] )
@@ -536,9 +537,10 @@ static int gLogLevel = kLogLevelAll;
 {
 	Assert(gTasks != nil);
 
+	NSNull* const nsNull = [NSNull null];
 	for_each_obj(en, callback, [[gTasks->tasksAC arrangedObjects] valueForKey: @"callback"])
 	{
-		 if (target == [callback target])
+		 if (callback != nsNull && target == [callback target])
 		 {
 			[callback setTarget: nil];
 		 }

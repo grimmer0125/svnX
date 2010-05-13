@@ -10,6 +10,7 @@ hdiutil create -volname "svnX" -size 10m -fs HFS+ $TMPDMG
 hdiutil attach -owners on $TMPDMG -shadow
 ditto "${1:-$SOURCE/build/Release/svnX.app}" "$TARGET/svnX.app"
 cp "$RES/Documentation.rtf" "$TARGET/Read Me.rtf"
+#ln -s "svnX.app/Contents/Resources/Documentation.rtf" "$TARGET/Read Me.rtf"
 cp "$RES/License.rtf" "$TARGET/"
 cp "$RES/ChangeLog.html" "$TARGET/"
 cp "$RES/open.sh" "$TARGET/svnXopen.sh"

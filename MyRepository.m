@@ -395,6 +395,8 @@ compareRevisions (id obj1, id obj2, void* context)
 
 - (void) displayUrlTextView
 {
+	if (![[self window] isVisible])
+		return;
 	[self checkRepositoryURL];
 	NSString* tmpString = UnEscapeURL(fURL);
 	int rootLength = [UnEscapeURL(fRootURL) length];
@@ -1411,10 +1413,17 @@ enum {
 				  taskInfo: [self documentNameDict]]
 	];
 
-	// TL : Creating new working copy for the checked out path.
+	// Create a new working copy for the checked out path.
 	if (GetPreferenceBool(@"addWorkingCopyOnCheckout"))
 	{
-		[[NSNotificationCenter defaultCenter] postNotificationName: @"newWorkingCopy" object: destinationPath];
+		[[NSNotificationCenter defaultCenter]
+			postNotificationName: @"newWorkingCopy"
+						  object: [NSDictionary dictionaryWithObjectsAndKeys:
+										windowTitle,		@"name",
+										destinationPath,	@"path",
+										user,				@"username",
+										pass,				@"password",
+										nil]];
 	}
 }
 
@@ -1908,6 +1917,8 @@ delete_ImportInfo (ImportInfo* obj)
 
 - (void) svnCommand_InfoCompleted: (id) taskObj
 {
+	if (![[self window] isVisible])
+		return;
 	if (!SvnWantAndHave() && isCompleted(taskObj))
 	{
 		[self fetchSvnInfoReceiveDataFinished: stdOut(taskObj)];

@@ -560,7 +560,10 @@ ensureDict (NSDictionary* dictOrNil)
 						 additionalTaskInfo: (id)            additionalTaskInfo
 						 outputToData:       (BOOL)          outputToData
 {
-//	NSLog(@"launchTask: '%@' arguments=%@", taskLaunchPath, arguments);
+/*	dprintf_("launchTask: `%@ %@`\n        [%@ %s] callback=%@",
+			 taskLaunchPath, [arguments componentsJoinedByString: @" "],
+			 [callback target], sel_getName([callback selector]), callback);*/
+	[callback retainArguments];
 	NSTask* task = [[NSTask alloc] init];
 	NSPipe* pipe = [[NSPipe alloc] init];
 	NSPipe* errorPipe = [[NSPipe alloc] init];

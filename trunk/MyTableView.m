@@ -20,14 +20,12 @@
 
 - (void) awakeFromNib
 {
-#if 1
 	IconTextCell* const cell = [IconTextCell new];
+	[cell setLineBreakMode: NSLineBreakByTruncatingMiddle];
 	[cell setFont: [NSFont labelFontOfSize: 11]];
 	[cell setIconRef: GenericFileIcon()];
 	[[self tableColumnWithIdentifier: @"path"] setDataCell: cell];
 	[cell release];
-	[self removeTableColumn: [self tableColumnWithIdentifier: @"icon"]];
-#endif
 	[self setDoubleAction: @selector(onDoubleClick:)];
 }
 

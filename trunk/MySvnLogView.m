@@ -169,7 +169,7 @@ logItemToString (NSDictionary* item, BOOL isAdvanced)
 		//			options: (NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld) context: nil];
 		}
 
-		[self setMostRecentRevision: 1];
+		[self setMostRecentRevision: 0];
 	}
 
 	return self;

@@ -1268,7 +1268,7 @@ svnInfoReceiver (void*     baton,
 {
 	[self setDisplayedTaskObj:
 		[MySvn genericCommand: @"cleanup"
-					arguments: paths ? paths : workingCopyPath
+					arguments: paths ? paths : [NSArray arrayWithObject: workingCopyPath]
 			   generalOptions: [self svnOptionsInvocation]
 					  options: nil
 					 callback: MakeCallbackInvocation(self, @selector(emptyCallback:))

@@ -138,6 +138,15 @@ HelpTagForWCItem (NSDictionary* wcFileInfo)
 
 //----------------------------------------------------------------------------------------
 
+- (int) numberOfRowsInTableView: (NSTableView*) tableView
+{
+	#pragma unused(tableView)
+	return [[svnFilesAC arrangedObjects] count];
+}
+
+
+//----------------------------------------------------------------------------------------
+
 - (BOOL) tableView:            (NSTableView*)  tableView
 		 writeRowsWithIndexes: (NSIndexSet*)   rowIndexes
 		 toPasteboard:         (NSPasteboard*) pboard

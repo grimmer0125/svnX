@@ -735,7 +735,7 @@ static ConstString kDialogId = @"BrowseLog";
 		int count = [fDocument svnStdOptions: objs];
 		objs[count++] = @"log";
 		objs[count++] = @"--xml";
-		objs[count++] = [NSString stringWithFormat: (reverseOrder ? @"-r1:%@" : @"-r%@:1"), revision];
+		objs[count++] = [NSString stringWithFormat: (reverseOrder ? @"-r0:%@" : @"-r%@:0"), revision];
 		objs[count++] = PathPegRevision(fileURL, revision);
 		if (verbose)
 			objs[count++] = @"-v";

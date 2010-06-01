@@ -48,7 +48,7 @@ static /*const*/ EditListPrefKeys kPrefKeys =
 		if (str == nil)
 			str = [[url path] lastPathComponent];
 		obj = [fAC newObject];
-		[obj setValue: url forKey: @"url"];
+		[obj setValue: [url absoluteString] forKey: @"url"];
 		[obj setValue: str forKey: @"name"];
 	}
 	return obj;

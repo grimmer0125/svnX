@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 42;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -60,8 +60,6 @@
 		8D15AC2F0486D014006FF6A4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165FFE840EACC02AAC07 /* InfoPlist.strings */; };
 		8D15AC320486D014006FF6A4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A37F4B0FDCFA73011CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		8D15AC340486D014006FF6A4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A7FEA54F5311CA2CBB /* Cocoa.framework */; };
-		F20521D10A5D2159003F966A /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F20521BE0A5D2159003F966A /* Sparkle.framework */; };
-		F20523280A5D2437003F966A /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = F20521BE0A5D2159003F966A /* Sparkle.framework */; };
 		F20524320A5D3C9A003F966A /* GetEthernetAddrSample.c in Sources */ = {isa = PBXBuildFile; fileRef = F20524300A5D3C9A003F966A /* GetEthernetAddrSample.c */; };
 		F20525080A5D3D7F003F966A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F205246A0A5D3D7E003F966A /* IOKit.framework */; };
 		F217F14A05F9EC0700286411 /* SvnFileStatusToColourTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = F217F14805F9EC0700286411 /* SvnFileStatusToColourTransformer.m */; };
@@ -144,7 +142,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				F20523280A5D2437003F966A /* Sparkle.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -222,8 +219,6 @@
 		83EE48870DD226C100542832 /* ViewUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewUtils.h; sourceTree = "<group>"; };
 		8D15AC360486D014006FF6A4 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = ../Info.plist; sourceTree = "<group>"; };
 		8D15AC370486D014006FF6A4 /* svnX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = svnX.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		F20521BE0A5D2159003F966A /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = SPARKLE_BUILD; };
-		F20524020A5D3945003F966A /* SUUpdater.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = SUUpdater.h; path = Sparkle.framework/Versions/A/Headers/SUUpdater.h; sourceTree = SPARKLE_BUILD; };
 		F20524300A5D3C9A003F966A /* GetEthernetAddrSample.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 30; path = GetEthernetAddrSample.c; sourceTree = "<group>"; };
 		F20524310A5D3C9A003F966A /* GetEthernetAddrSample.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GetEthernetAddrSample.h; sourceTree = "<group>"; };
 		F205246A0A5D3D7E003F966A /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
@@ -352,7 +347,6 @@
 			files = (
 				830910EE11715F6600E387C8 /* libsvnXplus.a in Frameworks */,
 				8D15AC340486D014006FF6A4 /* Cocoa.framework in Frameworks */,
-				F20521D10A5D2159003F966A /* Sparkle.framework in Frameworks */,
 				F20525080A5D3D7F003F966A /* IOKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -364,7 +358,6 @@
 			isa = PBXGroup;
 			children = (
 				F205246A0A5D3D7E003F966A /* IOKit.framework */,
-				F20521BE0A5D2159003F966A /* Sparkle.framework */,
 				1058C7A7FEA54F5311CA2CBB /* Cocoa.framework */,
 				8352C4780FF49F9D00C978F5 /* Carbon.framework */,
 				830910ED11715F6600E387C8 /* libsvnXplus.a */,
@@ -439,7 +432,6 @@
 				833B71E00D91ABB3006E242E /* SvnInterface.m */,
 				F20524300A5D3C9A003F966A /* GetEthernetAddrSample.c */,
 				F20524310A5D3C9A003F966A /* GetEthernetAddrSample.h */,
-				F20524020A5D3945003F966A /* SUUpdater.h */,
 				83C5B26B116649CD00A667E9 /* IconTextCell.h */,
 				83C5B26C116649CD00A667E9 /* IconTextCell.m */,
 				8369D49F0FD074A6002905A0 /* IconUtils.h */,
@@ -695,8 +687,12 @@
 /* Begin PBXProject section */
 		2A37F4A9FDCFA73011CA2CEA /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0610;
+			};
 			buildConfigurationList = F2FD1A1E0855F03C00550248 /* Build configuration list for PBXProject "svnX" */;
-			compatibilityVersion = "Xcode 2.4";
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
@@ -825,7 +821,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"$APR_SVN\"\nLIBS=\"svn_client svn_subr svn_fs apr\" # svn_wc\nif [ \"$APR_SVN.c\" -nt libapr.dylib ]; then\n\tfunction CC () {\n\t#\techo \"  <$1> <$2>\"\n\t\tgcc -Iapr -iquotesvn -dynamiclib -nodefaultlibs -arch ${2} -install_name \\\n\t\t\t\"@executable_path/../Frameworks/lib${1}.dylib\" -o lib${1}.${2} -DLIB_${1} \"$APR_SVN.c\"\n\t}\n\n\tfor LIB in $LIBS; {\n\t\techo \"Making $LIB\"\n\t\tCC \"$LIB\" 'ppc'\n\t\tCC \"$LIB\" 'i386'\n\t\tlipo -create lib${LIB}.ppc lib${LIB}.i386 -output lib${LIB}.dylib\n\t\trm lib${LIB}.ppc lib${LIB}.i386\n\t}\nfi\n\ncd \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/\"\nfor LIB in $LIBS; {\n\tln -sf \"$SVN_LIBS/lib${LIB}-1.0.dylib\" lib${LIB}.dylib\n}\n";
+			shellScript = "cd \"$APR_SVN\"\nLIBS=\"svn_client svn_subr svn_fs apr\" # svn_wc\nif [ \"$APR_SVN.c\" -nt libapr.dylib ]; then\n\tfunction CC () {\n\t#\techo \"  <$1> <$2>\"\n\t\tgcc -Iapr -iquotesvn -dynamiclib -nodefaultlibs -arch ${2} -install_name \\\n\t\t\t\"@executable_path/../Frameworks/lib${1}.dylib\" -o lib${1}.${2} -DLIB_${1} \"$APR_SVN.c\"\n\t}\n\n\tfor LIB in $LIBS; {\n\t\techo \"Making $LIB\"\n\t\tCC \"$LIB\" 'i386'\n        lipo -create lib${LIB}.i386 -output lib${LIB}.dylib\n        rm lib${LIB}.i386\n\t}\nfi\n\n\n";
 		};
 		83F834E20D9DC42600AA13B1 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -838,7 +834,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/Sparkle.framework/Versions/A/Headers/\"\nif [ -e Sparkle.h ]; then\n\trm -f *.h >& /dev/null\nfi\n";
+			shellScript = "
+";
 		};
 		F28FC4D30A7BA83D0008C757 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -851,7 +848,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ -e \"$SRCROOT/sparkle/Sparkle.xcodeproj\" ]; then\n\tcd $SRCROOT/sparkle\n\techo \"Patching Sparkle\"\n\tpatch -Np0 < ../fixSUUpdater.patch\n\techo \"Building Sparkle\"\n\txcodebuild\nfi\n";
+			shellScript = "
+";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -962,7 +960,9 @@
 		834DE4110D9C317100E6F26B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 			};
 			name = Release;
 		};
@@ -971,10 +971,7 @@
 			buildSettings = {
 				APP_NAME = "kAppName=\\\"svnX\\\"";
 				APR_SVN = $SRCROOT/apr_svn;
-				ARCHS = (
-					ppc,
-					i386,
-				);
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
@@ -1010,7 +1007,7 @@
 				IBC_NOTICES = NO;
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)";
-				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_LDFLAGS = (
 					"-weak_library",
 					$APR_SVN/libsvn_client.dylib,
@@ -1024,10 +1021,11 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = svnX;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+				SDKROOT = macosx;
 				SPARKLE_BUILD = $SRCROOT/sparkle/build/Release;
 				SVN_LIBS = /opt/subversion/lib;
 				USER_HEADER_SEARCH_PATHS = "$APR_SVN/svn $(inherited)";
+				VALID_ARCHS = i386;
 			};
 			name = Release;
 		};
@@ -1036,6 +1034,7 @@
 			buildSettings = {
 				APP_NAME = "kAppName=\\\"svnX\\\"";
 				APR_SVN = $SRCROOT/apr_svn;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = $SPARKLE_BUILD;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -1068,7 +1067,8 @@
 				IBC_NOTICES = NO;
 				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)";
-				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = (
 					"-weak_library",
 					$APR_SVN/libsvn_client.dylib,
@@ -1082,18 +1082,21 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = svnX;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+				SDKROOT = macosx;
 				SPARKLE_BUILD = $SRCROOT/sparkle/build/Release;
 				STRIP_INSTALLED_PRODUCT = NO;
 				SVN_LIBS = /opt/subversion/lib;
 				USER_HEADER_SEARCH_PATHS = "$APR_SVN/svn $(inherited)";
+				VALID_ARCHS = i386;
 			};
 			name = Debug;
 		};
 		F2EF3C3C0CD296C6000FBD9D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 			};
 			name = Debug;
 		};

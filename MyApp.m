@@ -200,6 +200,21 @@ addTransform (Class itsClass, NSString* itsName)
 	[favoriteWorkingCopies showWindow];
 }
 
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+{
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+    
+    BOOL ignoreExternal = [defaults boolForKey:@"ignoreExternal"];
+    
+    if (ignoreExternal) {
+        [ignoreExternalItem setState:NSOnState];
+    }
+}
+
+- (void)applicationWillResignActive:(NSNotification *)aNotification
+{
+    int k =0;
+}
 
 //----------------------------------------------------------------------------------------
 
@@ -273,6 +288,28 @@ addTransform (Class itsClass, NSString* itsName)
 //----------------------------------------------------------------------------------------
 #pragma mark	-
 //----------------------------------------------------------------------------------------
+
+- (IBAction) enableIgnoreUpdateExternal: (id) sender
+{
+    NSMenuItem *item =(NSMenuItem*)sender;
+
+    NSCellStateValue value = item.state; // [sender setState:NSOnState];
+    
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+
+    if (value==NSOnState) {
+        [item setState:NSOffState];
+                
+        [defaults setBool:false forKey:@"ignoreExternal"];
+        
+    }
+    else
+    {
+        [item setState:NSOnState];
+        
+        [defaults setBool:true forKey:@"ignoreExternal"];
+    }
+}
 
 - (IBAction) openPreferences: (id) sender
 {

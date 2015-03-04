@@ -16,9 +16,11 @@
 	IBOutlet id							tasksManager;
 	IBOutlet RepositoriesController*	repositoriesController;
 	IBOutlet FavoriteWorkingCopies*		favoriteWorkingCopies;
+    
+    IBOutlet NSMenuItem *ignoreExternalItem;
+    
 	UInt32								fSvnVersion;
 }
-
 
 + (MyApp*) myApp;
 
@@ -29,6 +31,8 @@
 - (void) openFiles:       (id) fileOrFiles;	// Open files in appropriate applications.
 - (void) diffFiles:       (id) fileOrFiles;	// Compare files against BASE.
 - (void) resolveFiles:    (id) fileOrFiles;	// Interactively resolve conflicted files.
+
+- (IBAction) enableIgnoreUpdateExternal: (id) sender;
 
 - (IBAction)  openPreferences:  (id) sender;
 - (IBAction)  closePreferences: (id) sender;

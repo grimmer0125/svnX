@@ -1417,8 +1417,11 @@ svnInfoReceiver (void*     baton,
 - (void) svnUpdate: (NSArray*) options
 		 items:     (NSArray*) itemPaths	// nil => workingCopyPath
 {
-	[self svnCommand: @"update" options: options info: nil
-		   itemPaths: itemPaths ? itemPaths : [NSArray arrayWithObject: workingCopyPath]];
+    
+
+    [self svnCommand: @"update" options: options info: nil
+               itemPaths: itemPaths ? itemPaths : [NSArray arrayWithObject: workingCopyPath]];
+    
 }
 
 
@@ -1427,7 +1430,22 @@ svnInfoReceiver (void*     baton,
 
 - (void) svnUpdate
 {
-	[self svnUpdate: nil items: nil];
+    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+        
+    BOOL ignoreExternal = [defaults boolForKey:@"ignoreExternal"];
+    if (ignoreExternal) {
+        NSArray *array = [ [ NSArray alloc ] initWithObjects:@"--ignore-externals",nil];
+
+        [self svnUpdate: array items: nil];
+
+    }
+    else
+    {
+        [self svnUpdate: nil items: nil];
+
+
+    }
+    
 }
 
 
